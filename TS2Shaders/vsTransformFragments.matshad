@@ -5,12 +5,12 @@ define VertexShaderTransformFragments()
 	create VS2And3SharedTransformFragments(3_0)   #mova, cos, crs, etc
 	create VS3UniqueTransformFragments()   # different output register names
 	create VSSharedTransformFragments(3_0)
-	
-	create VS2And3SharedTransformFragments(2_0) 
+
+	create VS2And3SharedTransformFragments(2_0)
 	create VS2UniqueTransformFragments(2_0)
 	create VSSharedTransformFragments(2_0)
 	create VS1and2SharedTransformFragments(2_0)   #vs1.1 compatible, output names
-	
+
 	create VS2And3SharedTransformFragments(2_x)
 	create VS2UniqueTransformFragments(2_x)
 	create VSSharedTransformFragments(2_x)
@@ -33,11 +33,11 @@ shaderSource
 //# VS2 MORPHING FRAGMENTS   #
 //############################
 
-vertexfragment MorphFourPositionTargets&{versionString} = 
+vertexfragment MorphFourPositionTargets&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	mov r_temp10, v_POSITION
 	mova a0, v_BLENDINDICES4
 	mad r_temp10.xyz, v_POSITION4, c_morphWeights[a0.x].www, r_temp10
@@ -46,7 +46,7 @@ asm_fragment
 	mad r_temp10.xyz, v_POSITION7, c_morphWeights[a0.w].www, r_temp10
 };
 
-vertexfragment MorphThreePositionTargets&{versionString} = 
+vertexfragment MorphThreePositionTargets&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
@@ -57,7 +57,7 @@ asm_fragment
 	mad r_temp10.xyz, v_POSITION6, c_morphWeights[a0.z].www, r_temp10
 };
 
-vertexfragment MorphTwoPositionTargets&{versionString} = 
+vertexfragment MorphTwoPositionTargets&{versionString} =
 asm_fragment
 {
 
@@ -68,7 +68,7 @@ asm_fragment
 	mad r_temp10.xyz, v_POSITION5, c_morphWeights[a0.y].www, r_temp10
 };
 
-vertexfragment MorphOnePositionTarget&{versionString} = 
+vertexfragment MorphOnePositionTarget&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
@@ -79,13 +79,13 @@ asm_fragment
 
 
 
-vertexfragment MorphFourNormalTargets&{versionString} = 
+vertexfragment MorphFourNormalTargets&{versionString} =
 asm_fragment
 {
- 
+
  // I assume that a0 has already been loaded from the position morphs.
  // and there are no position=0, morph != 0 cases.
- 
+
 	vs_&{versionString}
 	mov r_temp11,v_NORMAL
 	mad r_temp11.xyz, v_NORMAL4, c_morphWeights[a0.x].www, r_temp11
@@ -94,7 +94,7 @@ asm_fragment
 	mad r_temp11.xyz, v_NORMAL7, c_morphWeights[a0.w].www, r_temp11
 };
 
-vertexfragment MorphThreeNormalTargets&{versionString} = 
+vertexfragment MorphThreeNormalTargets&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
@@ -104,7 +104,7 @@ asm_fragment
 	mad r_temp11.xyz, v_NORMAL6, c_morphWeights[a0.z].www, r_temp11
 };
 
-vertexfragment MorphTwoNormalTargets&{versionString} = 
+vertexfragment MorphTwoNormalTargets&{versionString} =
 asm_fragment
 {
 
@@ -123,22 +123,22 @@ asm_fragment
 // ############################
 
 
-vertexfragment CreateCompositeSkinningMatrixFourWayPacked&{versionString} = 
+vertexfragment CreateCompositeSkinningMatrixFourWayPacked&{versionString} =
 asm_fragment
 {
 
 // USES: temp0, temp1, temp2
 // OUTPUTS:  temp5, temp6, temp7
-// INPUT: 
+// INPUT:
 
 	vs_&{versionString}
 
 	mul r_temp0, v_BLENDINDICES, c_helperConstant2.yyyy
-	
+
 	mova a0, r_temp0
-	
+
    // compute the missing wieght (only 3 weights are supplied)
-   
+
 	dp4 r_temp1.w, c_helperConstant1.yyyz, v_BLENDWEIGHT
 
    // load two rows
@@ -148,7 +148,7 @@ asm_fragment
    // create the last row with a cross, and apply wieghting.
 	crs r_temp2.xyz, r_temp1, c_PoseDataRow2[a0.x]
 	mul r_temp7.xyz, r_temp2, v_BLENDWEIGHT.x
-			
+
 	mad r_temp5.xyz, c_poseDataRow1[a0.y], v_BLENDWEIGHT.y, r_temp5
 	mad r_temp6.xyz, c_poseDataRow2[a0.y], v_BLENDWEIGHT.y, r_temp6
 	mov r_temp1.xyz, c_poseDataRow1[a0.y]
@@ -171,31 +171,31 @@ asm_fragment
 	mul r_temp0.xyz, c_poseTranslation[a0.x], v_BLENDWEIGHT.x
 	mad r_temp0.xyz, c_poseTranslation[a0.y], v_BLENDWEIGHT.y, r_temp0
 	mad r_temp0.xyz, c_poseTranslation[a0.z], v_BLENDWEIGHT.z, r_temp0
-   
-// final translation using computed wieght.	
+
+// final translation using computed wieght.
 	mad r_temp5.w, c_poseTranslation[a0.w].x, r_temp1.w, r_temp0.x
 	mad r_temp6.w, c_poseTranslation[a0.w].y, r_temp1.w, r_temp0.y
 	mad r_temp7.w, c_poseTranslation[a0.w].z, r_temp1.w, r_temp0.z
-				
+
 
 };
 
 
 
-vertexfragment CreateCompositeSkinningMatrixTwoWayPacked&{versionString} = 
+vertexfragment CreateCompositeSkinningMatrixTwoWayPacked&{versionString} =
 asm_fragment
 {
 
 // USES: temp0, temp1, temp2
 // OUTPUTS:  temp5, temp6, temp7
-// INPUT: 
+// INPUT:
 
 	vs_&{versionString}
 
 	mul r_temp0, v_BLENDINDICES, c_helperConstant2.yyyy
-	
+
 	mova a0, r_temp0
-   
+
 	// for 2 bone case, both weights are given to us, no need to compute a 4th.
 
 	mul r_temp5.xyz, c_poseDataRow1[a0.x], v_BLENDWEIGHT.x
@@ -203,7 +203,7 @@ asm_fragment
 	mov r_temp1.xyz, c_poseDataRow1[a0.x]
 	crs r_temp2.xyz, r_temp1, c_PoseDataRow2[a0.x]
 	mul r_temp7.xyz, r_temp2, v_BLENDWEIGHT.x
-			
+
 	mad r_temp5.xyz, c_poseDataRow1[a0.y], v_BLENDWEIGHT.y, r_temp5
 	mad r_temp6.xyz, c_poseDataRow2[a0.y], v_BLENDWEIGHT.y, r_temp6
 	mov r_temp1.xyz, c_poseDataRow1[a0.y]
@@ -212,12 +212,12 @@ asm_fragment
 
 	mul r_temp0.xyz, c_poseTranslation[a0.x], v_BLENDWEIGHT.x
 	mad r_temp0.xyz, c_poseTranslation[a0.y], v_BLENDWEIGHT.y, r_temp0
-	
+
    // expand position into skinning matrix w channels
    mov r_temp5.w, r_temp0.x
    mov r_temp6.w, r_temp0.y
    mov r_temp7.w, r_temp0.z
-   
+
 
 };
 
@@ -225,79 +225,79 @@ asm_fragment
 
 
 
-vertexfragment CreateCompositeSkinningMatrixSingleBonePacked&{versionString} = 
+vertexfragment CreateCompositeSkinningMatrixSingleBonePacked&{versionString} =
 asm_fragment
 {
 
 	vs_&{versionString}
 
 	mul r_temp0, v_BLENDINDICES, c_helperConstant2.yyyy
-	
+
 	mova a0, r_temp0
 	mov r_temp5.xyz, c_poseDataRow1[a0.x]
 	mov r_temp6.xyz, c_poseDataRow2[a0.x]
-	
+
 	mov r_temp1.xyz, c_poseDataRow1[a0.x]
 	crs r_temp7.xyz, r_temp1, c_PoseDataRow2[a0.x]
-	
+
 	// create the composite skinning matrix.
 	mov r_temp5.w, c_poseTranslation[a0.x].x
 	mov r_temp6.w, c_poseTranslation[a0.x].y
-	mov r_temp7.w, c_poseTranslation[a0.x].z	
-	
-	
-};
+	mov r_temp7.w, c_poseTranslation[a0.x].z
 
-
-
-vertexfragment CreateCompositeSkinningMatrixFourWayUnpacked&{versionString} = 
-asm_fragment
-{
-
-	vs_&{versionString}
-	
-	mul r_realIndices, v_BLENDINDICES, c_helperConstant2.yyyy 
-	mova a0, r_realIndices        
-
-	mul r_temp5, v_BLENDWEIGHT.x, c_unpackedPoseMatrixRow1[a0.x]
-	mul r_temp6, v_BLENDWEIGHT.x, c_unpackedPoseMatrixRow2[a0.x]
-	mul r_temp7, v_BLENDWEIGHT.x, c_unpackedPoseMatrixRow3[a0.x]
-		
-	mad r_temp5, v_BLENDWEIGHT.y, c_unpackedPoseMatrixRow1[a0.y],r_temp5  
-	mad r_temp6, v_BLENDWEIGHT.y, c_unpackedPoseMatrixRow2[a0.y],r_temp6  
-	mad r_temp7, v_BLENDWEIGHT.y, c_unpackedPoseMatrixRow3[a0.y],r_temp7  
-	
-	mad r_temp5, v_BLENDWEIGHT.z, c_unpackedPoseMatrixRow1[a0.z],r_temp5  
-	mad r_temp6, v_BLENDWEIGHT.z, c_unpackedPoseMatrixRow2[a0.z],r_temp6  
-	mad r_temp7, v_BLENDWEIGHT.z, c_unpackedPoseMatrixRow3[a0.z],r_temp7  
-	
-	dp4 r_temp1.w, v_BLENDWEIGHT, c_helperConstant1.yyyz  
-	mad r_temp5, r_temp1.w, c_unpackedPoseMatrixRow1[a0.w],r_temp5  
-	mad r_temp6, r_temp1.w, c_unpackedPoseMatrixRow2[a0.w],r_temp6  
-	mad r_temp7, r_temp1.w, c_unpackedPoseMatrixRow3[a0.w],r_temp7  
 
 };
 
 
 
-
-vertexfragment CreateCompositeSkinningMatrixTwoWayUnpacked&{versionString} = 
+vertexfragment CreateCompositeSkinningMatrixFourWayUnpacked&{versionString} =
 asm_fragment
 {
 
 	vs_&{versionString}
-	
-	mul r_realIndices, v_BLENDINDICES, c_helperConstant2.yyyy 
-	mova a0, r_realIndices        
+
+	mul r_realIndices, v_BLENDINDICES, c_helperConstant2.yyyy
+	mova a0, r_realIndices
 
 	mul r_temp5, v_BLENDWEIGHT.x, c_unpackedPoseMatrixRow1[a0.x]
 	mul r_temp6, v_BLENDWEIGHT.x, c_unpackedPoseMatrixRow2[a0.x]
 	mul r_temp7, v_BLENDWEIGHT.x, c_unpackedPoseMatrixRow3[a0.x]
-		
-	mad r_temp5, v_BLENDWEIGHT.y, c_unpackedPoseMatrixRow1[a0.y],r_temp5  
-	mad r_temp6, v_BLENDWEIGHT.y, c_unpackedPoseMatrixRow2[a0.y],r_temp6  
-	mad r_temp7, v_BLENDWEIGHT.y, c_unpackedPoseMatrixRow3[a0.y],r_temp7  
-	
+
+	mad r_temp5, v_BLENDWEIGHT.y, c_unpackedPoseMatrixRow1[a0.y],r_temp5
+	mad r_temp6, v_BLENDWEIGHT.y, c_unpackedPoseMatrixRow2[a0.y],r_temp6
+	mad r_temp7, v_BLENDWEIGHT.y, c_unpackedPoseMatrixRow3[a0.y],r_temp7
+
+	mad r_temp5, v_BLENDWEIGHT.z, c_unpackedPoseMatrixRow1[a0.z],r_temp5
+	mad r_temp6, v_BLENDWEIGHT.z, c_unpackedPoseMatrixRow2[a0.z],r_temp6
+	mad r_temp7, v_BLENDWEIGHT.z, c_unpackedPoseMatrixRow3[a0.z],r_temp7
+
+	dp4 r_temp1.w, v_BLENDWEIGHT, c_helperConstant1.yyyz
+	mad r_temp5, r_temp1.w, c_unpackedPoseMatrixRow1[a0.w],r_temp5
+	mad r_temp6, r_temp1.w, c_unpackedPoseMatrixRow2[a0.w],r_temp6
+	mad r_temp7, r_temp1.w, c_unpackedPoseMatrixRow3[a0.w],r_temp7
+
+};
+
+
+
+
+vertexfragment CreateCompositeSkinningMatrixTwoWayUnpacked&{versionString} =
+asm_fragment
+{
+
+	vs_&{versionString}
+
+	mul r_realIndices, v_BLENDINDICES, c_helperConstant2.yyyy
+	mova a0, r_realIndices
+
+	mul r_temp5, v_BLENDWEIGHT.x, c_unpackedPoseMatrixRow1[a0.x]
+	mul r_temp6, v_BLENDWEIGHT.x, c_unpackedPoseMatrixRow2[a0.x]
+	mul r_temp7, v_BLENDWEIGHT.x, c_unpackedPoseMatrixRow3[a0.x]
+
+	mad r_temp5, v_BLENDWEIGHT.y, c_unpackedPoseMatrixRow1[a0.y],r_temp5
+	mad r_temp6, v_BLENDWEIGHT.y, c_unpackedPoseMatrixRow2[a0.y],r_temp6
+	mad r_temp7, v_BLENDWEIGHT.y, c_unpackedPoseMatrixRow3[a0.y],r_temp7
+
 };
 
 
@@ -307,13 +307,13 @@ asm_fragment
 {
 	vs_&{versionString}
 
-// transform normal	
+// transform normal
 	m3x3 r_temp11.xyz, v_TANGENT, c_objectToCameraSpaceMatrix
 
 // assure orthogonal binormal in camera space
-	
+
 	crs r_temp10.xyz, r_temp11, r_temp9
-	
+
 
 };
 
@@ -326,7 +326,7 @@ asm_fragment
 	dp3 r_temp11.x, v_TANGENT, r_temp5
 	dp3 r_temp11.y, v_TANGENT, r_temp6
 	dp3 r_temp11.z, v_TANGENT, r_temp7
-		
+
 	// cross camera space normal and cameraspace tangent to get binormal.
 	crs r_temp10.xyz, r_temp11, r_temp9
 };
@@ -352,7 +352,7 @@ shaderSource
 //  3.0 fragments are for pre-process, which emit camera space coords, NOT CLIP SPACE COORDS
 
 // support for "Reduce bone weights option" for unpacked cases, packed still uses composite matrix
-vertexfragment SkinPositionSingleBoneUnpacked3_0 = 
+vertexfragment SkinPositionSingleBoneUnpacked3_0 =
 asm_fragment
 {
 	vs_3_0
@@ -365,7 +365,7 @@ asm_fragment
 };
 
 
-vertexfragment SkinPositionWithCompositeMatrix3_0 = 
+vertexfragment SkinPositionWithCompositeMatrix3_0 =
 asm_fragment
 {
 	vs_3_0
@@ -380,7 +380,7 @@ asm_fragment
 };
 
 
-vertexfragment SkinNormalWithCompositeMatrix3_0 = 
+vertexfragment SkinNormalWithCompositeMatrix3_0 =
 asm_fragment
 {
 	vs_3_0
@@ -391,11 +391,11 @@ asm_fragment
 
 };
 
-vertexfragment SkinNormalSingleBoneUnpacked3_0 = 
+vertexfragment SkinNormalSingleBoneUnpacked3_0 =
 asm_fragment
 {
 	vs_3_0
-   
+
 	mul r_temp0, v_BLENDINDICES, c_helperConstant2.yyyy
 	mova a0, r_temp0
 
@@ -411,7 +411,7 @@ asm_fragment
 
 	// CS position
 	//m4x3 o_POSITION.xyz, v_POSITION, c_objectToCameraSpaceMatrix
-	
+
 	// CS normal
 //	m3x3 o_NORMAL.xyz, v_NORMAL, c_objectToCameraSpaceMatrix
 
@@ -426,9 +426,9 @@ vertexfragment TransformPositionNoSkinning3_0 =
 asm_fragment
 {
 	vs_3_0
-	
+
 	mov r_temp10.w, c_helperConstant1.z
-	
+
 	//m4x3 o_POSITION.xyz, r_temp10, c_objectToCameraSpaceMatrix
    mov o_POSITION.xyz, r_temp10
 
@@ -439,7 +439,7 @@ vertexfragment TransformPositionRigidNoLighting3_0 =
 asm_fragment
 {
 	vs_3_0
-   
+
 	// hopefully won't be called when in pre-process.
 
 	mov o_POSITION, v_POSITION
@@ -452,11 +452,11 @@ vertexfragment TransformPositionMorphOnlyNoLighting3_0 =
 asm_fragment
 {
 	vs_3_0
-	
+
 	// vertex in object space still after morphing, so emit directly without transform.
-	
+
 	mov o_POSITION, r_temp10
-   
+
    mov o_NORMAL, v_NORMAL
 
 };
@@ -465,9 +465,9 @@ vertexfragment TransformNormalNoSkinning3_0 =
 asm_fragment
 {
 	vs_3_0
-	
+
 	// object to clip space directly
-	
+
 	//m3x3 o_NORMAL.xyz, r_temp11, c_objectToCameraSpaceMatrix
    mov o_NORMAL.xyz, r_temp11
 
@@ -487,7 +487,7 @@ define VS2UniqueTransformFragments(versionString)
 shaderSource
 
 // support for "Reduce bone weights option" for unpacked cases, packed still uses composite matrix
-vertexfragment SkinPositionSingleBoneUnpacked&{versionString} = 
+vertexfragment SkinPositionSingleBoneUnpacked&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
@@ -498,21 +498,21 @@ asm_fragment
 	m4x3 r_temp8.xyz, r_temp10, c_unpackedPoseMatrix[a0.x]
 
 	mov r_temp8.w, c_helperConstant1.z
-	
-	m4x4 r_temp4, r_temp8, c_cameraToClipSpaceMatrix	
+
+	m4x4 r_temp4, r_temp8, c_cameraToClipSpaceMatrix
 	mov oPos, r_temp4
-	mov oT1.xy, r_temp4.zw 
+	mov oT1.xy, r_temp4.zw
 };
 
-vertexfragment SkinNormalWithCompositeMatrix&{versionString} = 
+vertexfragment SkinNormalWithCompositeMatrix&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	dp3 r_temp0.x, r_temp11, r_temp5
 	dp3 r_temp0.y, r_temp11, r_temp6
 	dp3 r_temp0.z, r_temp11, r_temp7
-	
+
 	nrm r_temp9.xyz, r_temp0
 
 };
@@ -538,7 +538,7 @@ shaderSource
 // ############################
 
 
-vertexfragment MorphOneNormalTarget&{versionString} = 
+vertexfragment MorphOneNormalTarget&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
@@ -547,17 +547,17 @@ asm_fragment
 };
 
 
-vertexfragment NoMorphing&{versionString} = 
+vertexfragment NoMorphing&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	mov r_temp10, v_POSITION
 	mov r_temp11, v_NORMAL
 };
 
 
-vertexfragment NoNormalMorph&{versionString} = 
+vertexfragment NoNormalMorph&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
@@ -597,14 +597,14 @@ shaderSource
 
 
 
-vertexfragment SkinNormalSingleBoneUnpacked&{versionString} = 
+vertexfragment SkinNormalSingleBoneUnpacked&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	// a0.x set up from position skinning
 	m3x3 r_temp9.xyz, r_temp11, c_unpackedPoseMatrix[a0.x]
-	
+
 };
 
 
@@ -616,11 +616,11 @@ asm_fragment
 	vs_&{versionString}
 
 	m3x3 r_temp9.xyz, r_temp11, c_objectToCameraSpaceMatrix
-	
+
 };
 
 
-vertexfragment SkinPositionWithCompositeMatrix&{versionString} = 
+vertexfragment SkinPositionWithCompositeMatrix&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
@@ -631,13 +631,13 @@ asm_fragment
 	dp4 r_temp8.y, r_temp10, r_temp6
 	dp4 r_temp8.z, r_temp10, r_temp7
 	mov r_temp8.w, c_basics.z
-	
-	m4x4 r_temp4, r_temp8, c_cameraToClipSpaceMatrix	
+
+	m4x4 r_temp4, r_temp8, c_cameraToClipSpaceMatrix
 	mov oPos, r_temp4
-	mov oT1.xy, r_temp4.zw 
+	mov oT1.xy, r_temp4.zw
 };
 
-vertexfragment SkinPositionWithCompositeMatrixTempStore&{versionString} = 
+vertexfragment SkinPositionWithCompositeMatrixTempStore&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
@@ -648,7 +648,7 @@ asm_fragment
 	dp4 r_position.y, r_temp10, r_temp6
 	dp4 r_position.z, r_temp10, r_temp7
 	mov r_position.w, c_basics.z
-		
+
 };
 
 
@@ -660,20 +660,20 @@ asm_fragment
 	// CS position
 	m4x3 r_temp8.xyz, v_POSITION, c_objectToCameraSpaceMatrix
 	mov r_temp8.w, c_basics.z
-	
+
 	// CS normal
 	m3x3 r_temp9.xyz, v_NORMAL, c_objectToCameraSpaceMatrix
 	mov r_temp9.w, c_basics.z
 
 	// clip space position
-	m4x4 r_temp4, r_temp8, c_cameraToClipSpaceMatrix	
+	m4x4 r_temp4, r_temp8, c_cameraToClipSpaceMatrix
 	mov oPos, r_temp4
-	mov oT1.xy, r_temp4.zw 	
-	
+	mov oT1.xy, r_temp4.zw
+
 	mov oT0.xy, v_TEXCOORD
-	
+
 	// inputs ready for all lighting fragments
-	
+
 };
 
 
@@ -682,16 +682,16 @@ vertexfragment TransformPositionNoSkinning&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	mov r_temp10.w, c_helperConstant1.z
-	
+
 	m4x3 r_temp8.xyz, r_temp10, c_objectToCameraSpaceMatrix
 
 	mov r_temp8.w, c_helperConstant1.z
 
-	m4x4 r_temp4, r_temp8, c_cameraToClipSpaceMatrix   
+	m4x4 r_temp4, r_temp8, c_cameraToClipSpaceMatrix
 	mov oPos, r_temp4
-	mov oT1.xy, r_temp4.zw 
+	mov oT1.xy, r_temp4.zw
 };
 
 
@@ -700,9 +700,9 @@ vertexfragment TransformPositionNoSkinningTempStore&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	mov r_temp10.w, c_helperConstant1.z
-	
+
 	m4x3 r_position.xyz, r_temp10, c_objectToCameraSpaceMatrix
 
 	mov r_position.w, c_helperConstant1.z
@@ -719,9 +719,9 @@ asm_fragment
 	vs_&{versionString}
 	// object to clip space directly
 
-	m4x4 r_temp4, v_POSITION, c_objectToClipSpaceMatrix	
+	m4x4 r_temp4, v_POSITION, c_objectToClipSpaceMatrix
 	mov oPos, r_temp4
-	mov oT1.xy, r_temp4.zw 
+	mov oT1.xy, r_temp4.zw
 };
 
 
@@ -729,12 +729,12 @@ vertexfragment TransformPositionMorphOnlyNoLighting&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	// object to clip space directly
-	
-	m4x4 r_temp4, r_temp10, c_objectToClipSpaceMatrix	
+
+	m4x4 r_temp4, r_temp10, c_objectToClipSpaceMatrix
 	mov oPos, r_temp4
-	mov oT1.xy, r_temp4.zw 
+	mov oT1.xy, r_temp4.zw
 };
 
 
@@ -768,11 +768,11 @@ shaderSource
 
 
 
-vertexfragment MorphFourPositionTargets1_1 = 
+vertexfragment MorphFourPositionTargets1_1 =
 asm_fragment
 {
 	vs_1_1
-	
+
 	mov r_temp10, v_POSITION
 	mov a0.x, v_BLENDINDICES4
 	mad r_temp10.xyz, v_POSITION4, c_morphWeights[a0.x].www, r_temp10
@@ -782,15 +782,15 @@ asm_fragment
 	mad r_temp10.xyz, v_POSITION6, c_morphWeights[a0.x].www, r_temp10
 	mov a0.x, v_BLENDINDICES4.w
 	mad r_temp10.xyz, v_POSITION7, c_morphWeights[a0.x].www, r_temp10
-	
+
 };
 
-vertexfragment MorphThreePositionTargets1_1 = 
+vertexfragment MorphThreePositionTargets1_1 =
 asm_fragment
 {
 	vs_1_1
 	mov r_temp10, v_POSITION
-	
+
 	mov a0.x, v_BLENDINDICES4
 	mad r_temp10.xyz, v_POSITION4, c_morphWeights[a0.x].www, r_temp10
 
@@ -801,7 +801,7 @@ asm_fragment
 	mad r_temp10.xyz, v_POSITION6, c_morphWeights[a0.x].www, r_temp10
 };
 
-vertexfragment MorphTwoPositionTargets1_1 = 
+vertexfragment MorphTwoPositionTargets1_1 =
 asm_fragment
 {
 
@@ -809,13 +809,13 @@ asm_fragment
 	mov r_temp10,v_POSITION
 	mov a0.x, v_BLENDINDICES4
 	mad r_temp10.xyz, v_POSITION4, c_morphWeights[a0.x].www, r_temp10
-	
+
 	mov a0.x, v_BLENDINDICES4.y
 	mad r_temp10.xyz, v_POSITION5, c_morphWeights[a0.x].www, r_temp10
-	
+
 };
 
-vertexfragment MorphOnePositionTarget1_1 = 
+vertexfragment MorphOnePositionTarget1_1 =
 asm_fragment
 {
 	vs_1_1
@@ -829,13 +829,13 @@ asm_fragment
 // #  NO UBYTE4 MORPHING	     #
 // ###############################
 
-vertexfragment MorphFourPositionTargetsIndexAsColor1_1 = 
+vertexfragment MorphFourPositionTargetsIndexAsColor1_1 =
 asm_fragment
 {
 	vs_1_1
-	
+
 	mov r_temp10, v_POSITION
-	
+
 	mul r_temp0, v_BLENDINDICES4.zyxw, c_helperConstant2.x
 	mov a0.x, r_temp0
 	mad r_temp10.xyz, v_POSITION4, c_morphWeights[a0.x].www, r_temp10
@@ -845,16 +845,16 @@ asm_fragment
 	mad r_temp10.xyz, v_POSITION6, c_morphWeights[a0.x].www, r_temp10
 	mov a0.x, r_temp0.w
 	mad r_temp10.xyz, v_POSITION7, c_morphWeights[a0.x].www, r_temp10
-	
+
 };
 
-vertexfragment MorphThreePositionTargetsIndexAsColor1_1 = 
+vertexfragment MorphThreePositionTargetsIndexAsColor1_1 =
 asm_fragment
 {
 	vs_1_1
-	
+
 	mov r_temp10, v_POSITION
-	
+
 	mul r_temp0, v_BLENDINDICES4.zyxw, c_helperConstant2.x
 	mov a0.x, r_temp0
 	mad r_temp10.xyz, v_POSITION4, c_morphWeights[a0.x].www, r_temp10
@@ -862,36 +862,36 @@ asm_fragment
 	mad r_temp10.xyz, v_POSITION5, c_morphWeights[a0.x].www, r_temp10
 	mov a0.x, r_temp0.z
 	mad r_temp10.xyz, v_POSITION6, c_morphWeights[a0.x].www, r_temp10
-	
+
 };
 
-vertexfragment MorphTwoPositionTargetsIndexAsColor1_1 = 
+vertexfragment MorphTwoPositionTargetsIndexAsColor1_1 =
 asm_fragment
 {
 	vs_1_1
-	
+
 	mov r_temp10, v_POSITION
-	
+
 	mul r_temp0, v_BLENDINDICES4.zyxw, c_helperConstant2.x
 	mov a0.x, r_temp0
 	mad r_temp10.xyz, v_POSITION4, c_morphWeights[a0.x].www, r_temp10
 	mov a0.x, r_temp0.y
 	mad r_temp10.xyz, v_POSITION5, c_morphWeights[a0.x].www, r_temp10
-	
+
 };
 
 
-vertexfragment MorphOnePositionTargetIndexAsColor1_1 = 
+vertexfragment MorphOnePositionTargetIndexAsColor1_1 =
 asm_fragment
 {
 	vs_1_1
-	
+
 	mov r_temp10, v_POSITION
-	
+
 	mul r_temp0, v_BLENDINDICES4.zyxw, c_helperConstant2.x
 	mov a0.x, r_temp0
 	mad r_temp10.xyz, v_POSITION4, c_morphWeights[a0.x].www, r_temp10
-	
+
 };
 
 
@@ -901,15 +901,15 @@ asm_fragment
 // ###############################
 
 
-vertexfragment MorphFourNormalTargets1_1 = 
+vertexfragment MorphFourNormalTargets1_1 =
 asm_fragment
 {
- 
+
  // I assume that a0 has already been loaded from the position morphs.
  // and there are no position=0, morph != 0 cases.
- 
+
 	vs_1_1
-	
+
 	mov r_temp11,v_NORMAL
 	mov a0.x, v_BLENDINDICES4.x
 	mad r_temp11.xyz, v_NORMAL4, c_morphWeights[a0.x].www, r_temp11
@@ -921,7 +921,7 @@ asm_fragment
 	mad r_temp11.xyz, v_NORMAL7, c_morphWeights[a0.x].www, r_temp11
 };
 
-vertexfragment MorphThreeNormalTargets1_1 = 
+vertexfragment MorphThreeNormalTargets1_1 =
 asm_fragment
 {
 	vs_1_1
@@ -935,15 +935,15 @@ asm_fragment
 
 	mov a0.x, v_BLENDINDICES4.z
 	mad r_temp11.xyz, v_NORMAL6, c_morphWeights[a0.x].www, r_temp11
-	
+
 };
 
-vertexfragment MorphTwoNormalTargets1_1 = 
+vertexfragment MorphTwoNormalTargets1_1 =
 asm_fragment
 {
 
 	vs_1_1
-	
+
 	mov a0.x, v_BLENDINDICES4.x
 	mov r_temp11,v_NORMAL
 	mad r_temp11.xyz, v_NORMAL4, c_morphWeights[a0.x].www, r_temp11
@@ -958,19 +958,19 @@ asm_fragment
 // ###############################
 
 
-vertexfragment MorphFourNormalTargetsIndexAsColor1_1 = 
+vertexfragment MorphFourNormalTargetsIndexAsColor1_1 =
 asm_fragment
 {
- 
+
  // I assume that a0 has already been loaded from the position morphs.
  // and there are no position=0, morph != 0 cases.
- 
+
 	vs_1_1
-	
+
 	mov r_temp11,v_NORMAL
 	mul r_temp0,  v_BLENDINDICES4.zyxw, c_helperConstant2.x
 	mov a0.x, r_temp0
-	
+
 	mad r_temp11.xyz, v_NORMAL4, c_morphWeights[a0.x].www, r_temp11
 	mov a0.x, r_temp0.y
 	mad r_temp11.xyz, v_NORMAL5, c_morphWeights[a0.x].www, r_temp11
@@ -981,19 +981,19 @@ asm_fragment
 };
 
 
-vertexfragment MorphThreeNormalTargetsIndexAsColor1_1 = 
+vertexfragment MorphThreeNormalTargetsIndexAsColor1_1 =
 asm_fragment
 {
- 
+
  // I assume that a0 has already been loaded from the position morphs.
  // and there are no position=0, morph != 0 cases.
- 
+
 	vs_1_1
-	
+
 	mov r_temp11,v_NORMAL
 	mul r_temp0,  v_BLENDINDICES4.zyxw, c_helperConstant2.x
 	mov a0.x, r_temp0
-	
+
 	mad r_temp11.xyz, v_NORMAL4, c_morphWeights[a0.x].www, r_temp11
 	mov a0.x, r_temp0.y
 	mad r_temp11.xyz, v_NORMAL5, c_morphWeights[a0.x].www, r_temp11
@@ -1002,19 +1002,19 @@ asm_fragment
 };
 
 
-vertexfragment MorphTwoNormalTargetsIndexAsColor1_1 = 
+vertexfragment MorphTwoNormalTargetsIndexAsColor1_1 =
 asm_fragment
 {
- 
+
  // I assume that a0 has already been loaded from the position morphs.
  // and there are no position=0, morph != 0 cases.
- 
+
 	vs_1_1
-	
+
 	mov r_temp11,v_NORMAL
 	mul r_temp0,  v_BLENDINDICES4.zyxw, c_helperConstant2.x
 	mov a0.x, r_temp0
-	
+
 	mad r_temp11.xyz, v_NORMAL4, c_morphWeights[a0.x].www, r_temp11
 	mov a0.x, r_temp0.y
 	mad r_temp11.xyz, v_NORMAL5, c_morphWeights[a0.x].www, r_temp11
@@ -1022,28 +1022,28 @@ asm_fragment
 
 
 
-vertexfragment MorphOneNormalTargetIndexAsColor1_1 = 
+vertexfragment MorphOneNormalTargetIndexAsColor1_1 =
 asm_fragment
 {
- 
+
  // I assume that a0 has already been loaded from the position morphs.
  // and there are no position=0, morph != 0 cases.
- 
+
 	vs_1_1
-	
+
 	mov r_temp11,v_NORMAL
 	mul r_temp0,  v_BLENDINDICES4.zyxw, c_helperConstant2.x
 	mov a0.x, r_temp0
 	mad r_temp11.xyz, v_NORMAL4, c_morphWeights[a0.x].www, r_temp11
-		
+
 };
 
 
- 
- 
- 
- 
-vertexfragment CreateCompositeSkinningMatrixFourWayPacked1_1 = 
+
+
+
+
+vertexfragment CreateCompositeSkinningMatrixFourWayPacked1_1 =
 asm_fragment
 {
 
@@ -1056,10 +1056,10 @@ asm_fragment
 	vs_1_1
 
 	mul r_temp3, v_BLENDINDICES, c_helperConstant2.yyyy
-	
+
 	mov a0.x, r_temp3.x
 	// ***** MATRIX 1 ******
-	
+
 	dp4 r_temp1.w, c_helperConstant1.yyyz, v_BLENDWEIGHT
 
 	mul r_temp5.xyz, c_poseDataRow1[a0.x], v_BLENDWEIGHT.x
@@ -1077,12 +1077,12 @@ asm_fragment
 	mov a0.x, r_temp3.y
 	mad r_temp5.xyz, c_poseDataRow1[a0.x], v_BLENDWEIGHT.y, r_temp5
 	mad r_temp6.xyz, c_poseDataRow2[a0.x], v_BLENDWEIGHT.y, r_temp6
-	
+
 	mov r_temp1.xyz, c_poseDataRow1[a0.x]
-	mul	r_temp2.xyz,  r_temp1.yzx, c_poseDataRow2[a0.x].zxy	
+	mul	r_temp2.xyz,  r_temp1.yzx, c_poseDataRow2[a0.x].zxy
 	mad	r_temp2.xyz, -r_temp1.zxy, c_poseDataRow2[a0.x].yzx,	r_temp2
 	mad r_temp7.xyz, r_temp2, v_BLENDWEIGHT.y, r_temp7
-	
+
 	mad r_temp0.xyz, c_poseTranslation[a0.x], v_BLENDWEIGHT.y, r_temp0
 
 	// ***** MATRIX 3 ******
@@ -1090,15 +1090,15 @@ asm_fragment
 	mov a0.x, r_temp3.z
 	mad r_temp5.xyz, c_poseDataRow1[a0.x], v_BLENDWEIGHT.z, r_temp5
 	mad r_temp6.xyz, c_poseDataRow2[a0.x], v_BLENDWEIGHT.z, r_temp6
-	
+
 	mov r_temp1.xyz, c_poseDataRow1[a0.x]
-	mul	r_temp2.xyz,  r_temp1.yzx, c_poseDataRow2[a0.x].zxy	
+	mul	r_temp2.xyz,  r_temp1.yzx, c_poseDataRow2[a0.x].zxy
 	mad	r_temp2.xyz, -r_temp1.zxy, c_poseDataRow2[a0.x].yzx,	r_temp2
 	mad r_temp7.xyz, r_temp2, v_BLENDWEIGHT.z, r_temp7
-	
+
 	mad r_temp0.xyz, c_poseTranslation[a0.x], v_BLENDWEIGHT.z, r_temp0
-	
-	
+
+
 	// ***** MATRIX 4 ******
 
 	mov a0.x, r_temp3.w
@@ -1106,7 +1106,7 @@ asm_fragment
 	mad r_temp6.xyz, c_poseDataRow2[a0.x], r_temp1.w, r_temp6
 
 	mov r_temp1.xyz, c_poseDataRow1[a0.x]
-	mul	r_temp2.xyz,  r_temp1.yzx, c_poseDataRow2[a0.x].zxy	
+	mul	r_temp2.xyz,  r_temp1.yzx, c_poseDataRow2[a0.x].zxy
 	mad	r_temp2.xyz, -r_temp1.zxy, c_poseDataRow2[a0.x].yzx,	r_temp2
 
 	mad r_temp7.xyz, r_temp2, r_temp1.w,  r_temp7
@@ -1121,7 +1121,7 @@ asm_fragment
 
 
 
-vertexfragment CreateCompositeSkinningMatrixFourWayPackedIndexAsColor1_1 = 
+vertexfragment CreateCompositeSkinningMatrixFourWayPackedIndexAsColor1_1 =
 asm_fragment
 {
 
@@ -1135,10 +1135,10 @@ asm_fragment
 
 	# for GF3/4, without UBYTE4 support, I have to change 0->1 into 0->255) AND swizzle, since it was a color.
 	mul r_temp3, v_BLENDINDICES.zyxw, c_helperConstant1.xxxx
-	
+
 	mov a0.x, r_temp3.x
 	// ***** MATRIX 1 ******
-	
+
 	dp4 r_temp1.w, c_helperConstant1.yyyz, v_BLENDWEIGHT
 
 	mul r_temp5.xyz, c_poseDataRow1[a0.x], v_BLENDWEIGHT.x
@@ -1156,12 +1156,12 @@ asm_fragment
 	mov a0.x, r_temp3.y
 	mad r_temp5.xyz, c_poseDataRow1[a0.x], v_BLENDWEIGHT.y, r_temp5
 	mad r_temp6.xyz, c_poseDataRow2[a0.x], v_BLENDWEIGHT.y, r_temp6
-	
+
 	mov r_temp1.xyz, c_poseDataRow1[a0.x]
-	mul	r_temp2.xyz,  r_temp1.yzx, c_poseDataRow2[a0.x].zxy	
+	mul	r_temp2.xyz,  r_temp1.yzx, c_poseDataRow2[a0.x].zxy
 	mad	r_temp2.xyz, -r_temp1.zxy, c_poseDataRow2[a0.x].yzx,	r_temp2
 	mad r_temp7.xyz, r_temp2, v_BLENDWEIGHT.y, r_temp7
-	
+
 	mad r_temp0.xyz, c_poseTranslation[a0.x], v_BLENDWEIGHT.y, r_temp0
 
 	// ***** MATRIX 3 ******
@@ -1169,15 +1169,15 @@ asm_fragment
 	mov a0.x, r_temp3.z
 	mad r_temp5.xyz, c_poseDataRow1[a0.x], v_BLENDWEIGHT.z, r_temp5
 	mad r_temp6.xyz, c_poseDataRow2[a0.x], v_BLENDWEIGHT.z, r_temp6
-	
+
 	mov r_temp1.xyz, c_poseDataRow1[a0.x]
-	mul	r_temp2.xyz,  r_temp1.yzx, c_poseDataRow2[a0.x].zxy	
+	mul	r_temp2.xyz,  r_temp1.yzx, c_poseDataRow2[a0.x].zxy
 	mad	r_temp2.xyz, -r_temp1.zxy, c_poseDataRow2[a0.x].yzx,	r_temp2
 	mad r_temp7.xyz, r_temp2, v_BLENDWEIGHT.z, r_temp7
-	
+
 	mad r_temp0.xyz, c_poseTranslation[a0.x], v_BLENDWEIGHT.z, r_temp0
-	
-	
+
+
 	// ***** MATRIX 4 ******
 
 	mov a0.x, r_temp3.w
@@ -1185,7 +1185,7 @@ asm_fragment
 	mad r_temp6.xyz, c_poseDataRow2[a0.x], r_temp1.w, r_temp6
 
 	mov r_temp1.xyz, c_poseDataRow1[a0.x]
-	mul	r_temp2.xyz,  r_temp1.yzx, c_poseDataRow2[a0.x].zxy	
+	mul	r_temp2.xyz,  r_temp1.yzx, c_poseDataRow2[a0.x].zxy
 	mad	r_temp2.xyz, -r_temp1.zxy, c_poseDataRow2[a0.x].yzx,	r_temp2
 
 	mad r_temp7.xyz, r_temp2, r_temp1.w,  r_temp7
@@ -1204,8 +1204,8 @@ asm_fragment
 
 
 
- 
-vertexfragment CreateCompositeSkinningMatrixTwoWayPacked1_1 = 
+
+vertexfragment CreateCompositeSkinningMatrixTwoWayPacked1_1 =
 asm_fragment
 {
 
@@ -1218,10 +1218,10 @@ asm_fragment
 	vs_1_1
 
 	mul r_temp3, v_BLENDINDICES, c_helperConstant2.yyyy
-	
+
 	mov a0.x, r_temp3.x
 	// ***** MATRIX 1 ******
-	
+
 	dp4 r_temp1.w, c_helperConstant1.yyyz, v_BLENDWEIGHT
 
 	mul r_temp5.xyz, c_poseDataRow1[a0.x], v_BLENDWEIGHT.x
@@ -1239,12 +1239,12 @@ asm_fragment
 	mov a0.x, r_temp3.y
 	mad r_temp5.xyz, c_poseDataRow1[a0.x], v_BLENDWEIGHT.y, r_temp5
 	mad r_temp6.xyz, c_poseDataRow2[a0.x], v_BLENDWEIGHT.y, r_temp6
-	
+
 	mov r_temp1.xyz, c_poseDataRow1[a0.x]
-	mul	r_temp2.xyz,  r_temp1.yzx, c_poseDataRow2[a0.x].zxy	
+	mul	r_temp2.xyz,  r_temp1.yzx, c_poseDataRow2[a0.x].zxy
 	mad	r_temp2.xyz, -r_temp1.zxy, c_poseDataRow2[a0.x].yzx,	r_temp2
 	mad r_temp7.xyz, r_temp2, v_BLENDWEIGHT.y, r_temp7
-	
+
 	mad r_temp0.xyz, c_poseTranslation[a0.x], v_BLENDWEIGHT.y, r_temp0
 
 // move position into 4th column of 4x3 matrix
@@ -1252,14 +1252,14 @@ asm_fragment
    mov r_temp5.w, r_temp0.x
    mov r_temp6.w, r_temp0.y
    mov r_temp7.w, r_temp0.z
-   
+
 
 };
 
 
 
 
-vertexfragment CreateCompositeSkinningMatrixTwoWayPackedIndexAsColor1_1 = 
+vertexfragment CreateCompositeSkinningMatrixTwoWayPackedIndexAsColor1_1 =
 asm_fragment
 {
 
@@ -1273,10 +1273,10 @@ asm_fragment
 
 	# for GF3/4, without UBYTE4 support, I have to change 0->1 into 0->255) AND swizzle, since it was a color.
 	mul r_temp3, v_BLENDINDICES.zyxw, c_helperConstant1.xxxx
-	
+
 	mov a0.x, r_temp3.x
 	// ***** MATRIX 1 ******
-	
+
 	dp4 r_temp1.w, c_helperConstant1.yyyz, v_BLENDWEIGHT
 
 	mul r_temp5.xyz, c_poseDataRow1[a0.x], v_BLENDWEIGHT.x
@@ -1294,20 +1294,20 @@ asm_fragment
 	mov a0.x, r_temp3.y
 	mad r_temp5.xyz, c_poseDataRow1[a0.x], v_BLENDWEIGHT.y, r_temp5
 	mad r_temp6.xyz, c_poseDataRow2[a0.x], v_BLENDWEIGHT.y, r_temp6
-	
+
 	mov r_temp1.xyz, c_poseDataRow1[a0.x]
-	mul	r_temp2.xyz,  r_temp1.yzx, c_poseDataRow2[a0.x].zxy	
+	mul	r_temp2.xyz,  r_temp1.yzx, c_poseDataRow2[a0.x].zxy
 	mad	r_temp2.xyz, -r_temp1.zxy, c_poseDataRow2[a0.x].yzx,	r_temp2
 	mad r_temp7.xyz, r_temp2, v_BLENDWEIGHT.y, r_temp7
-	
+
 	mad r_temp0.xyz, c_poseTranslation[a0.x], v_BLENDWEIGHT.y, r_temp0
-   
+
    // move position into 4th column of 4x3 matrix
-   
+
    mov r_temp5.w, r_temp0.x
    mov r_temp6.w, r_temp0.y
    mov r_temp7.w, r_temp0.z
-   
+
 
 };
 
@@ -1319,75 +1319,75 @@ asm_fragment
 
 
 
-vertexfragment CreateCompositeSkinningMatrixSingleBonePacked1_1 = 
+vertexfragment CreateCompositeSkinningMatrixSingleBonePacked1_1 =
 asm_fragment
 {
 
 	vs_1_1
 
 	mul r_temp0, v_BLENDINDICES, c_helperConstant2.yyyy
-	
+
 	mov a0.x, r_temp0
 	mov r_temp5.xyz, c_poseDataRow1[a0.x]
 	mov r_temp6.xyz, c_poseDataRow2[a0.x]
-	
+
 	mov r_temp1.xyz, c_poseDataRow1[a0.x]
 
-	mul	r_temp7.xyz, r_temp1.yzx, c_poseDataRow2[a0.x].zxy	
+	mul	r_temp7.xyz, r_temp1.yzx, c_poseDataRow2[a0.x].zxy
 	mad	r_temp7.xyz, -r_temp1.zxy, c_poseDataRow2[a0.x].yzx,	r_temp7
 
 	//  merge in the translation
 	mov r_temp5.w, c_poseTranslation[a0.x].x
 	mov r_temp6.w, c_poseTranslation[a0.x].y
-	mov r_temp7.w, c_poseTranslation[a0.x].z	
-	
-	
+	mov r_temp7.w, c_poseTranslation[a0.x].z
+
+
 };
 
 
-vertexfragment CreateCompositeSkinningMatrixSingleBonePackedIndexAsColor1_1 = 
+vertexfragment CreateCompositeSkinningMatrixSingleBonePackedIndexAsColor1_1 =
 asm_fragment
 {
 
 	vs_1_1
 
 	mul r_temp0, v_BLENDINDICES.zyxw, c_helperConstant1.xxxx
-	
+
 	mov a0.x, r_temp0
 	mov r_temp5.xyz, c_poseDataRow1[a0.x]
 	mov r_temp6.xyz, c_poseDataRow2[a0.x]
-	
+
 	mov r_temp1.xyz, c_poseDataRow1[a0.x]
 
-	mul	r_temp7.xyz, r_temp1.yzx, c_poseDataRow2[a0.x].zxy	
+	mul	r_temp7.xyz, r_temp1.yzx, c_poseDataRow2[a0.x].zxy
 	mad	r_temp7.xyz, -r_temp1.zxy, c_poseDataRow2[a0.x].yzx,	r_temp7
 
 	//  merge in the translation
 	mov r_temp5.w, c_poseTranslation[a0.x].x
 	mov r_temp6.w, c_poseTranslation[a0.x].y
-	mov r_temp7.w, c_poseTranslation[a0.x].z	
-	
-	
+	mov r_temp7.w, c_poseTranslation[a0.x].z
+
+
 };
 
-vertexfragment SkinNormalWithCompositeMatrix1_1 = 
+vertexfragment SkinNormalWithCompositeMatrix1_1 =
 asm_fragment
 {
 	vs_1_1
-	
+
 	//INPUTS:  ObjectSpace Normal: R11  CompositeMatrix r5,r6,r7
 	//OUTPUTS: Normalized, Camera normal: r9
 	//USES: r0
-	
-	
+
+
 	dp3 r_temp0.x, r_temp11, r_temp5
 	dp3 r_temp0.y, r_temp11, r_temp6
 	dp3 r_temp0.z, r_temp11, r_temp7
-	
+
 	dp3 r_temp0.w, r_temp0, r_temp0     // Squared dist
 	rsq r_temp0.w, r_temp0.w			// 1/sqrt
 	mul r_temp9.xyz, r_temp0, r_temp0.w // normalize.
-	
+
 };
 
 
@@ -1396,11 +1396,11 @@ asm_fragment
 {
 	vs_1_1
 
-// transform normal	
+// transform normal
 	m3x3 r_temp11.xyz, v_TANGENT, c_objectToCameraSpaceMatrix
 
 // assure orthogonal binormal in camera space (do a cross product)
-	mul	r_temp10.xyz, r_temp11.yzx, r_temp9.zxy	
+	mul	r_temp10.xyz, r_temp11.yzx, r_temp9.zxy
 	mad	r_temp10.xyz, -r_temp11.zxy, r_temp9.yzx,	r_temp10
 
 };
@@ -1414,9 +1414,9 @@ asm_fragment
 	dp3 r_temp11.x, v_TANGENT, r_temp5
 	dp3 r_temp11.y, v_TANGENT, r_temp6
 	dp3 r_temp11.z, v_TANGENT, r_temp7
-		
+
 	// cross camera space normal and cameraspace tangent to get binormal.
-	mul	r_temp10.xyz, r_temp11.yzx, r_temp9.zxy	
+	mul	r_temp10.xyz, r_temp11.yzx, r_temp9.zxy
 	mad	r_temp10.xyz, -r_temp11.zxy, r_temp9.yzx,	r_temp10
 };
 
@@ -1434,8 +1434,8 @@ enddef
 
 
 define TransformFragments(skinFlag singleBone swvsFlag morphFlag positionMorphCount normalMorphCount normalFlag shaderVersion)
-   #trace "$currentMaterialName : &morphFlag : &positionMorphCount : $ubyte4Supported : &normalFlag : &normalMorphCount : &skinFlag : &singleBone : $bonesPerVertex" 
-	
+   #trace "$currentMaterialName : &morphFlag : &positionMorphCount : $ubyte4Supported : &normalFlag : &normalMorphCount : &skinFlag : &singleBone : $bonesPerVertex"
+
 	if (&morphFlag and &positionMorphCount)
 
 		if ($ubyte4Supported)
@@ -1452,7 +1452,7 @@ define TransformFragments(skinFlag singleBone swvsFlag morphFlag positionMorphCo
 			if (&positionMorphCount = 4)
 				shaderFragment MorphFourPositionTargets&{shaderVersion}
 			endif
-			
+
 			if (&normalFlag)
 				if (&normalMorphCount = 1)
 					shaderFragment MorphOneNormalTarget&{shaderVersion}
@@ -1483,9 +1483,9 @@ define TransformFragments(skinFlag singleBone swvsFlag morphFlag positionMorphCo
 			if (&positionMorphCount = 4)
 				shaderFragment MorphFourPositionTargetsIndexAsColor&{shaderVersion}
 			endif
-			
+
 			if (&normalFlag)
-			
+
 				if (&normalMorphCount = 1)
 					shaderFragment MorphOneNormalTargetIndexAsColor&{shaderVersion}
 				endif
@@ -1498,58 +1498,58 @@ define TransformFragments(skinFlag singleBone swvsFlag morphFlag positionMorphCo
 				if (&normalMorphCount = 4)
 					shaderFragment MorphFourNormalTargetsIndexAsColor&{shaderVersion}
 				endif
-				
+
 				if (&normalMorphCount = 0)
 					shaderFragment NoNormalMorph&{shaderVersion}
 				endif
 			endif
-		
+
 		endif
-		
-				
+
+
 	else
 		shaderFragment NoMorphing&{shaderVersion}
 	endif
 
-	
+
 	if (&skinFlag)
 
 		# if single bone, I can optimize this case for most objects in the game.
-		
+
 		if (&singleBone)
-		
+
          #trace "$currentMaterialName  only has one bone per vertex max, using faster case"
-      
+
 			if (&swvsFlag)
 				shaderFragment SkinPositionSingleBoneUnpacked&{shaderVersion}
 
 				# for now, assume reduce bone weights also means no bumpmapping
-				
+
 				if (&normalFlag)
 					shaderFragment SkinNormalSingleBoneUnpacked&{shaderVersion}
 				endif
-				
+
 			else
-			
+
 				if ($ubyte4Supported)
 					shaderFragment CreateCompositeSkinningMatrixSingleBonePacked&{shaderVersion}
 				else
 					shaderFragment CreateCompositeSkinningMatrixSingleBonePackedIndexAsColor&{shaderVersion}
 				endif
-		
+
 				shaderFragment SkinPositionWithCompositeMatrix&{shaderVersion}
-				
+
 				if (&normalFlag)
 					shaderFragment SkinNormalWithCompositeMatrix&{shaderVersion}
 				endif
-			
+
 			endif
-				
-			
-					
-			
+
+
+
+
 		else
-				
+
 			if (&swvsFlag)
             if ($bonesPerVertex = 2)
                shaderFragment CreateCompositeSkinningMatrixTwoWayUnpacked&{shaderVersion}
@@ -1557,15 +1557,15 @@ define TransformFragments(skinFlag singleBone swvsFlag morphFlag positionMorphCo
                shaderFragment CreateCompositeSkinningMatrixFourWayUnpacked&{shaderVersion}
             endif
 			else
-				
+
 				if ($ubyte4Supported)
                if ($bonesPerVertex = 2)
                   shaderFragment CreateCompositeSkinningMatrixTwoWayPacked&{shaderVersion}
                else
                   shaderFragment CreateCompositeSkinningMatrixFourWayPacked&{shaderVersion}
-      
+
                endif
-               
+
 				else
                if ($bonesPerVertex = 2)
                   shaderFragment CreateCompositeSkinningMatrixTwoWayPackedIndexAsColor&{shaderVersion}
@@ -1573,29 +1573,29 @@ define TransformFragments(skinFlag singleBone swvsFlag morphFlag positionMorphCo
                    shaderFragment CreateCompositeSkinningMatrixFourWayPackedIndexAsColor&{shaderVersion}
                endif
 				endif
-				
+
 			endif
-			
+
 			shaderFragment SkinPositionWithCompositeMatrix&{shaderVersion}
 
 			if (&normalFlag)
 				shaderFragment SkinNormalWithCompositeMatrix&{shaderVersion}
 			endif
-			
-			
+
+
 		endif
-		
+
 	else
-	
+
 	# no skinning cases here:
-		
-	
+
+
 		if (&normalFlag)
 			shaderFragment TransformPositionNoSkinning&{shaderVersion}
 			shaderFragment TransformNormalNoSkinning&{shaderVersion}
-						
+
 		else
-			
+
 			# no lighting case, so position only.
 			if (&morphFlag)
 				shaderFragment TransformPositionMorphOnlyNoLighting&{shaderVersion}
@@ -1603,9 +1603,8 @@ define TransformFragments(skinFlag singleBone swvsFlag morphFlag positionMorphCo
 				shaderFragment TransformPositionRigidNoLighting&{shaderVersion}
 			endif
 		endif
-		
-	
-	endif		
+
+
+	endif
 
 enddef
-

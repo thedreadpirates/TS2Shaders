@@ -23,107 +23,107 @@ setb  hasCutout false
 
 define TerrainCanvasShaderShaderVS_PS()
    pass
-      fillmode $stdMatFillMode      
-      depthTest true -enableDepthWrite true                  
-      
-      if ($hasCutout)                         
+      fillmode $stdMatFillMode
+      depthTest true -enableDepthWrite true
+
+      if ($hasCutout)
          depthTestFunction acceptIfEqual
       else
          depthTestFunction acceptIfLessOrEqual
       endif
-      
+
       shaderProgram -target vertexProgram -method compile -version 1_1
-         bindConstants 0 -bindingID geomToClip -constantCount 4			
+         bindConstants 0 -bindingID geomToClip -constantCount 4
 			bindConstants 4 -bindingID immediateData -data (1/$canvasBaseTextureScale, 1/$canvasDetailTextureScale, 0, 0)
-			
+
 			shaderSource
 			   float4x4 clipSpaceMatrix  : register(c0);
 			   float4   textureConstants : register(c4);
-			
+
 			struct InputVertex
 				{
 					float3 position: POSITION0;
 					float2 texcoord : TEXCOORD0;
 				};
-				
+
 				struct OutputVertex
 				{
 					float4 clipPosition : POSITION;
 					float2 txBase  : TEXCOORD0;
 					float2 txDetail: TEXCOORD1;
 				};
-				
+
 				OutputVertex VertexMain( InputVertex i)
 				{
 				   OutputVertex o;
 				   o.clipPosition = mul(float4(i.position, 1), clipSpaceMatrix);
 				   o.txBase   = i.texcoord * textureConstants.x;
-				   o.txDetail = i.texcoord * textureConstants.y;				   
+				   o.txDetail = i.texcoord * textureConstants.y;
 				   return o;
 				}
-			endShaderSource  
+			endShaderSource
       end # end shader program
-      
-      
-      shaderProgram -target pixelProgram -method compile -version 1_1      
-         shaderSource                            
+
+
+      shaderProgram -target pixelProgram -method compile -version 1_1
+         shaderSource
             sampler base;
             sampler detail;
             struct cInputPixel
-            {               
+            {
                float2 tcBase : TEXCOORD0;
                float2 tcDetail : TEXCOORD1;
             };
-            
+
             float4 PixelMain(cInputPixel pi) : COLOR
-            {         
-               float4 baseColor   = tex2D(base, pi.tcBase);                                                
-               float4 detailColor = tex2D(detail, pi.tcDetail);                              
-               float4 result = (detailColor.a * detailColor) + ((1 - detailColor.a) * baseColor);               
-               return result;                        
+            {
+               float4 baseColor   = tex2D(base, pi.tcBase);
+               float4 detailColor = tex2D(detail, pi.tcDetail);
+               float4 result = (detailColor.a * detailColor) + ((1 - detailColor.a) * baseColor);
+               return result;
             }
          endShaderSource
-      end # end shader program      
-         
+      end # end shader program
+
       sampler base
          texture "${texture}"
          textureAddressing tile tile
       end
-      
+
       sampler detail
          texture "${texture}_detail"
          textureAddressing tile tile
-      end      
+      end
    end
 enddef
 
 define TerrainCanvasShaderShaderFF()
-   pass -fixedFunction         
+   pass -fixedFunction
       fillmode $stdMatFillMode
-      
-      depthTest true -enableDepthWrite true                  
-      
-      if ($hasCutout)                         
+
+      depthTest true -enableDepthWrite true
+
+      if ($hasCutout)
          depthTestFunction acceptIfEqual
       else
          depthTestFunction acceptIfLessOrEqual
       endif
-               
+
       stage
          texture "${texture}"
          textureAddressing tile tile
          ffTextureMatrix -scalev ($canvasBaseTextureScale, $canvasBaseTextureScale) -invert
          ffTextureCoordsSource 0
          textureBlend select(texture) select(texture)
-      end 
+      end
       stage
          texture "${texture}_detail"
          textureAddressing tile tile
          ffTextureMatrix -scalev ($canvasDetailTextureScale, $canvasDetailTextureScale) -invert
          ffTextureCoordsSource 0
          textureBlend lerpTextureAlpha(texture outRegister) select(outRegister)
-      end 
-   end       
+      end
+   end
 enddef
 
 define TerrainCanvasShader()
@@ -133,19 +133,19 @@ define TerrainCanvasShader()
          vertexFormatPred normal        0 true
          vertexFormatPred texcoord      0 true
          viewerRenderTypePred viewerRenderType
-         
+
          create DetermineHardwareSupport()
          if (viewerRenderType = $kRenderTypeShadowMap)
 	         create ShadowMapVS_PS()
 	      else
-            if ($useHWShader1Path or $useHWShader2Path)	
-		         create TerrainCanvasShaderShaderVS_PS()		
-	         else   
+            if ($useHWShader1Path or $useHWShader2Path)
+		         create TerrainCanvasShaderShaderVS_PS()
+	         else
                create TerrainCanvasShaderShaderFF()
             endif
          endif
       end
-      
+
       shader
       end
    end
@@ -160,32 +160,32 @@ define TerrainPaintShaderVS_PS()
       pass
          fillmode $stdMatFillMode
          alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
-         
+
          alphaTest true 10
          alphaTestFunction acceptIfGreater
-         
+
          depthTest true -enableDepthWrite false
-         
+
          if (viewerRenderType = $kRenderTypeImposter)
             depthTestFunction acceptIfLessOrEqual
          else
             depthTestFunction acceptIfEqual
          endif
-         
+
          shaderProgram -target vertexProgram -method compile -version 1_1
-            bindConstants 0 -bindingID geomToClip -constantCount 4			
+            bindConstants 0 -bindingID geomToClip -constantCount 4
 			   bindConstants 4 -bindingID immediateData -data (1/$canvasBaseTextureScale, 1/$canvasDetailTextureScale, $alphaMapScaleU, $alphaMapScaleV)
-   			
+
 			   shaderSource
 			      float4x4 clipSpaceMatrix  : register(c0);
 			      float4   textureConstants : register(c4);
-   			
+
 			   struct InputVertex
 				   {
 					   float3 position: POSITION0;
 					   float2 texcoord : TEXCOORD0;
 				   };
-   				
+
 				   struct OutputVertex
 				   {
 					   float4 clipPosition : POSITION;
@@ -193,58 +193,58 @@ define TerrainPaintShaderVS_PS()
 					   float2 txDetail: TEXCOORD1;
 					   float2 txAlpha : TEXCOORD2;
 				   };
-   				
+
 				   OutputVertex VertexMain( InputVertex i)
 				   {
 				      OutputVertex o;
 				      o.clipPosition = mul(float4(i.position, 1), clipSpaceMatrix);
 				      o.txBase   = i.texcoord * textureConstants.x;
-				      o.txDetail = i.texcoord * textureConstants.y;				   
+				      o.txDetail = i.texcoord * textureConstants.y;
 				      o.txAlpha  = i.texcoord.xy * textureConstants.zw;
 				      return o;
 				   }
-			   endShaderSource  
+			   endShaderSource
          end # end shader program
-         
-         
-         shaderProgram -target pixelProgram -method compile -version 1_1      
-            shaderSource                            
+
+
+         shaderProgram -target pixelProgram -method compile -version 1_1
+            shaderSource
                sampler base;
                sampler detail;
                sampler alphaMap;
                struct cInputPixel
-               {               
+               {
                   float2 tcBase : TEXCOORD0;
                   float2 tcDetail : TEXCOORD1;
                   float2 tcAlpha  : TEXCOORD2;
                };
-               
+
                float4 PixelMain(cInputPixel pi) : COLOR
-               {         
-                  float4 baseColor   = tex2D(base, pi.tcBase);                                                
-                  float4 detailColor = tex2D(detail, pi.tcDetail);                              
+               {
+                  float4 baseColor   = tex2D(base, pi.tcBase);
+                  float4 detailColor = tex2D(detail, pi.tcDetail);
                   float4 alphaColor  = tex2D(alphaMap, pi.tcAlpha);
-                  float4 result = (detailColor.a * detailColor) + ((1 - detailColor.a) * baseColor);               
+                  float4 result = (detailColor.a * detailColor) + ((1 - detailColor.a) * baseColor);
                   result.a = alphaColor.a;
-                  return result;                        
+                  return result;
                }
             endShaderSource
-         end # end shader program      
-            
+         end # end shader program
+
          sampler base
             texture $paintTexture
             textureAddressing tile tile
          end
-         
+
          sampler detail
             texture "${paintTexture}_detail"
             textureAddressing tile tile
          end
-         
+
          sampler alphaMap
             texture $alphaMap
             textureAddressing clamp clamp
-         end      
+         end
       end
    end
 enddef
@@ -253,22 +253,22 @@ define TerrainPaintShader(addDetail)
    shader -layer (($terrainMatLayer - 2) * 8)
       vertexFormatPred position      0 true
       vertexFormatPred texcoord      0 true
-      
-      pass -fixedFunction         
+
+      pass -fixedFunction
          fillmode $stdMatFillMode
 
          alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
-         
+
          alphaTest true 10
          alphaTestFunction acceptIfGreater
-         
+
          depthTest true -enableDepthWrite false
          if (viewerRenderType = $kRenderTypeImposter)
             depthTestFunction acceptIfLessOrEqual
          else
             depthTestFunction acceptIfEqual
          endif
-         
+
          if (&addDetail)
             stage
                texture $paintTexture
@@ -277,7 +277,7 @@ define TerrainPaintShader(addDetail)
                textureTransformType vector2
                ffTextureCoordsSource 0
                textureBlend select(texture) select(outRegister)
-            end 
+            end
             stage
                texture "${paintTexture}_detail"
                textureAddressing tile tile
@@ -285,7 +285,7 @@ define TerrainPaintShader(addDetail)
                textureTransformType vector2
                ffTextureCoordsSource 0
                textureBlend lerpTextureAlpha(texture outRegister) select(outRegister)
-            end 
+            end
          else
             stage
                texture $paintTexture
@@ -294,7 +294,7 @@ define TerrainPaintShader(addDetail)
                textureTransformType vector2
                ffTextureCoordsSource 0
                textureBlend select(texture) select(outRegister)
-            end 
+            end
          endif
          stage
             texture $alphaMap
@@ -302,8 +302,8 @@ define TerrainPaintShader(addDetail)
             ffTextureMatrix -scalev ($alphaMapScaleU, $alphaMapScaleV)
             ffTextureCoordsSource 0
             textureBlend select(outRegister) select(texture)
-         end 
-      end       
+         end
+      end
    end
 enddef
 
@@ -311,17 +311,17 @@ enddef
 define TerrainPaint()
    material
       create DetermineHardwareSupport()
-      
-      if (viewerRenderType != $kRenderTypeShadowMap)   
-         if ($useHWShader1Path or $useHWShader2Path)	
+
+      if (viewerRenderType != $kRenderTypeShadowMap)
+         if ($useHWShader1Path or $useHWShader2Path)
 		      create TerrainPaintShaderVS_PS()
-	      else            
+	      else
             create TerrainPaintShader(true)
             create TerrainPaintShader(false)
             shader
             end
-         endif      
-      endif      
+         endif
+      endif
    end
 enddef
 
@@ -330,68 +330,68 @@ enddef
 define TerrainLightingVS_PS()
    pass
       fillmode $stdMatFillMode
-      alphaBlend srcFactor(destColor) add dstFactor(zero)            
-      depthTest true -enableDepthWrite false            
+      alphaBlend srcFactor(destColor) add dstFactor(zero)
+      depthTest true -enableDepthWrite false
       depthTestFunction acceptIfEqual
-      
+
       shaderProgram -target vertexProgram -method compile -version 1_1
-         bindConstants 0 -bindingID geomToClip -constantCount 4			
-			bindConstants 4 -bindingID immediateData -data (1/64, 0, 0, 0)			
-			
+         bindConstants 0 -bindingID geomToClip -constantCount 4
+			bindConstants 4 -bindingID immediateData -data (1/64, 0, 0, 0)
+
 			shaderSource
 			   float4x4 clipSpaceMatrix  : register(c0);
-			   float4   textureConstants : register(c4);			   
-			
+			   float4   textureConstants : register(c4);
+
 			struct InputVertex
 				{
 					float3 position: POSITION0;
 					float2 texcoord : TEXCOORD0;
 				};
-				
+
 				struct OutputVertex
 				{
 					float4 clipPosition : POSITION;
-					float2 txBase  : TEXCOORD0;					
+					float2 txBase  : TEXCOORD0;
 				};
-				
+
 				OutputVertex VertexMain( InputVertex i)
 				{
 				   OutputVertex o;
 				   o.clipPosition = mul(float4(i.position, 1), clipSpaceMatrix);
-				   o.txBase   = i.texcoord * textureConstants.xx;				   
+				   o.txBase   = i.texcoord * textureConstants.xx;
 				   return o;
 				}
-			endShaderSource  
+			endShaderSource
       end # end shader program
-      
-      
+
+
       shaderProgram -target pixelProgram -method compile -version 1_1
-         bindConstants 0 -bindingID immediateData -data ($terrainMatDiffCoef.x, $terrainMatDiffCoef.y, $terrainMatDiffCoef.z, 1)         
-         
-         shaderSource   
+         bindConstants 0 -bindingID immediateData -data ($terrainMatDiffCoef.x, $terrainMatDiffCoef.y, $terrainMatDiffCoef.z, 1)
+
+         shaderSource
             float4   terrainDiffCoef  : register(c0);
-                                     
-            sampler base;            
+
+            sampler base;
             struct cInputPixel
-            {               
-               float2 tcBase : TEXCOORD0;               
+            {
+               float2 tcBase : TEXCOORD0;
             };
-            
+
             float4 PixelMain(cInputPixel pi) : COLOR
-            {         
-               float4 baseColor   = tex2D(base, pi.tcBase);                                                               
-               float4 result = 2.0*(baseColor*terrainDiffCoef);               
+            {
+               float4 baseColor   = tex2D(base, pi.tcBase);
+               float4 result = 2.0*(baseColor*terrainDiffCoef);
                result.a = terrainDiffCoef.w;
-               return result;                        
+               return result;
             }
          endShaderSource
-      end # end shader program      
-         
+      end # end shader program
+
       sampler base
          texture "floorLightMap_0"  # at the moment is deterministically mapped to page 0
          textureAddressing tile tile
-      end            
-   end   
+      end
+   end
 enddef
 
 define TerrainLighting()
@@ -401,11 +401,11 @@ define TerrainLighting()
       shader -layer (($terrainMatLayer - 1) * 8)
          vertexFormatPred position      0 true
          vertexFormatPred texcoord      0 true
-         if (viewerRenderType != $kRenderTypeShadowMap)            
+         if (viewerRenderType != $kRenderTypeShadowMap)
             if ($useHWShader2Path or $useHWShader1Path)
                create TerrainLightingVS_PS()
             else
-               pass -fixedFunction            
+               pass -fixedFunction
                   fillmode $stdMatFillMode
 
                   alphaBlend srcFactor(destColor) add dstFactor(zero)
@@ -413,7 +413,7 @@ define TerrainLighting()
                   colorScalar $terrainMatDiffCoef 1  # important that alpha be one for ARGB capture.
 
                   ffDepthOffset 0
-                  depthTest true -enableDepthWrite false            
+                  depthTest true -enableDepthWrite false
                   depthTestFunction acceptIfEqual
 
                   stage
@@ -423,29 +423,29 @@ define TerrainLighting()
                      textureTransformType vector2
                      ffTextureCoordsSource 0
                      textureBlend multiplyScale2(texture colorScalar) select(colorScalar)
-                  end 
-               end                     
-                           
+                  end
+               end
+
                pass -fixedFunction
                   create LightingStatesNoStdLights()
                   fillmode $stdMatFillMode
 
                   alphaBlend srcFactor(zero) add dstFactor(one)
-      
+
                   ffDepthOffset 0
                   depthTest true -enableDepthWrite false
                   alphaTest true 100
                   alphaTestFunction acceptIfLess
-      
+
                   stage
                      texture "floorLightMap_0"  # at the moment is deterministically mapped to page 0
                      ffTextureMatrix -scalev (1/64, 1/64)
                      textureTransformType vector2
                      ffTextureCoordsSource 0
                      textureBlend select(texture) select(texture)
-                  end 
-               end             
-            endif         
+                  end
+               end
+            endif
          endif
       end
    end
@@ -466,13 +466,13 @@ define TerrainToolThumbnail()
             alphaBlend srcFactor(srcAlpha) add dstFactor(zero)
             colorScalar $thumbnailMatDiffCoef
             fillmode $stdMatFillMode
-            
+
             stage
                texture $paintTexture
                textureAddressing tile tile
                textureBlend multiplyScale2(texture diffuse) select(texture)
-            end 
-         end       
+            end
+         end
       end
    end
 enddef
@@ -486,26 +486,26 @@ define TerrainWaterShader(withBumpMap)
       vertexFormatPred blendindices  0 false
       vertexFormatPred targetindices 0 false
       viewerRenderTypePred viewerRenderType
-         
-      setb cubeMapSupport (queryBooleanGraphicsDeviceCap(hasCubeMapSupport))   
-      create DetermineHardwareSupport()            
-      
-      pass -fixedFunction         
+
+      setb cubeMapSupport (queryBooleanGraphicsDeviceCap(hasCubeMapSupport))
+      create DetermineHardwareSupport()
+
+      pass -fixedFunction
          # disable lighting, disable normalize normals, enable local viewer
          if ($useSWVertexShaderPath)
             create LightingStatesNoStdLights()
          else
-            create LightingStatesNoStdLightsParam(false true)            
-         endif         
-         alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)                  
+            create LightingStatesNoStdLightsParam(false true)
+         endif
+         alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
 
          fillmode $stdMatFillMode
-         colorScalar (1, 1, 1) -applyTextureLightColor 0 0                           
-                  
+         colorScalar (1, 1, 1) -applyTextureLightColor 0 0
+
          stage
             if ($cubeMapSupport)
                texture reflectionoutdoorwater-envcube
-               textureMIPFilterHint disabled 
+               textureMIPFilterHint disabled
 
                ffTextureCoordsSource fromReflectionVector
                textureTransformType vector3
@@ -514,20 +514,20 @@ define TerrainWaterShader(withBumpMap)
                textureAddressing clamp clamp clamp
                textureBlend multiply(texture colorScalar) select(diffuse)
             else
-               colorScalar (0.3,0.5,1.0)  -applyTextureLightColor 0 0     
+               colorScalar (0.3,0.5,1.0)  -applyTextureLightColor 0 0
                textureBlend select(colorScalar) select(diffuse)
             endif
-         end           
-      end   
-      
-      if (&withBumpMap)         
+         end
+      end
+
+      if (&withBumpMap)
          pass -fixedFunction
             create LightingStatesNoStdLights()
             alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
             fillmode $stdMatFillMode
             colorScalar (1.0, 1.0, 1.0, 0.3) -applyTextureLightColor 0 0
-         
-            stage 
+
+            stage
                texture "water-1-bump"
                textureAddressing tile tile
                # -atrans waveformType cycles/sec offset (startU, startV)  (endU, endV)
@@ -535,8 +535,8 @@ define TerrainWaterShader(withBumpMap)
                textureTransformType vector2
                ffTextureCoordsSource 0
                textureBlend select(texture) select(texture)
-            end 
-   
+            end
+
             stage
                texture "water-2-bump"
                textureAddressing tile tile
@@ -545,13 +545,13 @@ define TerrainWaterShader(withBumpMap)
                textureTransformType vector2
                ffTextureCoordsSource 0
                textureBlend multiply(texture outRegister) select(texture)
-            end 
-            
+            end
+
             stage
                # does this work out on GF2 due to reg combiners?
                textureBlend multiply(outRegister colorScalar) select(colorScalar)
-            end 
-         end  
+            end
+         end
       endif
    end
 enddef
@@ -560,14 +560,14 @@ enddef
 #==============================================================================
 define TerrainWater()
    material
-      # only activate the water w/ bump shader for pixel shader capable HW      
+      # only activate the water w/ bump shader for pixel shader capable HW
       if (tsFrozenPond)
          create TerrainWaterFrozen()
       else
-         if (queryIntegerGraphicsDeviceCap(maxPixelProgramVersionMajor) != 0)         
+         if (queryIntegerGraphicsDeviceCap(maxPixelProgramVersionMajor) != 0)
             create TerrainWaterShader(true)
          endif
-         create TerrainWaterShader(false)  # fallback without bumps         
+         create TerrainWaterShader(false)  # fallback without bumps
       endif
    end
 enddef
@@ -575,39 +575,39 @@ enddef
 define TerrainWaterFrozen()
    shader -layer 1
       pass -fixedFunction
-            create LightingStatesNoStdLightsParam(false false)                           
+            create LightingStatesNoStdLightsParam(false false)
          alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
          fillmode $stdMatFillMode
          colorScalar (0.45, 0.45, 0.5, 0.475) -applyTextureLightColor 0 0
-         
+
          stage
             texture "ice-pond-surface"
-            textureAddressing tile tile                                                   
+            textureAddressing tile tile
             ffTextureCoordsSource fromPosition
             ffTextureMatrix -cameraToGlobal -scale (5) -invert
             textureBlend multiply(texture colorScalar) select(colorScalar)
-         end                         
-         
+         end
+
          stage
             texture "ice-pond-surface"
-            textureAddressing tile tile                                                   
+            textureAddressing tile tile
             ffTextureCoordsSource fromPosition
-            ffTextureMatrix -cameraToGlobal -scale (17) -invert                    
+            ffTextureMatrix -cameraToGlobal -scale (17) -invert
             textureBlend multiplyAdd(texture colorScalar outRegister) add(colorScalar outRegister)
          end
-      end                       
+      end
    end
-enddef 
+enddef
 
 #==============================================================================
 
-define TerrainSnowShader()   
+define TerrainSnowShader()
    create DetermineHardwareSupport()
    if ($useHWShader1Path or $useHWShader2Path)
-		create TerrainSnow()		
-	else   
+		create TerrainSnow()
+	else
       create TerrainSnowFF()
-   endif      
+   endif
 enddef
 
 define TerrainSnowFF()
@@ -620,243 +620,243 @@ define TerrainSnowFF()
             else
                colorScalar (0.15, 0.15, 0.375, 1)
             endif
-               
-               stage                                         
+
+               stage
                   texture "snow-ground-diffuse"
-                  textureAddressing tile tile  
+                  textureAddressing tile tile
                   ffTextureCoordsSource fromPosition
-                  ffTextureMatrix -cameraToGlobal -scalev (2, 2) -invert                            
+                  ffTextureMatrix -cameraToGlobal -scalev (2, 2) -invert
                   textureBlend multiply(texture colorScalar) select(colorScalar)
-               end            
-               
-               stage                                         
+               end
+
+               stage
                   texture "snow-ground-diffuse"
-                  textureAddressing tile tile  
+                  textureAddressing tile tile
                   ffTextureCoordsSource fromPosition
-                  ffTextureMatrix -cameraToGlobal -scalev (13, 13) -invert                            
+                  ffTextureMatrix -cameraToGlobal -scalev (13, 13) -invert
                   textureBlend multiplyAdd(texture colorScalar outRegister) select(colorScalar)
-               end            
+               end
          end
       end
    end
 enddef
 
-define TerrainSnowPS1()   
-   shaderProgram -target pixelProgram -method compile -version 1_1 # -disassemble "c:\sims2ep5\hlslPS1_1.txt"                            
+define TerrainSnowPS1()
+   shaderProgram -target pixelProgram -method compile -version 1_1 # -disassemble "c:\sims2ep5\hlslPS1_1.txt"
       bindConstants 0 -bindingID cursorTerrainPosition -constantCount 1 -constantType float
-      if (tsIsDay)         
-         bindConstants 1 -bindingID immediateData -data (1.1, 1.1, 1.175, 1)         
+      if (tsIsDay)
+         bindConstants 1 -bindingID immediateData -data (1.1, 1.1, 1.175, 1)
       else
-         bindConstants 1 -bindingID immediateData -data (0.35, 0.35, 1.0, 1)         
+         bindConstants 1 -bindingID immediateData -data (0.35, 0.35, 1.0, 1)
       endif
-            
-      shaderSource 
+
+      shaderSource
          sampler normmap;
-                                                                                                
+
          float4 cursorPos : register(c0);
          float4 colorFactor : register(c1);
-         
+
          struct v2f
          {
-            float4 hpos	: POSITION;                             
-            float4 color : COLOR0;	             
-	         float3 worldPos : COLOR1;	               
+            float4 hpos	: POSITION;
+            float4 color : COLOR0;
+	         float3 worldPos : COLOR1;
 	         float3 bumpCoords : TEXCOORD0;
-	         float3 tanLightDir : TEXCOORD1;	                                 
+	         float3 tanLightDir : TEXCOORD1;
          };
 
          float4 PixelMain(v2f pi) : COLOR
-         {      
-            float4 normal = 2.0f * (tex2D(normmap, pi.bumpCoords) - 0.5f);  
-            float3 diffuse = saturate(dot(pi.tanLightDir, normal.xyz))*colorFactor.xyz;            
-            return float4(diffuse.xyz + pi.color, 1.0f);                        
-         }
-      endShaderSource                                                                                                             
-   end                                            
-   
-   sampler normmap
-      texture "snow-ground-bump"
-      textureAddressing tile tile
-   end 
-   
-enddef
-
-define TerrainSnowPS2()   
-   shaderProgram -target pixelProgram -method compile -version ${psVersion}_0  # -disassemble "c:\sims2ep5\hlslPS1_1.txt"                            
-      bindConstants 0 -bindingID cursorTerrainPosition -constantCount 1 -constantType float                        
-  		if (tsIsDay)         
-         bindConstants 1 -bindingID immediateData -data (1.1, 1.1, 1.175, 1)         
-      else
-         bindConstants 1 -bindingID immediateData -data (0.35, 0.35, 1.0, 1)         
-      endif
-
-      shaderSource                         
-         
-         sampler normmap;         
-         
-         float4 cursorPos : register(c0);
-         float4 colorFactor : register(c1);
-         
-         struct v2f
          {
-            float4 hpos	: POSITION;                             
-	         float4 color : COLOR0;	                     	                     
-	         float3 worldPos : COLOR1;              
-	         float2 bumpCoords : TEXCOORD0;               	                     
-	         float3 tanLightDir : TEXCOORD1;   	   	                     	      	         
-         };
-
-         float4 PixelMain(v2f pi) : COLOR
-         {                                                  
-            float4 normal0 = 2.0f * (tex2D(normmap, pi.bumpCoords) - 0.5f);                        
-            float4 normal1 = 2.0f * (tex2D(normmap, pi.bumpCoords*0.4f) - 0.5f);
-            float4 normal = 0.5f*(normal0+normal1);
-            float3 diffuse0 = saturate(dot(pi.tanLightDir, normal.xyz))*colorFactor.xyz;            
-            
-            float3 diffVec = cursorPos-pi.worldPos;            
-            diffVec *= 64.0f;
-            float blend = saturate(dot(diffVec, diffVec));                                                                                                
-            return float4(saturate(float3(diffuse0.xyz + pi.color.xxx)), blend);                        
+            float4 normal = 2.0f * (tex2D(normmap, pi.bumpCoords) - 0.5f);
+            float3 diffuse = saturate(dot(pi.tanLightDir, normal.xyz))*colorFactor.xyz;
+            return float4(diffuse.xyz + pi.color, 1.0f);
          }
       endShaderSource
-   end                                            
-   
+   end
+
    sampler normmap
       texture "snow-ground-bump"
       textureAddressing tile tile
-   end               
-   
+   end
+
+enddef
+
+define TerrainSnowPS2()
+   shaderProgram -target pixelProgram -method compile -version ${psVersion}_0  # -disassemble "c:\sims2ep5\hlslPS1_1.txt"
+      bindConstants 0 -bindingID cursorTerrainPosition -constantCount 1 -constantType float
+  		if (tsIsDay)
+         bindConstants 1 -bindingID immediateData -data (1.1, 1.1, 1.175, 1)
+      else
+         bindConstants 1 -bindingID immediateData -data (0.35, 0.35, 1.0, 1)
+      endif
+
+      shaderSource
+
+         sampler normmap;
+
+         float4 cursorPos : register(c0);
+         float4 colorFactor : register(c1);
+
+         struct v2f
+         {
+            float4 hpos	: POSITION;
+	         float4 color : COLOR0;
+	         float3 worldPos : COLOR1;
+	         float2 bumpCoords : TEXCOORD0;
+	         float3 tanLightDir : TEXCOORD1;
+         };
+
+         float4 PixelMain(v2f pi) : COLOR
+         {
+            float4 normal0 = 2.0f * (tex2D(normmap, pi.bumpCoords) - 0.5f);
+            float4 normal1 = 2.0f * (tex2D(normmap, pi.bumpCoords*0.4f) - 0.5f);
+            float4 normal = 0.5f*(normal0+normal1);
+            float3 diffuse0 = saturate(dot(pi.tanLightDir, normal.xyz))*colorFactor.xyz;
+
+            float3 diffVec = cursorPos-pi.worldPos;
+            diffVec *= 64.0f;
+            float blend = saturate(dot(diffVec, diffVec));
+            return float4(saturate(float3(diffuse0.xyz + pi.color.xxx)), blend);
+         }
+      endShaderSource
+   end
+
+   sampler normmap
+      texture "snow-ground-bump"
+      textureAddressing tile tile
+   end
+
 enddef
 
 define TerrainSnowVS1()
    shaderProgram -target vertexProgram -method compile -version 1_1
-      bindConstants 0 -bindingID  geomToClip     -constantCount 4        
+      bindConstants 0 -bindingID  geomToClip     -constantCount 4
       bindConstants 4 -bindingID  geomToCamera   -constantCount 3
-		bindConstants 7 -bindingID  cameraToGeom   -constantCount 3			
-		bindConstants 15 -bindingID ambientLight -constantCount 1 -constantType float	                   			      
-		bindConstants 18 -bindingID allStandardLightData -constantCount 4 -constantType float			      
-		
-		if (tsIsDay)         
-         bindConstants 10 -bindingID immediateData -data (1.2, 1.2, 1.2, 1)         
+		bindConstants 7 -bindingID  cameraToGeom   -constantCount 3
+		bindConstants 15 -bindingID ambientLight -constantCount 1 -constantType float
+		bindConstants 18 -bindingID allStandardLightData -constantCount 4 -constantType float
+
+		if (tsIsDay)
+         bindConstants 10 -bindingID immediateData -data (1.2, 1.2, 1.2, 1)
       else
-         bindConstants 10 -bindingID immediateData -data (0.64, 0.64, 1.1, 1)         
+         bindConstants 10 -bindingID immediateData -data (0.64, 0.64, 1.1, 1)
       endif
-      
+
       bindConstants 12 -bindingID geomToGlobal -constantCount 3
-                     
-      bindConstants 22 -bindingID cameraToClipWithDepthOffset -constantCount 4 -data(0, 0, 0, 0) 
-		
+
+      bindConstants 22 -bindingID cameraToClipWithDepthOffset -constantCount 4 -data(0, 0, 0, 0)
+
 		shaderSource
 			float4x4 modelviewproj : register(c0);
 			float4x3 modelview : register(c4);
-			float4x3 modelviewInv : register(c7);				      				      
+			float4x3 modelviewInv : register(c7);
          // light direction
 			float4 lightDir0 : register(c18);
 			float4 lightDir1 : register(c26);
 			float4x4 cameraToClipWithDOMatrix : register(c22);
-         float4 ambient : register(c15);                                   
+         float4 ambient : register(c15);
          float4x3 modelToWorld : register(c12);
-				      			
-			struct a2v 
+
+			struct a2v
          {
-            float4 pos		: POSITION;                     
+            float4 pos		: POSITION;
             float3 normal	: NORMAL;
-            float2 tangent	: TEXCOORD0; 
-            float2 bumpcoord : TEXCOORD1;                    
+            float2 tangent	: TEXCOORD0;
+            float2 bumpcoord : TEXCOORD1;
          };
 
          struct v2f
          {
-            float4 hpos		 : POSITION;                                          
-	         float4 color : COLOR0;	                  	                  
-	         float3 worldPos : COLOR1;	         
+            float4 hpos		 : POSITION;
+	         float4 color : COLOR0;
+	         float3 worldPos : COLOR1;
 	         float2 bumpCoords : TEXCOORD0;
-	         float3 tanLightDir : TEXCOORD1;    	               	                 	                  	                  	               	                 	                  	                  
+	         float3 tanLightDir : TEXCOORD1;
          };
-         
+
          v2f VertexMain(a2v IN)
          {
 	         v2f OUT;
 
 	         // vertex position in object space
-	         float4 pos = float4(IN.pos.x,IN.pos.y,IN.pos.z,1.0);	  
-	         
+	         float4 pos = float4(IN.pos.x,IN.pos.y,IN.pos.z,1.0);
+
 	         float3 tangent = float3(IN.tangent.x, IN.tangent.y, 0);
-	                  	         
+
 	         // compute binormal
 	         float3 binormal = normalize(cross(IN.normal, tangent));
-	         
+
 	         // tangent space matrix
 	         float3x3 tbn = float3x3(tangent, binormal, IN.normal);
-	         
-	         // light direction in object space	                  
+
+	         // light direction in object space
 	         float3 lt0 = mul(lightDir0, (float3x3)modelviewInv);
-	         
-	         // light 0 direction in tangent space	                  	                  
+
+	         // light 0 direction in tangent space
 	         OUT.tanLightDir = normalize(mul(tbn, lt0));
-	         	         	         
+
 	         OUT.bumpCoords = float2(IN.bumpcoord.x, IN.bumpcoord.y);
-	         
+
 	         // compute tangent space view vector
 	         // object space view point
 	         float3 viewPoint = mul(float4(0, 0, 0, 1), modelviewInv).xyz;
 	         float3 viewVecObj = normalize(viewPoint - IN.pos.xyz);
-	         
+
 	         // object space light
 	         float3 lightDirObj = normalize(mul(lightDir0, (float3x3)modelviewInv));
-	         
+
 	         // half angle vector in object space
-	         float3 halfWayVector = normalize(lightDirObj + viewVecObj);	                  
-	         
+	         float3 halfWayVector = normalize(lightDirObj + viewVecObj);
+
 	         // transform half angle vector to tangent space
 	         //OUT.tanHalfAngle.xyz = normalize(mul(tbn, halfWayVector));
-	         
+
 	         // specular shadowing term
-	         //OUT.tanHalfAngle.w = max(dot(halfWayVector, IN.normal), 0);	                  
-	         
+	         //OUT.tanHalfAngle.w = max(dot(halfWayVector, IN.normal), 0);
+
 	         // vertex position in clip space
 	         float3 hposView = mul(pos, modelview);
-            OUT.hpos = mul(float4(hposView, 1), cameraToClipWithDOMatrix);                     	                   
-            
+            OUT.hpos = mul(float4(hposView, 1), cameraToClipWithDOMatrix);
+
             // vertex position in world space
-            OUT.worldPos = mul(pos, modelToWorld)/64.0f;                                             
-	                  	                                    		         
+            OUT.worldPos = mul(pos, modelToWorld)/64.0f;
+
 	         OUT.color.xyz = ambient.xyz*0.3f;
-	         OUT.color.w = 1.0;	         
+	         OUT.color.w = 1.0;
 	         return OUT;
          }
-                  			
+
 		endShaderSource
-   end # end shader program   
+   end # end shader program
 enddef
 
 define TerrainSnow()
    material
-      shader -layer 1         
+      shader -layer 1
          validateRenderShaderContext -vertexFormat position 0 required
          validateRenderShaderContext -vertexFormat normal 0 required
          validateRenderShaderContext -vertexFormat texcoord 0 required
          validateRenderShaderContext -vertexFormat texcoord 1 required
-         
+
          create DetermineHardwareSupport()
-                          
-         pass 
+
+         pass
             alphaTest true 5
             alphaTestFunction acceptIfGreater
 
             alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
             depthTest true -enableDepthWrite true
-            
+
             create TerrainSnowVS1()
-            
+
             if ($useHWShader1Path)
                create TerrainSnowPS1()
-            elseif ($useHWShader2Path)               
+            elseif ($useHWShader2Path)
                create TerrainSnowPS2()
             endif
-                                                   
+
          end # end pass
-         
+
       end #end shader
    end # end material
 enddef
@@ -867,7 +867,7 @@ define XRayCursorMaterial()
          pass -fixedFunction -modifiedEachFrameHint
             alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
             depthTest true -enableDepthWrite false
-                        
+
             colorScalar (1, 1, 0, 0.0)
             stage
                textureBlend select(colorScalar) select(colorScalar)
@@ -884,27 +884,27 @@ define LightSnowDayPS(psFullVersion)
       else
          bindConstants 0 -bindingID immediateData -data (1, 0, 0, 0) -constantType float
       endif
-      
-      shaderSource     
-         float scale2Factor : register(c0);         
-                                 
-         sampler base;            
+
+      shaderSource
+         float scale2Factor : register(c0);
+
+         sampler base;
          sampler base2;
          struct cInputPixel
-         {               
+         {
             float2 txScale1  : TEXCOORD0;
 				float2 txScale2  : TEXCOORD1;
          };
-         
+
          float4 PixelMain(cInputPixel pi) : COLOR
-         {         
-            float4 scale1Color = tex2D(base, pi.txScale1);                                                
-            float4 scale2Color = tex2D(base2, pi.txScale2)*scale2Factor.x;                              
-            float4 result = (scale1Color + scale2Color);            
-            return result;                        
+         {
+            float4 scale1Color = tex2D(base, pi.txScale1);
+            float4 scale2Color = tex2D(base2, pi.txScale2)*scale2Factor.x;
+            float4 result = (scale1Color + scale2Color);
+            return result;
          }
       endShaderSource
-   end # end shader program      
+   end # end shader program
 enddef
 
 define LightSnowNightPS(psFullVersion)
@@ -914,56 +914,56 @@ define LightSnowNightPS(psFullVersion)
       else
          bindConstants 0 -bindingID immediateData -data (1, 1, 0, 0) -constantType float
       endif
-      
-      shaderSource     
-         float2 scale2Factor : register(c0);         
-                                 
-         sampler base;  
+
+      shaderSource
+         float2 scale2Factor : register(c0);
+
+         sampler base;
          sampler base2;
-         sampler lightMap;          
+         sampler lightMap;
          struct cInputPixel
-         {               
+         {
             float2 txScale1  : TEXCOORD0;
 				float2 txScale2  : TEXCOORD1;
 				float2 txltMap   : TEXCOORD2;
          };
-         
+
          float4 PixelMain(cInputPixel pi) : COLOR
-         {         
-            float4 scale1Color = tex2D(base, pi.txScale1);                                                
+         {
+            float4 scale1Color = tex2D(base, pi.txScale1);
             scale1color.xyz = scale1color.xyz;
             float4 scale2Color = tex2D(base2, pi.txScale2)*scale2Factor.x;
-            float4 result = (scale1Color + scale2Color);               
+            float4 result = (scale1Color + scale2Color);
             float4 lightMapColor = tex2D(lightMap, pi.txltMap);
-            return float4(result.xyz*lightMapColor.xyz, result.w);                        
+            return float4(result.xyz*lightMapColor.xyz, result.w);
          }
       endShaderSource
-   end # end shader program      
+   end # end shader program
 enddef
 
 
 define LightSnowVS_PS()
    pass
       alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
-      depthTest true -enableDepthWrite false      
+      depthTest true -enableDepthWrite false
       depthTestFunction acceptIfEqual
-      
+
       shaderProgram -target vertexProgram -method compile -version 1_1
-         bindConstants 0 -bindingID geomToClip -constantCount 4						
+         bindConstants 0 -bindingID geomToClip -constantCount 4
          bindConstants 4 -bindingID geomToGlobal -constantCount 3
          bindConstants 8 -bindingID immediateData -data (1/(($scaleStage1).x), 1/(($scaleStage1).y), 1/(($scaleStage2).x), 1/(($scaleStage2).y)) -constantType float
-			
+
 			shaderSource
-			   float4x4 clipSpaceMatrix  : register(c0);			   
+			   float4x4 clipSpaceMatrix  : register(c0);
 			   float4x3 modelToWorld : register(c4);
 			   float4 scaleData : register(c8);
-			
+
 			struct InputVertex
 				{
-					float3 position: POSITION0;					
+					float3 position: POSITION0;
 					float2 txCoord : TEXCOORD0;
 				};
-				
+
 				struct OutputVertex
 				{
 					float4 clipPosition : POSITION;
@@ -971,7 +971,7 @@ define LightSnowVS_PS()
 					float2 txScale2  : TEXCOORD1;
 					float2 txltMap    : TEXCOORD2;
 				};
-				
+
 				OutputVertex VertexMain( InputVertex i)
 				{
 				   OutputVertex o;
@@ -982,33 +982,33 @@ define LightSnowVS_PS()
 				   o.txltMap  = i.txCoord;
 				   return o;
 				}
-			endShaderSource  
+			endShaderSource
       end # end shader program
-      
+
       if (tsIsDay)
-         if ($useHWShader1Path)	
+         if ($useHWShader1Path)
 		      create LightSnowDayPS("1_1")
-	      else   
+	      else
             create LightSnowDayPS(${psVersion}_0)
          endif
       else
-         if ($useHWShader1Path)	
+         if ($useHWShader1Path)
 		      create LightSnowNightPS("1_1")
-	      else   
+	      else
             create LightSnowNightPS(${psVersion}_0)
          endif
       endif
-         
+
       sampler base
          texture "${snowTexture}"
          textureAddressing tile tile
       end
-      
+
       sampler base2
          texture "${snowTexture2}"
          textureAddressing tile tile
       end
-      
+
       if (not tsIsDay)
          sampler lightMap
             texture "floorLightMap_${page}"
@@ -1019,27 +1019,27 @@ define LightSnowVS_PS()
 enddef
 
 define LightSnowFF()
-   pass -fixedFunction         
+   pass -fixedFunction
       alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
-      fillmode $stdMatFillMode            
-      depthTest true -enableDepthWrite false                        
-      
+      fillmode $stdMatFillMode
+      depthTest true -enableDepthWrite false
+
       if ($kRaiseLightSnowFF)
          ffDepthOffset 2
-         depthTestFunction acceptIfLessOrEqual      
+         depthTestFunction acceptIfLessOrEqual
       else
-         depthTestFunction acceptIfEqual      
-      endif      
-              
+         depthTestFunction acceptIfEqual
+      endif
+
       stage
          texture $snowTexture
          textureAddressing tile tile
          ffTextureCoordsSource fromPosition
-         ffTextureMatrix -cameraToGlobal -scalev $scaleStage1 -invert               
+         ffTextureMatrix -cameraToGlobal -scalev $scaleStage1 -invert
          textureBlend select(texture) select(texture)
       end
-      
-      if (not $singlePass)           
+
+      if (not $singlePass)
          stage
             texture $snowTexture2
             textureAddressing tile tile
@@ -1049,54 +1049,54 @@ define LightSnowFF()
          end
       else
          # a dummy stage so if the shader has to fail it should fail
-         stage            
+         stage
             texture "floorLightMap_${page}"
             textureBlend select(outRegister) select(outRegister)
          end
-      endif      
+      endif
 
-      
+
       if (not tsIsDay)
          stage
             texture "floorLightMap_${page}"
             textureAddressing tile tile
-            ffTextureCoordsSource 0                                            
+            ffTextureCoordsSource 0
             textureBlend multiplyScale2(texture outRegister) select(outRegister)
          end
       endif
-      
+
       # a dummy stage so if the shader has to fail it should fail
-      stage            
+      stage
          texture "floorLightMap_${page}"
          textureBlend select(outRegister) select(outRegister)
       end
-   
-   end      
+
+   end
 enddef
 
 define LightSnowFFLowEnd()
-   pass -fixedFunction         
+   pass -fixedFunction
       alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
-      fillmode $stdMatFillMode            
-      depthTest true -enableDepthWrite false                  
+      fillmode $stdMatFillMode
+      depthTest true -enableDepthWrite false
       ffDepthOffset 1
-      depthTestFunction acceptIfLessOrEqual      
-      
-      if (tsIsDay)         
-         colorScalar (1, 1, 1, 1)         
+      depthTestFunction acceptIfLessOrEqual
+
+      if (tsIsDay)
+         colorScalar (1, 1, 1, 1)
       else
-         colorScalar (0.17, 0.17, 0.43, 1)         
+         colorScalar (0.17, 0.17, 0.43, 1)
       endif
-              
+
       stage
          texture $snowTexture
          textureAddressing tile tile
          ffTextureCoordsSource fromPosition
-         ffTextureMatrix -cameraToGlobal -scalev $scaleStage1 -invert               
+         ffTextureMatrix -cameraToGlobal -scalev $scaleStage1 -invert
          textureBlend multiply(texture colorScalar) select(texture)
       end
-      
-      if (not $singlePass)           
+
+      if (not $singlePass)
          stage
             texture $snowTexture
             textureAddressing tile tile
@@ -1109,19 +1109,19 @@ define LightSnowFFLowEnd()
             texture $snowTexture
             textureAddressing tile tile
             ffTextureCoordsSource fromPosition
-            ffTextureMatrix -cameraToGlobal -scalev $scaleStage1 -invert               
+            ffTextureMatrix -cameraToGlobal -scalev $scaleStage1 -invert
             textureBlend multiplyAdd(texture colorScalar outRegister) select(outRegister)
          end
-      endif      
+      endif
 
-   end      
+   end
 enddef
 
 define LightSnow()
    material
       setv2 scaleStage1 (23, 23)
       setv2 scaleStage2 (17, 17)
-      
+
       if (tsHasHail)
          set snowTexture "hail-ground-surface"
          set snowTexture2 "hail-ground-surface"
@@ -1130,28 +1130,28 @@ define LightSnow()
       endif
 
       shader -layer (-1)
-         create DetermineHardwareSupport()            
-         if ((not $kRaiseLightSnowFF and $useHWShader1Path) or $useHWShader2Path)	
-		      create LightSnowVS_PS()		
-	      else   
+         create DetermineHardwareSupport()
+         if ((not $kRaiseLightSnowFF and $useHWShader1Path) or $useHWShader2Path)
+		      create LightSnowVS_PS()
+	      else
             create LightSnowFF() # can use more than two stages
          endif
       end
-      
+
       shader -layer (-1)      #if the above shader fails for some reason
          create LightSnowFFLowEnd()
       end
-   end   
+   end
 enddef
 
 materialDefinition TerrainSnowMaterial
-   setDefinition TerrainSnowShader     
+   setDefinition TerrainSnowShader
 end
 
 materialDefinition RoadSnowMaterial
    setDefinition LightSnow
-   addParam snowTexture snow-light-pass2   
-   addParam snowTexture2 snow-light-pass1   
+   addParam snowTexture snow-light-pass2
+   addParam snowTexture2 snow-light-pass1
    addParam singlePass true
    addParam page 0
 end
@@ -1161,8 +1161,8 @@ materialDefinition LightSnowMaterial
    addParam snowTexture snow-light-pass2
    addParam snowTexture2 snow-light-pass1
    addParam singlePass false
-   addParam page 0   
-end 
+   addParam page 0
+end
 
 materialDefinition terrainLightingMaterial
    setDefinition TerrainLighting
@@ -1177,10 +1177,10 @@ materialDefinition XrayCursorBoxDirtyRectMaterial
 end
 
 define GeneralSnowMaterialFF()
-   material      
+   material
       shader -layer ($stdMatLayer)
-         pass -fixedFunction            
-            create LightingStatesParam(false false)      
+         pass -fixedFunction
+            create LightingStatesParam(false false)
             setv3 half (0.5,0.5,0.5)
             if ($stdMatSpecPower !=	0)
 		         ffMatCoef -amb ($stdMatDiffCoef * $half) -ambAlpha	$stdMatAlphaMultiplier -diff ($stdMatDiffCoef * $half)	-diffAlpha $stdMatAlphaMultiplier -spec $stdMatSpecCoef -specPow	$stdMatSpecPower
@@ -1188,24 +1188,24 @@ define GeneralSnowMaterialFF()
 	         else
 		         ffMatCoef -amb ($stdMatDiffCoef * $half) -ambAlpha	$stdMatAlphaMultiplier -diff ($stdMatDiffCoef * $half)	-diffAlpha $stdMatAlphaMultiplier -spec (0,0,0) -specPow	0
 	         endif
-   	      
+
 	         create StandardShaderFBAlphaState($stdMatAlphaBlendMode)
-   	         	         	      
-   	      
+
+
 	         stage
 	            texture $stdMatBaseTextureName
 	            textureBlend multiplyScale2(diffuse texture) select(texture)
-	         end	         
-	         
+	         end
+
 	         if (tsIsDay)
 	         colorScalar $colorToAdd
-	            stage	            
+	            stage
 	               textureBlend add(outRegister colorScalar) select(outRegister)
-	            end	         	         
+	            end
 	         endif
-	         
+
 	      end
-	      	      
+
       end
    end
 enddef
@@ -1238,7 +1238,7 @@ materialDefinition puddle_liquid_rain
    addParam stdMatLightingEnabled 1
    addParam stdMatMinLightRangeHint 4
    addParam stdMatSpecCoef 0.54,0.72,0.76
-   addParam stdMatSpecPower 22      
+   addParam stdMatSpecPower 22
    addParam stdMatAddLayer -10
 end
 
@@ -1266,11 +1266,9 @@ materialDefinition puddle_liquid_blue
    addParam stdMatLightingEnabled 1
    addParam stdMatMinLightRangeHint 4
    addParam stdMatSpecCoef 0.55,0.55,0.55
-   addParam stdMatSpecPower 6.1   
+   addParam stdMatSpecPower 6.1
    addParam stdMatAddLayer -10
 end
 
 
 #endshader
-
-

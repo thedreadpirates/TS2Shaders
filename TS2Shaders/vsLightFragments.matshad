@@ -6,14 +6,14 @@ define VertexShaderLightingFragments()
 
 	create VS2SharedLightingFragments(2_0)
 	create VS2SharedLightingFragments(2_x)
-	
+
 	create VSSharedLightingFragments(2_0)
 	create VSSharedLightingFragments(2_x)
 	create VSSharedLightingFragments(1_1)
-	
+
 	create VS1UniqueLightingFragments()
    create LightLoopFragments(2_0)
-   
+
 enddef
 
 
@@ -28,41 +28,41 @@ shaderSource
 vertexfragment ObjectSnowShader&{versionString} =
 asm_fragment
 {
-   vs_&{versionString}   
-   
+   vs_&{versionString}
+
    mov r_temp0, v_NORMAL
    mov oT0.x, r_temp0.zzz
    mov r_temp0, v_POSITION
    mov oT1.xy, r_temp0.xy
    mov oT2.xyz, r_temp9.xyz
-   dp3 r_temp0, r_temp9, c_lightDirections[0]   
+   dp3 r_temp0, r_temp9, c_lightDirections[0]
    //dp3 r_temp1, r_temp9, c_lightDirections[2]
-   mul r_temp2, r_temp0, c_lightColors[0]      
+   mul r_temp2, r_temp0, c_lightColors[0]
    //mad oT3.xyz, r_temp1, c_lightColors[2], r_temp2
    mov oT3.xyz, r_temp2
 };
 
 
 
-vertexfragment CreateReflectionVector&{versionString} = 
+vertexfragment CreateReflectionVector&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	nrm r_temp1.xyz, -r_temp8
 	// 2N
-	add r_temp0.xyz, r_temp9, r_temp9   
+	add r_temp0.xyz, r_temp9, r_temp9
 	// N.V
 	dp3 r_temp0.w, r_temp9, r_temp1
-	
+
 	// 2N ( N.V) - V
 	mad r_reflectionVector.xyz, r_temp0, r_temp0.w, -r_temp1
-		
+
 };
 
 
 
-vertexfragment SetLight0Offset&{versionString}= 
+vertexfragment SetLight0Offset&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
@@ -70,14 +70,14 @@ asm_fragment
 };
 
 
-vertexfragment SetLight1Offset&{versionString}= 
+vertexfragment SetLight1Offset&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
 	mova a0.x, c_basics.z
 };
 
-vertexfragment SetLight2Offset&{versionString}= 
+vertexfragment SetLight2Offset&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
@@ -85,14 +85,14 @@ asm_fragment
 };
 
 
-vertexfragment SetLight3Offset&{versionString}= 
+vertexfragment SetLight3Offset&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
 	mova a0.x, c_helperConstant2.y
 };
 
-vertexfragment SetLight4Offset&{versionString}= 
+vertexfragment SetLight4Offset&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
@@ -102,17 +102,17 @@ asm_fragment
 
 vertexfragment CompleteVertexDiffuseAddAmbientHDR&{versionString}=
 asm_fragment
-{	
+{
 	vs_&{versionString}
 
 	add r_diffuse_r2.rgb, r_diffuse_r2, c_ambientLightColor
-	
+
 	mul r_diffuse_r2.rgb, r_diffuse_r2, c_diffuseMaterialColor
 
 	add oT2.rgb, r_diffuse_r2, c_emissiveColor
 
 	mov oT2.a, c_diffuseMaterialColor.w
-	
+
 };
 
 
@@ -121,14 +121,14 @@ asm_fragment
 //#######
 
 
-vertexfragment VertexSpecularXYZW&{versionString}= 
+vertexfragment VertexSpecularXYZW&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
-	
-	
+
+
 	max r_rdotls, c_basics.x, r_rdotls  // assure positive
-	
+
 	pow r_temp1.x, r_rdotls.x, c_specularMaterialColor.w
 	pow r_temp1.y, r_rdotls.y, c_specularMaterialColor.w
 	pow r_temp1.z, r_rdotls.z, c_specularMaterialColor.w
@@ -140,35 +140,35 @@ asm_fragment
 
 	// without going to a 2 constant packed array for the specular Scales, (and more bind Constants as well as address register wrangling)
 	// I have to combine and multiply thisway.
-	
+
 	mul r_temp1.x, r_temp1, c_lightColors[a0.x].w
 	mul r_temp1.y, r_temp1, c_lightColors[a0.x+1].w
 	mul r_temp1.z, r_temp1,  c_lightColors[a0.x+2].w
 	mul r_temp1.w, r_temp1, c_lightColors[a0.x+3].w
-	
+
 	mul r_specular_r2.rgb, r_temp1.x, c_lightColors[a0.x]  // complete specular for light 1
 	mad r_specular_r2.rgb, r_temp1.y, c_lightColors[a0.x+1], r_specular_r2
 	mad r_specular_r2.rgb, r_temp1.z, c_lightColors[a0.x+2], r_specular_r2
 	mad r_specular_r2.rgb, r_temp1.w, c_lightColors[a0.x+3], r_specular_r2
-		
+
 };
 
 
-vertexfragment VertexSpecularXYZ&{versionString}= 
+vertexfragment VertexSpecularXYZ&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 
 	max r_rdotls.xyz, c_basics.x, r_rdotls  // assure positive
-		
+
 	pow r_temp1.x, r_rdotls.x, c_specularMaterialColor.w
 	pow r_temp1.y, r_rdotls.y, c_specularMaterialColor.w
 	pow r_temp1.z, r_rdotls.z, c_specularMaterialColor.w
-	
+
 
    add r_ndotls.xyz, r_ndotls, -c_helperConstant2.w
-   slt r_ndotlClamp.xyz, -r_ndotls, c_basics.xxx 
+   slt r_ndotlClamp.xyz, -r_ndotls, c_basics.xxx
 	mul r_temp1.xyz, r_temp1, r_ndotlClamp
 
 	mul r_temp1.x, r_temp1, c_lightColors[a0.x].w
@@ -186,21 +186,21 @@ asm_fragment
 
 
 
-vertexfragment VertexSpecularXY&{versionString}= 
+vertexfragment VertexSpecularXY&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	max r_rdotls.xy, c_basics.x, r_rdotls  // assure positive
-		
+
 	pow r_temp1.x, r_rdotls.x, c_specularMaterialColor.w
 	pow r_temp1.y, r_rdotls.y, c_specularMaterialColor.w
-	
+
    add r_ndotls.xy, r_ndotls, -c_helperConstant2.w
 
 	slt r_ndotlClamp.xy, -r_ndotls, c_basics.x
 	mul r_temp1.xy, r_temp1, r_ndotlClamp
-	
+
 	mul r_temp1.x, r_temp1, c_lightColors[a0.x].w
 	mul r_temp1.y, r_temp1, c_lightColors[a0.x+1].w
 
@@ -211,16 +211,16 @@ asm_fragment
 };
 
 
-vertexfragment VertexSpecularX&{versionString}= 
+vertexfragment VertexSpecularX&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
-	
-	
+
+
 	max r_rdotls.x, c_basics.x, r_rdotls  // assure positive
-		
+
 	pow r_temp1.x, r_rdotls.x, c_specularMaterialColor.w
-	
+
    add r_ndotls.x, r_ndotls, -c_helperConstant2.w
 
 	slt r_ndotlClamp.x, -r_ndotls, c_basics.x
@@ -229,30 +229,30 @@ asm_fragment
 	mul r_temp1.x, r_temp1, c_lightColors[a0.x].w
 
 	mul r_specular_r2.rgb, r_temp1.x, c_lightColors[a0.x]  // complete specular for light 1
-	 
-		
+
+
 };
 
 
 
 
-vertexfragment VertexSpecularAccumulateXYZW&{versionString}= 
+vertexfragment VertexSpecularAccumulateXYZW&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	max r_rdotls, c_basics.x, r_rdotls  // assure positive
-		
+
 	pow r_temp1.x, r_rdotls.x, c_specularMaterialColor.w
 	pow r_temp1.y, r_rdotls.y, c_specularMaterialColor.w
 	pow r_temp1.z, r_rdotls.z, c_specularMaterialColor.w
 	pow r_temp1.w, r_rdotls.w, c_specularMaterialColor.w
-	
+
    add r_ndotls, r_ndotls, -c_helperConstant2.w
 
 	slt r_ndotlClamp.xyzw, -r_ndotls, c_basics.x
 	mul r_temp1.xyzw, r_temp1, r_ndotlClamp
-	
+
 //	mul r_temp1.x, r_temp1, c_lightColors[a0.x].w
 //	mul r_temp1.y, r_temp1, c_lightColors[a0.x+1].w
 //	mul r_temp1.z, r_temp1, c_lightColors[a0.x+2].w
@@ -262,25 +262,25 @@ asm_fragment
 	mad r_specular_r2.rgb, r_temp1.y, c_lightColors[a0.x+1], r_specular_r2
 	mad r_specular_r2.rgb, r_temp1.z, c_lightColors[a0.x+2], r_specular_r2
 	mad r_specular_r2.rgb, r_temp1.w, c_lightColors[a0.x+3], r_specular_r2
-		
+
 };
 
 
-vertexfragment VertexSpecularAccumulateXYZ&{versionString}= 
+vertexfragment VertexSpecularAccumulateXYZ&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	max r_rdotls.xyz, c_basics.x, r_rdotls  // assure positive
-		
+
 	pow r_temp1.x, r_rdotls.x, c_specularMaterialColor.w
 	pow r_temp1.y, r_rdotls.y, c_specularMaterialColor.w
 	pow r_temp1.z, r_rdotls.z, c_specularMaterialColor.w
-	
+
    add r_ndotls.xyz, r_ndotls, -c_helperConstant2.w
 	slt r_ndotlClamp.xyz, -r_ndotls, c_basics.x
 	mul r_temp1.xyz, r_temp1, r_ndotlClamp
-	
+
 	mul r_temp1.x, r_temp1, c_lightColors[a0.x].w
 	mul r_temp1.y, r_temp1, c_lightColors[a0.x+1].w
 	mul r_temp1.z, r_temp1, c_lightColors[a0.x+2].w
@@ -288,22 +288,22 @@ asm_fragment
 	mad r_specular_r2.rgb, r_temp1.x, c_lightColors[a0.x] , r_specular_r2 // complete specular for light 1
 	mad r_specular_r2.rgb, r_temp1.y, c_lightColors[a0.x+1], r_specular_r2
 	mad r_specular_r2.rgb, r_temp1.z, c_lightColors[a0.x+2], r_specular_r2
-	
-	
+
+
 };
 
 
 
-vertexfragment VertexSpecularAccumulateXY&{versionString}= 
+vertexfragment VertexSpecularAccumulateXY&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	max r_rdotls.xy, c_basics.x, r_rdotls  // assure positive
-		
+
 	pow r_temp1.x, r_rdotls.x, c_specularMaterialColor.w
 	pow r_temp1.y, r_rdotls.y, c_specularMaterialColor.w
-	
+
    add r_ndotls.xy, r_ndotls, -c_helperConstant2.w
 	slt r_ndotlClamp.xy, -r_ndotls, c_basics.x
 	mul r_temp1.xy, r_temp1, r_ndotlClamp
@@ -312,40 +312,40 @@ asm_fragment
 
    mul r_temp1.y, r_temp1, c_lightColors[a0.x+1].w
 
-	
+
 	mad r_specular_r2.rgb, r_temp1.x, c_lightColors[a0.x], r_specular_r2 // complete specular for light 1
 	mad r_specular_r2.rgb, r_temp1.y, c_lightColors[a0.x+1], r_specular_r2
 
 
 };
 
-vertexfragment VertexSpecularAccumulateX&{versionString}= 
+vertexfragment VertexSpecularAccumulateX&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	max r_rdotls.x, c_basics.x, r_rdotls  // assure positive
-		
+
 	pow r_temp1.x, r_rdotls.x, c_specularMaterialColor.w  // apply specular shinyness
 
 	add r_ndotls.x, r_ndotls, -c_helperConstant2.w   // fudge factor
 	slt r_ndotlClamp.x, -r_ndotls, c_basics.x     // test for N.L > 0
 	mul r_temp1.x, r_temp1, r_ndotlClamp        // kill any < 0
-	
+
    mul r_temp1.x, r_temp1, c_lightColors[a0.x].www  // apply relative specular scale
    mad r_specular_r2.rgb, r_temp1.xxx, c_lightColors[a0.x], r_specular_r2
-   
+
    //mul r_thisSpec.rgb, r_temp1.xxx, c_lightColors[a0.x]  // apply light color.
 
 
   // add r_specular_r2.rgb, r_specular_r2, r_thisSpec
 
 //   mov r_blah.rgb, r_specular_r2
-   
+
 //   mov r_specular_r2.rgb, r_thisSpec
-   
+
 //   add r_blah.rgb, r_specular_r2, r_blah
- 
+
  //  mov r_specular_r2.rgb, r_blah
 
 };
@@ -372,11 +372,11 @@ define VSSharedLightingFragments(versionString)
 
 shaderSource
 
-vertexfragment  ZeroHDROutputs&{versionString} = 
+vertexfragment  ZeroHDROutputs&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
-	
+
    mov oT2.xyz, c_basics.x
    mov oT3.xyz, c_basics.x
 
@@ -385,13 +385,13 @@ asm_fragment
 
 // one single monochrome light, with it's results going to the texture coordinate instead of a color.
 
-vertexfragment  CelShadingLight&{versionString} = 
+vertexfragment  CelShadingLight&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	dp3 r_ndotls.x, c_lightDirections, r_temp9
-	
+
 	max oT0.x, r_ndotls.x, c_basics.x
 	mov oT0.y, c_basics.x
 };
@@ -399,7 +399,7 @@ asm_fragment
 // special case, where the 'V' coordinate is a selector for the color or ramp to choose.
 // the selector is the alpha value from the vertex color.
 
-vertexfragment  CelShadingVertexAlphaToVCoordinate&{versionString} = 
+vertexfragment  CelShadingVertexAlphaToVCoordinate&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
@@ -411,100 +411,100 @@ asm_fragment
 
 
 // to maintain compatibility, no-lighting cases will go through the 8-bit path, the PS2 code will always add D0. HDR cases will write black to them
-vertexfragment NoLighting&{versionString} = 
+vertexfragment NoLighting&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	// write WHITE, if lighting is off.
-	mov oD0, c_basics.z 
+	mov oD0, c_basics.z
 	mov oD1, c_basics.x	// black to specular
 };
 
 
-vertexfragment NoLightingHDR&{versionString} = 
+vertexfragment NoLightingHDR&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	// write WHITE, if lighting is off.
 	mov oT2, c_helperConstant1.z // c_diffuseMaterialColor
-	mov oT3, c_basics.x	
+	mov oT3, c_basics.x
 };
 
 
-vertexfragment AmbientLighting&{versionString} = 
+vertexfragment AmbientLighting&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
-		
+
 	mov r_ambient, c_ambientLightColor
-// yes yes, a constant * constant is lame, but since ambient comes from the engine, not a matshad, I have no way of setting this value!	
+// yes yes, a constant * constant is lame, but since ambient comes from the engine, not a matshad, I have no way of setting this value!
 	mul r_ambient, r_ambient, c_diffuseMaterialColor
 	mul oD0.xyz, r_ambient, c_basics.y  // half lights, so PS can do _x2
 	mov oD0.w, c_diffuseMaterialColor.w
-	mov oD1, c_basics.x	
-	
+	mov oD1, c_basics.x
+
 };
 
 
-vertexfragment AmbientLightingVertexColorMaterial&{versionString} = 
+vertexfragment AmbientLightingVertexColorMaterial&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
-		
+
 	mul r_ambient, c_ambientLightColor, v_COLOR0
-	
+
 	mul r_ambient.rgb, r_ambient, c_diffuseMaterialColor
-	
+
 	mov oD0.rgb, r_ambient
 	//mul oD0.rgb, r_ambient, c_basics.y
-	
+
 	mov oD0.a, v_COLOR0.w // copy vertex color alpha straight out.
 
-	mov oD1, c_basics.x	
-	
+	mov oD1, c_basics.x
+
 };
 
 
 
-vertexfragment CopyVertexAlphaToDiffuse&{versionString} = 
+vertexfragment CopyVertexAlphaToDiffuse&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
 
 	mov oD0.w, v_COLOR0
-		
+
 };
 
 
 
-vertexfragment AmbientLightingHDR&{versionString} = 
+vertexfragment AmbientLightingHDR&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
-		
+
 	mov r_ambient, c_ambientLightColor
-// yes yes, a constant * constant is lame, but since ambient comes from the engine, not a matshad, I have no way of setting this value!	
+// yes yes, a constant * constant is lame, but since ambient comes from the engine, not a matshad, I have no way of setting this value!
 	mul oT2, r_ambient, c_diffuseMaterialColor
-	mov oT3, c_basics.x	
-	
+	mov oT3, c_basics.x
+
 };
 
 
-vertexfragment AmbientLightingVertexColorMaterialHDR&{versionString} = 
+vertexfragment AmbientLightingVertexColorMaterialHDR&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
-		
+
 	mul oT2.xyz, c_ambientLightColor, v_COLOR
 	mov oT2.w, v_COLOR
-	mov oT3, c_basics.x	
-	
+	mov oT3, c_basics.x
+
 };
 
 
-vertexfragment PointSpotLightVectorsXYZW&{versionString}= 
+vertexfragment PointSpotLightVectorsXYZW&{versionString}=
 asm_fragment
 {
 
@@ -534,7 +534,7 @@ asm_fragment
 
 
 
-vertexfragment PointSpotAttenuationXYZW&{versionString}= 
+vertexfragment PointSpotAttenuationXYZW&{versionString}=
 asm_fragment
 {
 
@@ -542,7 +542,7 @@ asm_fragment
 
 	// start attenuation
 	// 1 / (1 + C * d^2)
-	
+
 	mul r_attenuation, c_lightAttenuation[a0.x], r_range
 
 // range cutoffs, compare squared distances
@@ -551,7 +551,7 @@ asm_fragment
 	// add 1
 	// two constants, so I can't use MAD here.
 	add r_attenuation, r_attenuation, c_helperConstant1.z
-	
+
 	// 1 / x
 	rcp r_attenuation.x, r_attenuation.x
 	rcp r_attenuation.y, r_attenuation.y
@@ -560,13 +560,13 @@ asm_fragment
 
 	// roll in range cutoffs
 	mul r_attenuation, r_temp1, r_attenuation
-	
+
 
 };
 
 
 
-vertexfragment PointSpotLightVectorsXYZ&{versionString}= 
+vertexfragment PointSpotLightVectorsXYZ&{versionString}=
 asm_fragment
 {
 
@@ -591,7 +591,7 @@ asm_fragment
 	mul r_temp6.xyz, r_temp6, r_temp6.w
 };
 
-vertexfragment PointSpotLightVectorsYZW&{versionString}= 
+vertexfragment PointSpotLightVectorsYZW&{versionString}=
 asm_fragment
 {
 
@@ -617,7 +617,7 @@ asm_fragment
 };
 
 
-vertexfragment PointSpotAttenuationXYZ&{versionString}= 
+vertexfragment PointSpotAttenuationXYZ&{versionString}=
 asm_fragment
 {
 
@@ -625,7 +625,7 @@ asm_fragment
 
 	// start attenuation
 	// 1 / (1 + C * d^2)
-	
+
 	mul r_attenuation.xyz, c_lightAttenuation[a0.x], r_range
 
 // range cutoffs, compare squared distances
@@ -634,7 +634,7 @@ asm_fragment
 	// add 1
 	// two constants, so I can't use MAD here.
 	add r_attenuation.xyz, r_attenuation, c_basics.z
-	
+
 	// 1 / x
 	rcp r_attenuation.x, r_attenuation.x
 	rcp r_attenuation.y, r_attenuation.y
@@ -642,12 +642,12 @@ asm_fragment
 
 	// roll in range cutoffs
 	mul r_attenuation.xyz, r_temp1, r_attenuation
-	
+
 
 };
 
 
-vertexfragment PointSpotAttenuationYZW&{versionString}= 
+vertexfragment PointSpotAttenuationYZW&{versionString}=
 asm_fragment
 {
 
@@ -655,7 +655,7 @@ asm_fragment
 
 	// start attenuation
 	// 1 / (1 + C * d^2)
-	
+
 	mul r_attenuation.yzw, c_lightAttenuation[a0.x], r_range
 
 // range cutoffs, compare squared distances
@@ -664,7 +664,7 @@ asm_fragment
 	// add 1
 	// two constants, so I can't use MAD here.
 	add r_attenuation.yzw, r_attenuation, c_basics.z
-	
+
 	// 1 / x
 	rcp r_attenuation.y, r_attenuation.y
 	rcp r_attenuation.z, r_attenuation.z
@@ -672,13 +672,13 @@ asm_fragment
 
 	// roll in range cutoffs
 	mul r_attenuation.yzw, r_temp1, r_attenuation
-	
+
 };
 
 
 
 
-vertexfragment PointSpotLightVectorsXY&{versionString}= 
+vertexfragment PointSpotLightVectorsXY&{versionString}=
 asm_fragment
 {
 
@@ -696,12 +696,12 @@ asm_fragment
 	// normalize light vectors.
 	mul r_temp4.xyz, r_temp4, r_temp4.w
 	mul r_temp5.xyz, r_temp5, r_temp5.w
-	
+
 };
 
 
 
-vertexfragment PointSpotLightVectorsYZ&{versionString}= 
+vertexfragment PointSpotLightVectorsYZ&{versionString}=
 asm_fragment
 {
 
@@ -719,11 +719,11 @@ asm_fragment
 	// normalize light vectors.
 	mul r_temp5.xyz, r_temp5, r_temp5.w
 	mul r_temp6.xyz, r_temp6, r_temp6.w
-	
+
 };
 
 
-vertexfragment PointSpotLightVectorsZW&{versionString}= 
+vertexfragment PointSpotLightVectorsZW&{versionString}=
 asm_fragment
 {
 
@@ -741,13 +741,13 @@ asm_fragment
 	// normalize light vectors.
 	mul r_temp6.xyz, r_temp6, r_temp6.w
 	mul r_temp7.xyz, r_temp7, r_temp7.w
-	
+
 };
 
 
 
 
-vertexfragment PointSpotLightVectorsX&{versionString}= 
+vertexfragment PointSpotLightVectorsX&{versionString}=
 asm_fragment
 {
 
@@ -761,11 +761,11 @@ asm_fragment
 
 	// normalize light vectors.
 	mul r_temp4.xyz, r_temp4, r_temp4.w
-	
+
 };
 
 
-vertexfragment PointSpotLightVectorsY&{versionString}= 
+vertexfragment PointSpotLightVectorsY&{versionString}=
 asm_fragment
 {
 
@@ -779,12 +779,12 @@ asm_fragment
 
 	// normalize light vectors.
 	mul r_temp5.xyz, r_temp5, r_temp5.w
-	
+
 };
 
 
 
-vertexfragment PointSpotLightVectorsZ&{versionString}= 
+vertexfragment PointSpotLightVectorsZ&{versionString}=
 asm_fragment
 {
 
@@ -798,12 +798,12 @@ asm_fragment
 
 	// normalize light vectors.
 	mul r_temp6.xyz, r_temp6, r_temp6.w
-	
+
 };
 
 
 
-vertexfragment PointSpotLightVectorsW&{versionString}= 
+vertexfragment PointSpotLightVectorsW&{versionString}=
 asm_fragment
 {
 
@@ -817,14 +817,14 @@ asm_fragment
 
 	// normalize light vectors.
 	mul r_temp7.xyz, r_temp7, r_temp7.w
-	
+
 };
 
 
 
 
 
-vertexfragment PointSpotAttenuationXY&{versionString}= 
+vertexfragment PointSpotAttenuationXY&{versionString}=
 asm_fragment
 {
 
@@ -832,7 +832,7 @@ asm_fragment
 
 	// start attenuation
 	// 1 / (1 + C * d^2)
-	
+
 	mul r_attenuation.xy, c_lightAttenuation[a0.x], r_range
 
 // range cutoffs, compare squared distances
@@ -841,18 +841,18 @@ asm_fragment
 	// add 1
 	// two constants, so I can't use MAD here.
 	add r_attenuation.xy, r_attenuation, c_basics.z
-	
+
 	// 1 / x
 	rcp r_attenuation.x, r_attenuation.x
 	rcp r_attenuation.y, r_attenuation.y
 
 	// roll in range cutoffs
 	mul r_attenuation.xy, r_temp1, r_attenuation
-	
+
 
 };
 
-vertexfragment PointSpotAttenuationYZ&{versionString}= 
+vertexfragment PointSpotAttenuationYZ&{versionString}=
 asm_fragment
 {
 
@@ -860,7 +860,7 @@ asm_fragment
 
 	// start attenuation
 	// 1 / (1 + C * d^2)
-	
+
 	mul r_attenuation.yz, c_lightAttenuation[a0.x], r_range
 
 // range cutoffs, compare squared distances
@@ -869,19 +869,19 @@ asm_fragment
 	// add 1
 	// two constants, so I can't use MAD here.
 	add r_attenuation.yz, r_attenuation, c_basics.z
-	
+
 	// 1 / x
 	rcp r_attenuation.y, r_attenuation.y
 	rcp r_attenuation.z, r_attenuation.z
 
 	// roll in range cutoffs
 	mul r_attenuation.yz, r_temp1, r_attenuation
-	
+
 
 };
 
 
-vertexfragment PointSpotAttenuationZW&{versionString}= 
+vertexfragment PointSpotAttenuationZW&{versionString}=
 asm_fragment
 {
 
@@ -889,7 +889,7 @@ asm_fragment
 
 	// start attenuation
 	// 1 / (1 + C * d^2)
-	
+
 	mul r_attenuation.zw, c_lightAttenuation[a0.x], r_range
 
 // range cutoffs, compare squared distances
@@ -898,19 +898,19 @@ asm_fragment
 	// add 1
 	// two constants, so I can't use MAD here.
 	add r_attenuation.zw, r_attenuation, c_basics.z
-	
+
 	// 1 / x
 	rcp r_attenuation.z, r_attenuation.z
 	rcp r_attenuation.w, r_attenuation.w
 
 	// roll in range cutoffs
 	mul r_attenuation.zw, r_temp1, r_attenuation
-	
+
 
 };
 
 
-vertexfragment PointSpotAttenuationY&{versionString}= 
+vertexfragment PointSpotAttenuationY&{versionString}=
 asm_fragment
 {
 
@@ -918,7 +918,7 @@ asm_fragment
 
 	// start attenuation
 	// 1 / (1 + C * d^2)
-	
+
 	mul r_attenuation.y, c_lightAttenuation[a0.x], r_range
 
 // range cutoffs, compare squared distances
@@ -927,13 +927,13 @@ asm_fragment
 	// add 1
 	// two constants, so I can't use MAD here.
 	add r_attenuation.y, r_attenuation, c_basics.z
-	
+
 	// 1 / x
 	rcp r_attenuation.y, r_attenuation.y
 
 	// roll in range cutoffs
 	mul r_attenuation.y, r_temp1, r_attenuation
-	
+
 
 };
 
@@ -941,7 +941,7 @@ asm_fragment
 
 
 
-vertexfragment PointSpotAttenuationX&{versionString}= 
+vertexfragment PointSpotAttenuationX&{versionString}=
 asm_fragment
 {
 
@@ -949,7 +949,7 @@ asm_fragment
 
 	// start attenuation
 	// 1 / (1 + C * d^2)
-	
+
 	mul r_attenuation.x, c_lightAttenuation[a0.x], r_range
 
 // range cutoffs, compare squared distances
@@ -958,13 +958,13 @@ asm_fragment
 	// add 1
 	// two constants, so I can't use MAD here.
 	add r_attenuation.x, r_attenuation, c_helperConstant1.z
-	
+
 	// 1 / x
 	rcp r_attenuation.x, r_attenuation.x
 
 	// roll in range cutoffs
 	mul r_attenuation.x, r_temp1, r_attenuation
-	
+
 
 };
 
@@ -972,7 +972,7 @@ asm_fragment
 
 
 
-vertexfragment PointSpotAttenuationZ&{versionString}= 
+vertexfragment PointSpotAttenuationZ&{versionString}=
 asm_fragment
 {
 
@@ -980,7 +980,7 @@ asm_fragment
 
 	// start attenuation
 	// 1 / (1 + C * d^2)
-	
+
 	mul r_attenuation.z, c_lightAttenuation[a0.x], r_range
 
 // range cutoffs, compare squared distances
@@ -989,18 +989,18 @@ asm_fragment
 
 	// add 1
 	add r_attenuation.z, r_attenuation, c_helperConstant1.z
-	
+
 	// 1 / x
 	rcp r_attenuation.z, r_attenuation.z
 
 	// roll in range cutoffs
 	mul r_attenuation.z, r_temp1, r_attenuation
-	
+
 
 };
 
 
-vertexfragment PointSpotAttenuationW&{versionString}= 
+vertexfragment PointSpotAttenuationW&{versionString}=
 asm_fragment
 {
 
@@ -1008,7 +1008,7 @@ asm_fragment
 
 	// start attenuation
 	// 1 / (1 + C * d^2)
-	
+
 	mul r_attenuation.w, c_lightAttenuation[a0.x], r_range
 
 // range cutoffs, compare squared distances
@@ -1016,23 +1016,23 @@ asm_fragment
 
 	// add 1
 	add r_attenuation.w, r_attenuation, c_helperConstant1.z
-	
+
 	// 1 / x
 	rcp r_attenuation.w, r_attenuation.w
 
 	// roll in range cutoffs
 	mul r_attenuation.w, r_temp1, r_attenuation
-	
+
 
 };
 
 
 
-vertexfragment PointSpotVertexDiffuseXYZW&{versionString}= 
+vertexfragment PointSpotVertexDiffuseXYZW&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	dp3 r_ndotls.x, r_temp4, r_temp9  // N.L light 1
 	dp3 r_ndotls.y, r_temp5, r_temp9
 	dp3 r_ndotls.z, r_temp6, r_temp9
@@ -1041,11 +1041,11 @@ asm_fragment
 
 };
 
-vertexfragment DistantVertexDiffuseXYZW&{versionString}= 
+vertexfragment DistantVertexDiffuseXYZW&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	dp3 r_ndotls.x, c_lightDirections[a0.x], r_temp9  // N.L light 1
 	dp3 r_ndotls.y, c_lightDirections[a0.x+1], r_temp9
 	dp3 r_ndotls.z, c_lightDirections[a0.x+2], r_temp9
@@ -1056,11 +1056,11 @@ asm_fragment
 
 
 
-vertexfragment DistantVertexDiffuseXYZ&{versionString}= 
+vertexfragment DistantVertexDiffuseXYZ&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	dp3 r_ndotls.x, c_lightDirections[a0.x], r_temp9  // N.L light 1
 	dp3 r_ndotls.y, c_lightDirections[a0.x+1], r_temp9
 	dp3 r_ndotls.z, c_lightDirections[a0.x+2], r_temp9
@@ -1068,11 +1068,11 @@ asm_fragment
 };
 
 
-vertexfragment DistantVertexDiffuseYZW&{versionString}= 
+vertexfragment DistantVertexDiffuseYZW&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	dp3 r_ndotls.y, c_lightDirections[a0.x+1], r_temp9  // N.L light 1
 	dp3 r_ndotls.z, c_lightDirections[a0.x+2], r_temp9
 	dp3 r_ndotls.w, c_lightDirections[a0.x+3], r_temp9
@@ -1081,22 +1081,22 @@ asm_fragment
 
 
 
-vertexfragment PointSpotVertexDiffuseXYZ&{versionString}= 
+vertexfragment PointSpotVertexDiffuseXYZ&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	dp3 r_ndotls.x, r_temp4, r_temp9  // N.L light 1
 	dp3 r_ndotls.y, r_temp5, r_temp9
 	dp3 r_ndotls.z, r_temp6, r_temp9
 	mul r_ndotls.xyz, r_ndotls, r_attenuation // apply attenuation factors
 };
 
-vertexfragment PointSpotVertexDiffuseYZW&{versionString}= 
+vertexfragment PointSpotVertexDiffuseYZW&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	dp3 r_ndotls.y, r_temp5, r_temp9  // N.L light 1
 	dp3 r_ndotls.z, r_temp6, r_temp9
 	dp3 r_ndotls.w, r_temp7, r_temp9
@@ -1104,22 +1104,22 @@ asm_fragment
 };
 
 
-vertexfragment DistantVertexDiffuseFiveLights&{versionString}= 
+vertexfragment DistantVertexDiffuseFiveLights&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	dp3 r_ndotls.x, c_lightDirections[a0.x], r_temp9  // N.L light 1
 	dp3 r_ndotls.y, c_lightDirections[a0.x+1], r_temp9
 	dp3 r_ndotls.z, c_lightDirections[a0.x+2], r_temp9  // N.L light 3
 	dp3 r_ndotls.w, c_lightDirections[a0.x+3], r_temp9
-	
+
 	max r_ndotls, r_ndotls, c_basics.x
-	
+
 	dp3 r_temp1.x, c_lightDirections[a0.x+4], r_temp9  // N.L light 5
 
 	max r_temp1.x, r_temp1.x, c_basics.x
-	
+
 	mul r_diffuse_r2.rgb, r_temp1.x, c_lightColors[a0.x+4]
 	mad r_diffuse_r2.rgb, r_ndotls.x, c_lightColors[a0.x], r_diffuse_r2
 	mad r_diffuse_r2.rgb, r_ndotls.y, c_lightColors[a0.x+1], r_diffuse_r2
@@ -1131,32 +1131,32 @@ asm_fragment
 
 
 
-vertexfragment DistantVertexDiffuseXY&{versionString}= 
+vertexfragment DistantVertexDiffuseXY&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	dp3 r_ndotls.x, c_lightDirections[a0.x], r_temp9  // N.L light 1
 	dp3 r_ndotls.y, c_lightDirections[a0.x+1], r_temp9
 };
 
 
-vertexfragment DistantVertexDiffuseYZ&{versionString}= 
+vertexfragment DistantVertexDiffuseYZ&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	dp3 r_ndotls.y, c_lightDirections[a0.x+1], r_temp9  // N.L light 1
 	dp3 r_ndotls.z, c_lightDirections[a0.x+2], r_temp9
 };
 
 
 
-vertexfragment PointSpotVertexDiffuseXY&{versionString}= 
+vertexfragment PointSpotVertexDiffuseXY&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	dp3 r_ndotls.x, r_temp4, r_temp9  // N.L light 1
 	dp3 r_ndotls.y, r_temp5, r_temp9
 	mul r_ndotls.xy, r_ndotls, r_attenuation // apply attenuation factors
@@ -1164,50 +1164,50 @@ asm_fragment
 };
 
 
-vertexfragment PointSpotVertexDiffuseYZ&{versionString}= 
+vertexfragment PointSpotVertexDiffuseYZ&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	dp3 r_ndotls.y, r_temp5, r_temp9  // N.L light 1
 	dp3 r_ndotls.z, r_temp6, r_temp9
 	mul r_ndotls.yz, r_ndotls, r_attenuation // apply attenuation factors
 
 };
 
-vertexfragment PointSpotVertexDiffuseZW&{versionString}= 
+vertexfragment PointSpotVertexDiffuseZW&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	dp3 r_ndotls.z, r_temp6, r_temp9  // N.L light 1
 	dp3 r_ndotls.w, r_temp7, r_temp9
 	mul r_ndotls.zw, r_ndotls, r_attenuation // apply attenuation factors
 
 };
 
-vertexfragment VertexDiffuseXYZW&{versionString}= 
+vertexfragment VertexDiffuseXYZW&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
 
 	max r_ndotls2, c_basics.x, r_ndotls  // assure positive, but maintain unclamped ndotl for possible use in specular cutoff later
-		
+
 	mul r_diffuse_r2.rgb, r_ndotls2.x, c_lightColors[a0.x]
 	mad r_diffuse_r2.rgb, r_ndotls2.y, c_lightColors[a0.x+1], r_diffuse_r2
 	mad r_diffuse_r2.rgb, r_ndotls2.z, c_lightColors[a0.x+2], r_diffuse_r2
 	mad r_diffuse_r2.rgb, r_ndotls2.w, c_lightColors[a0.x+3], r_diffuse_r2
-	
+
 };
 
 
-vertexfragment VertexDiffuseXYZ&{versionString}= 
+vertexfragment VertexDiffuseXYZ&{versionString}=
 asm_fragment
-{	
+{
 	vs_&{versionString}
 
 	max r_ndotls2.xyz, c_basics.x, r_ndotls  // assure positive
-		
+
 	mul r_diffuse_r2.rgb, r_ndotls2.x, c_lightColors[a0.x]
 	mad r_diffuse_r2.rgb, r_ndotls2.y, c_lightColors[a0.x+1], r_diffuse_r2
 	mad r_diffuse_r2.rgb, r_ndotls2.z, c_lightColors[a0.x+2], r_diffuse_r2
@@ -1216,23 +1216,23 @@ asm_fragment
 
 vertexfragment CompleteVertexDiffuseAddAmbient&{versionString}=
 asm_fragment
-{	
+{
 	vs_&{versionString}
 
 	add r_diffuse_r2.rgb, r_diffuse_r2, c_ambientLightColor
 	mul r_diffuse_r2.rgb, r_diffuse_r2, c_diffuseMaterialColor
-	
+
 	add r_diffuse_r2.rgb, r_diffuse_r2, c_emissiveColor // not scaled by material color
 
 	mul oD0.rgb, r_diffuse_r2, c_basics.y  // scale by 0.5.
 	mov oD0.a, c_diffuseMaterialColor.w
-	
+
 };
 
 
 vertexfragment CompleteVertexDiffuse&{versionString}=
 asm_fragment
-{	
+{
 	vs_&{versionString}
 
 	mul r_diffuse_r2.rgb, r_diffuse_r2, c_diffuseMaterialColor
@@ -1246,7 +1246,7 @@ asm_fragment
 
 vertexfragment CompleteVertexDiffuseHDR&{versionString}=
 asm_fragment
-{	
+{
 	vs_&{versionString}
 
 	mul r_diffuse_r2.rgb, r_diffuse_r2, c_diffuseMaterialColor
@@ -1260,26 +1260,26 @@ asm_fragment
 
 vertexfragment CompleteVertexDiffuseAddAmbientForPixelLighting&{versionString}=
 asm_fragment
-{	
+{
 	vs_&{versionString}
 
 	// don't apply material color here, since the PS will do this work.
-	
-	
+
+
 	add r_diffuse_r2.rgb, r_diffuse_r2, c_ambientLightColor	// add ambient.
 	add r_diffuse_r2.rgb, r_diffuse_r2, c_emissiveColor // have to add now, not enough instructions for PS1.1
 
 	mul oD0.rgb, r_diffuse_r2, c_basics.y // scale by 0.5.
 	mov oD0.a, c_diffuseMaterialColor.w
 
-	
+
 };
 
 
 
 vertexfragment CompleteVertexDiffuseAddAmbientForPixelLightingHDR&{versionString}=
 asm_fragment
-{	
+{
 	vs_&{versionString}
 
 	// don't apply material color here, since the PS will do this work.
@@ -1289,150 +1289,150 @@ asm_fragment
 	add oT2.rgb, r_diffuse_r2, c_ambientLightColor	// add ambient.
 
 	mov oT2.a, c_diffuseMaterialColor.w
-	
+
 };
 
 
 
-vertexfragment VertexDiffuseXY&{versionString}= 
+vertexfragment VertexDiffuseXY&{versionString}=
 asm_fragment
-{		
+{
 	vs_&{versionString}
 
 	max r_ndotls2.xy, c_basics.x, r_ndotls  // assure positive
-		
+
 	mul r_diffuse_r2.rgb, r_ndotls2.x, c_lightColors[a0.x]
 	mad r_diffuse_r2.rgb, r_ndotls2.y, c_lightColors[a0.x+1], r_diffuse_r2
-	
+
 };
 
 
 
-vertexfragment VertexDiffuseX&{versionString}= 
+vertexfragment VertexDiffuseX&{versionString}=
 asm_fragment
-{		
+{
 	vs_&{versionString}
 
 	max r_ndotls2.x, c_basics.x, r_ndotls  // assure positive
-		
+
 	mul r_diffuse_r2.rgb, r_ndotls2.x, c_lightColors[a0.x]
-	
+
 };
 
 
 
-vertexfragment VertexDiffuseY&{versionString}= 
+vertexfragment VertexDiffuseY&{versionString}=
 asm_fragment
-{		
+{
 	vs_&{versionString}
 
 	max r_ndotls2.y, c_basics.x, r_ndotls  // assure positive
-		
+
 	mul r_diffuse_r2.rgb, r_ndotls2.y, c_lightColors[a0.x+1]
-	
+
 };
 
 
 
-vertexfragment VertexDiffuseZ&{versionString}= 
+vertexfragment VertexDiffuseZ&{versionString}=
 asm_fragment
-{		
+{
 	vs_&{versionString}
 
 	max r_ndotls2.z, c_basics.x, r_ndotls  // assure positive
-		
+
 	mul r_diffuse_r2.rgb, r_ndotls2.z, c_lightColors[a0.x+2]
-	
+
 };
 
 
 
 
-vertexfragment VertexDiffuseW&{versionString}= 
+vertexfragment VertexDiffuseW&{versionString}=
 asm_fragment
-{		
+{
 	vs_&{versionString}
 
 	max r_ndotls2.w, c_basics.x, r_ndotls  // assure positive
-		
+
 	mul r_diffuse_r2.rgb, r_ndotls2.w, c_lightColors[a0.x+3]
-	
+
 };
 
 
-vertexfragment VertexDiffuseZW&{versionString}= 
+vertexfragment VertexDiffuseZW&{versionString}=
 asm_fragment
-{		
+{
 	vs_&{versionString}
 
 	max r_ndotls2.zw, c_basics.x, r_ndotls  // assure positive
-		
+
 	mul r_diffuse_r2.rgb, r_ndotls2.z, c_lightColors[a0.x+2]
 	mad r_diffuse_r2.rgb, r_ndotls2.w, c_lightColors[a0.x+3], r_diffuse_r2
-	
+
 };
 
-vertexfragment VertexDiffuseYZ&{versionString}= 
+vertexfragment VertexDiffuseYZ&{versionString}=
 asm_fragment
-{		
+{
 	vs_&{versionString}
 
 	max r_ndotls2.yz, c_basics.x, r_ndotls  // assure positive
-		
+
 	mul r_diffuse_r2.rgb, r_ndotls2.y, c_lightColors[a0.x+1]
 	mad r_diffuse_r2.rgb, r_ndotls2.z, c_lightColors[a0.x+2], r_diffuse_r2
-	
+
 };
 
-vertexfragment VertexDiffuseYW&{versionString}= 
+vertexfragment VertexDiffuseYW&{versionString}=
 asm_fragment
-{		
+{
 	vs_&{versionString}
 
 	max r_ndotls2.yw, c_basics.x, r_ndotls  // assure positive
-		
+
 	mul r_diffuse_r2.rgb, r_ndotls2.y, c_lightColors[a0.x+1]
 	mad r_diffuse_r2.rgb, r_ndotls2.w, c_lightColors[a0.x+3], r_diffuse_r2
-	
+
 };
 
 
-vertexfragment VertexDiffuseYZW&{versionString}= 
+vertexfragment VertexDiffuseYZW&{versionString}=
 asm_fragment
-{		
+{
 	vs_&{versionString}
 
 	max r_ndotls2.yzw, c_basics.x, r_ndotls  // assure positive
-		
+
 	mul r_diffuse_r2.rgb, r_ndotls2.y, c_lightColors[a0.x+1]
 	mad r_diffuse_r2.rgb, r_ndotls2.z, c_lightColors[a0.x+2], r_diffuse_r2
 	mad r_diffuse_r2.rgb, r_ndotls2.w, c_lightColors[a0.x+3], r_diffuse_r2
-	
+
 };
 
 
-vertexfragment VertexDiffuseAccumulateXYZW&{versionString}= 
+vertexfragment VertexDiffuseAccumulateXYZW&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
 
 	max r_ndotls2, c_basics.x, r_ndotls  // assure positive
-		
+
 	mad r_diffuse_r2.rgb, r_ndotls2.x, c_lightColors[a0.x], r_diffuse_r2
 	mad r_diffuse_r2.rgb, r_ndotls2.y, c_lightColors[a0.x+1], r_diffuse_r2
 	mad r_diffuse_r2.rgb, r_ndotls2.z, c_lightColors[a0.x+2], r_diffuse_r2
 	mad r_diffuse_r2.rgb, r_ndotls2.w, c_lightColors[a0.x+3], r_diffuse_r2
-	
+
 };
 
 
-vertexfragment VertexDiffuseAccumulateXYZ&{versionString}= 
+vertexfragment VertexDiffuseAccumulateXYZ&{versionString}=
 asm_fragment
-{	
+{
 	vs_&{versionString}
 
 	max r_ndotls2.xyz, c_basics.x, r_ndotls  // assure positive
-		
+
 	mad r_diffuse_r2.rgb, r_ndotls2.x, c_lightColors[a0.x], r_diffuse_r2
 	mad r_diffuse_r2.rgb, r_ndotls2.y, c_lightColors[a0.x+1], r_diffuse_r2
 	mad r_diffuse_r2.rgb, r_ndotls2.z, c_lightColors[a0.x+2], r_diffuse_r2
@@ -1440,150 +1440,150 @@ asm_fragment
 
 
 
-vertexfragment VertexDiffuseAccumulateXY&{versionString}= 
+vertexfragment VertexDiffuseAccumulateXY&{versionString}=
 asm_fragment
-{		
+{
 	vs_&{versionString}
 
 	max r_ndotls2.xy, c_basics.x, r_ndotls  // assure positive
-		
+
 	mad r_diffuse_r2.rgb, r_ndotls2.x, c_lightColors[a0.x], r_diffuse_r2
 	mad r_diffuse_r2.rgb, r_ndotls2.y, c_lightColors[a0.x+1], r_diffuse_r2
-	
+
 };
 
-vertexfragment VertexDiffuseAccumulateYW&{versionString}= 
+vertexfragment VertexDiffuseAccumulateYW&{versionString}=
 asm_fragment
-{		
+{
 	vs_&{versionString}
 
 	max r_ndotls2.yw, c_basics.x, r_ndotls  // assure positive
-		
+
 	mad r_diffuse_r2.rgb, r_ndotls2.y, c_lightColors[a0.x+1], r_diffuse_r2
 	mad r_diffuse_r2.rgb, r_ndotls2.w, c_lightColors[a0.x+3], r_diffuse_r2
-	
+
 };
 
 
 
-vertexfragment VertexDiffuseAccumulateX&{versionString}= 
+vertexfragment VertexDiffuseAccumulateX&{versionString}=
 asm_fragment
-{		
+{
 	vs_&{versionString}
 
 	max r_ndotls2.x,c_basics.x, r_ndotls  // assure positive
-		
+
 	mad r_diffuse_r2.rgb, r_ndotls2.x, c_lightColors[a0.x], r_diffuse_r2
-	
+
 };
 
 
 
-vertexfragment VertexDiffuseAccumulateY&{versionString}= 
+vertexfragment VertexDiffuseAccumulateY&{versionString}=
 asm_fragment
-{		
+{
 	vs_&{versionString}
 
 	max r_ndotls2.y, c_basics.x, r_ndotls  // assure positive
-		
+
 	mad r_diffuse_r2.rgb, r_ndotls2.y, c_lightColors[a0.x+1], r_diffuse_r2
-	
+
 };
 
 
-vertexfragment VertexDiffuseAccumulateZ&{versionString}= 
+vertexfragment VertexDiffuseAccumulateZ&{versionString}=
 asm_fragment
-{		
+{
 	vs_&{versionString}
 
 	max r_ndotls2.z, c_basics.x, r_ndotls  // assure positive
-		
+
 	mad r_diffuse_r2.rgb, r_ndotls2.z, c_lightColors[a0.x+2], r_diffuse_r2
-	
+
 };
 
-vertexfragment VertexDiffuseAccumulateW&{versionString}= 
+vertexfragment VertexDiffuseAccumulateW&{versionString}=
 asm_fragment
-{		
+{
 	vs_&{versionString}
 
 	max r_ndotls2.w, c_basics.x, r_ndotls  // assure positive
-		
+
 	mad r_diffuse_r2.rgb, r_ndotls2.z, c_lightColors[a0.x+3], r_diffuse_r2
-	
+
 };
 
 
-vertexfragment DistantVertexDiffuseX&{versionString}= 
+vertexfragment DistantVertexDiffuseX&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	dp3 r_ndotls.x, c_lightDirections[a0.x], r_temp9  // N.L light 1
 };
 
-vertexfragment DistantVertexDiffuseY&{versionString}= 
+vertexfragment DistantVertexDiffuseY&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	dp3 r_ndotls.y, c_lightDirections[a0.x+1], r_temp9  // N.L light 1
 };
 
 
-vertexfragment DistantVertexDiffuseZ&{versionString}= 
+vertexfragment DistantVertexDiffuseZ&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	dp3 r_ndotls.z, c_lightDirections[a0.x+2], r_temp9  // N.L light 1
 };
 
 
-vertexfragment DistantVertexDiffuseW&{versionString}= 
+vertexfragment DistantVertexDiffuseW&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	dp3 r_ndotls.w, c_lightDirections[a0.x+3], r_temp9  // N.L light 1
 };
 
 
-vertexfragment PointSpotVertexDiffuseX&{versionString}= 
+vertexfragment PointSpotVertexDiffuseX&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	dp3 r_ndotls.x, r_temp4, r_temp9  // N.L light 1
 	mul r_ndotls.x, r_ndotls, r_attenuation // apply attenuation factors
 };
 
 
-vertexfragment PointSpotVertexDiffuseY&{versionString}= 
+vertexfragment PointSpotVertexDiffuseY&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	dp3 r_ndotls.y, r_temp5, r_temp9  // N.L light 1
 	mul r_ndotls.y, r_ndotls, r_attenuation // apply attenuation factors
 };
 
 
-vertexfragment PointSpotVertexDiffuseZ&{versionString}= 
+vertexfragment PointSpotVertexDiffuseZ&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	dp3 r_ndotls.z, r_temp6, r_temp9  // N.L light 1
 	mul r_ndotls.z, r_ndotls, r_attenuation // apply attenuation factors
 };
 
 
-vertexfragment PointSpotVertexDiffuseW&{versionString}= 
+vertexfragment PointSpotVertexDiffuseW&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	dp3 r_ndotls.w, r_temp7, r_temp9  // N.L light 1
 	mul r_ndotls.w, r_ndotls, r_attenuation // apply attenuation factors
 };
@@ -1595,16 +1595,16 @@ asm_fragment
 
 
 
-// DX8 per-pixel lighting in the 4 light case is done with 3 lights and one vertex light 
+// DX8 per-pixel lighting in the 4 light case is done with 3 lights and one vertex light
 // light vector are pre-scaled to save clocks/complexity in the pixel shader.
 
 
 // No normal map case, (like the faces).. Do per-pixel clamps, but no normal map)
-vertexfragment PointSpotPixelDiffuseXYZW&{versionString}= 
+vertexfragment PointSpotPixelDiffuseXYZW&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 
 	dp3 r_temp0.x, r_temp4, r_temp10
 	dp3 r_temp0.y, r_temp4, r_temp11
@@ -1612,23 +1612,23 @@ asm_fragment
 
 	mul  r_temp0,  r_temp0, r_attenuation // apply attenuation factor to vector.
 	mad oT1.xyz, r_temp0, c_helperConstant2.z, c_helperConstant2.z // smash signed vector into unsigned vector
-	
+
 	dp3 r_temp0.x, r_temp5, r_temp10
 	dp3 r_temp0.y, r_temp5, r_temp11
 	dp3 r_temp0.z, r_temp5, r_temp9     // transform to tangent space
-	
+
 	mul  r_temp0,  r_temp0, r_attenuation // apply attenuation factor to vector.
 	mad oT2.xyz, r_temp0, c_helperConstant2.z, c_helperConstant2.z // smash signed vector into unsigned vector
 
 	dp3 r_temp0.x, r_temp6, r_temp10
 	dp3 r_temp0.y, r_temp6, r_temp11
 	dp3 r_temp0.z, r_temp6, r_temp9     // transform to tangent space
-	
+
 	mul  r_temp0,  r_temp0, r_attenuation // apply attenuation factor to vector.
 	mad oT3.xyz, r_temp0, c_helperConstant2.z, c_helperConstant2.z // smash signed vector into unsigned vector
 
 	mov oT0.xy, v_TEXCOORD0   ; T0 = base texture
-	
+
 	dp3 r_temp0.w, r_temp7, r_temp9  // N.L light 4
 	max r_temp0.w, c_basics.x, r_temp0  // assure positive
 	mul r_temp0.w, r_temp0, r_attenuation // apply attenuation factors
@@ -1637,81 +1637,81 @@ asm_fragment
 	mul oD0.rgb, r_temp0, c_diffuseMaterialColor
 	mov oD0.a, c_diffuseMaterialColor.w
 
-	
-	
+
+
 };
 
 
 
-vertexfragment PointSpotVertexSpecularXYZW&{versionString}= 
+vertexfragment PointSpotVertexSpecularXYZW&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	dp3 r_rdotls.x, r_temp4, r_reflectionVector  // R.L light 1
 	dp3 r_rdotls.y, r_temp5, r_reflectionVector
 	dp3 r_rdotls.z, r_temp6, r_reflectionVector
 	dp3 r_rdotls.w, r_temp7, r_reflectionVector  // R.L light 4
-	
+
 	mul r_rdotls, r_rdotls, r_attenuation // apply attenuation factors
 };
 
-vertexfragment DistantVertexSpecularXYZW&{versionString}= 
+vertexfragment DistantVertexSpecularXYZW&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	dp3 r_rdotls.x, c_lightDirections[a0.x], r_reflectionVector  // R.L light 1
 	dp3 r_rdotls.y, c_lightDirections[a0.x+1], r_reflectionVector
 	dp3 r_rdotls.z, c_lightDirections[a0.x+2], r_reflectionVector
 	dp3 r_rdotls.w, c_lightDirections[a0.x+3], r_reflectionVector  // R.L light 4
-	
+
 };
 
 
-vertexfragment DistantVertexSpecularXYZ&{versionString}= 
+vertexfragment DistantVertexSpecularXYZ&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	dp3 r_rdotls.x, c_lightDirections[a0.x], r_reflectionVector  // R.L light 1
 	dp3 r_rdotls.y, c_lightDirections[a0.x+1], r_reflectionVector
 	dp3 r_rdotls.z, c_lightDirections[a0.x+2], r_reflectionVector
-	
+
 };
 
 
-vertexfragment DistantVertexSpecularXY&{versionString}= 
+vertexfragment DistantVertexSpecularXY&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	dp3 r_rdotls.x, c_lightDirections[a0.x], r_reflectionVector  // R.L light 1
 	dp3 r_rdotls.y, c_lightDirections[a0.x+1], r_reflectionVector
-	
+
 };
 
 
 
 
-vertexfragment DistantVertexSpecularX&{versionString}= 
+vertexfragment DistantVertexSpecularX&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	dp3 r_rdotls.x, c_lightDirections[a0.x], r_reflectionVector  // R.L light 1
-	
+
 };
 
 
 
 
 
-vertexfragment PointSpotVertexSpecularXYZ&{versionString}= 
+vertexfragment PointSpotVertexSpecularXYZ&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	dp3 r_rdotls.x, r_temp4, r_reflectionVector  // R.L light 1
 	dp3 r_rdotls.y, r_temp5, r_reflectionVector
 	dp3 r_rdotls.z, r_temp6, r_reflectionVector
@@ -1720,11 +1720,11 @@ asm_fragment
 
 };
 
-vertexfragment PointSpotVertexSpecularYZW&{versionString}= 
+vertexfragment PointSpotVertexSpecularYZW&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	dp3 r_rdotls.y, r_temp5, r_reflectionVector  // R.L light 1
 	dp3 r_rdotls.z, r_temp6, r_reflectionVector
 	dp3 r_rdotls.w, r_temp7, r_reflectionVector
@@ -1736,99 +1736,99 @@ asm_fragment
 
 
 
-vertexfragment PointSpotVertexSpecularXY&{versionString}= 
+vertexfragment PointSpotVertexSpecularXY&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	dp3 r_rdotls.x, r_temp4, r_reflectionVector  // R.L light 1
 	dp3 r_rdotls.y, r_temp5, r_reflectionVector
 	mul r_rdotls.xy, r_rdotls, r_attenuation // apply attenuation factors
-	
+
 };
 
-vertexfragment PointSpotVertexSpecularYZ&{versionString}= 
+vertexfragment PointSpotVertexSpecularYZ&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	dp3 r_rdotls.y, r_temp5, r_reflectionVector  // R.L light 1
 	dp3 r_rdotls.z, r_temp6, r_reflectionVector
 	mul r_rdotls.yz, r_rdotls, r_attenuation // apply attenuation factors
-	
+
 };
 
 
-vertexfragment PointSpotVertexSpecularZW&{versionString}= 
+vertexfragment PointSpotVertexSpecularZW&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	dp3 r_rdotls.z, r_temp6, r_reflectionVector  // R.L light 3
 	dp3 r_rdotls.w, r_temp7, r_reflectionVector // light 4
 	mul r_rdotls.zw, r_rdotls, r_attenuation // apply attenuation factors
-	
+
 };
 
 
-vertexfragment PointSpotVertexSpecularX&{versionString}= 
+vertexfragment PointSpotVertexSpecularX&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	dp3 r_rdotls.x, r_temp4, r_reflectionVector  // R.L light 1
 	mul r_rdotls.x, r_rdotls, r_attenuation // apply attenuation factors
-	
+
 };
 
 
-vertexfragment PointSpotVertexSpecularY&{versionString}= 
+vertexfragment PointSpotVertexSpecularY&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	dp3 r_rdotls.y, r_temp5, r_reflectionVector  // R.L light 2
 	mul r_rdotls.y, r_rdotls, r_attenuation // apply attenuation factors
-	
+
 };
 
 
 
-vertexfragment PointSpotVertexSpecularZ&{versionString}= 
+vertexfragment PointSpotVertexSpecularZ&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	dp3 r_rdotls.z, r_temp6, r_reflectionVector  // R.L light 3
 	mul r_rdotls.z, r_rdotls, r_attenuation // apply attenuation factors
-	
+
 };
 
 
-vertexfragment WriteAttenuationToColorZ&{versionString}= 
+vertexfragment WriteAttenuationToColorZ&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	mov oD0, r_attenuation.zzzz // write attenuation factors
 };
 
 
-vertexfragment PointSpotVertexSpecularW&{versionString}= 
+vertexfragment PointSpotVertexSpecularW&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	dp3 r_rdotls.w, r_temp7, r_reflectionVector  // R.L light 1
 	mul r_rdotls.w, r_rdotls, r_attenuation // apply attenuation factors
-	
+
 };
 
 
 
 vertexfragment CompleteVertexSpecular&{versionString}=
 asm_fragment
-{	
+{
 	vs_&{versionString}
 
 	mul oD0.rgb, r_specular_r2, c_specularMaterialColor
@@ -1838,13 +1838,13 @@ asm_fragment
 
 
 
-vertexfragment SpotLightConesPart1XYZW&{versionString}= 
+vertexfragment SpotLightConesPart1XYZW&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
 
 	// find vector to light  dot light direction
-	
+
 	dp3 r_temp0.x, r_temp4, c_lightDirections[a0.x]
 	dp3 r_temp0.y, r_temp5, c_lightDirections[a0.x+1]
 	dp3 r_temp0.z, r_temp6, c_lightDirections[a0.x+2]
@@ -1852,7 +1852,7 @@ asm_fragment
 };
 
 
-vertexfragment SpotLightConesPart2XYZW&{versionString}= 
+vertexfragment SpotLightConesPart2XYZW&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
@@ -1868,21 +1868,21 @@ asm_fragment
 };
 
 
-vertexfragment SpotLightConesPart1XYZ&{versionString}= 
+vertexfragment SpotLightConesPart1XYZ&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
 
 	// find vector to light  dot light direction
-	
+
 	dp3 r_temp0.x, r_temp4, c_lightDirections[a0.x]
 	dp3 r_temp0.y, r_temp5, c_lightDirections[a0.x+1]
 	dp3 r_temp0.z, r_temp6, c_lightDirections[a0.x+2]
-	
+
 };
 
-	
-vertexfragment SpotLightConesPart2XYZ&{versionString}= 
+
+vertexfragment SpotLightConesPart2XYZ&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
@@ -1900,20 +1900,20 @@ asm_fragment
 
 
 
-vertexfragment SpotLightConesPart1YZW&{versionString}= 
+vertexfragment SpotLightConesPart1YZW&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
 
 	// find vector to light  dot light direction
-	
+
 	dp3 r_temp0.y, r_temp5, c_lightDirections[a0.x+1]
 	dp3 r_temp0.z, r_temp6, c_lightDirections[a0.x+2]
 	dp3 r_temp0.w, r_temp7, c_lightDirections[a0.x+3]
 };
 
 
-vertexfragment SpotLightConesPart2YZW&{versionString}= 
+vertexfragment SpotLightConesPart2YZW&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
@@ -1931,21 +1931,21 @@ asm_fragment
 
 
 
-vertexfragment SpotLightConesPart1XY&{versionString}= 
+vertexfragment SpotLightConesPart1XY&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
 
 	// find vector to light  dot light direction
-	
+
 	dp3 r_temp0.x, r_temp4, c_lightDirections[a0.x]
 	dp3 r_temp0.y, r_temp5, c_lightDirections[a0.x+1]
-	
+
 	// coneAngle factor = 1.0 - (angle - outer) * 1/d
 };
 
 
-vertexfragment SpotLightConesPart2XY&{versionString}= 
+vertexfragment SpotLightConesPart2XY&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
@@ -1954,28 +1954,28 @@ asm_fragment
 	mul r_temp1.xy, r_temp1, c_spotConeHelper2[a0.x]
 	min r_temp1.xy, r_temp1, c_basics.z  // clamp to < 1.0
 	max r_temp1.xy, r_temp1, c_basics.x // assure > 0
-	
+
 	mul r_attenuation.xy, r_attenuation, r_temp1 // roll into attenuation.
 };
 
 
 
 
-vertexfragment SpotLightConesPart1YZ&{versionString}= 
+vertexfragment SpotLightConesPart1YZ&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
 
 	// find vector to light  dot light direction
-	
+
 	dp3 r_temp0.y, r_temp5, c_lightDirections[a0.x+1]
 	dp3 r_temp0.z, r_temp6, c_lightDirections[a0.x+2]
-	
+
 	// coneAngle factor = 1.0 - (angle - outer) * 1/d
 };
 
 
-vertexfragment SpotLightConesPart2YZ&{versionString}= 
+vertexfragment SpotLightConesPart2YZ&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
@@ -1988,20 +1988,20 @@ asm_fragment
 	mul r_attenuation.yz, r_attenuation, r_temp1 // roll into attenuation.
 };
 
-vertexfragment SpotLightConesPart1ZW&{versionString}= 
+vertexfragment SpotLightConesPart1ZW&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
 
 	// find vector to light  dot light direction
-	
+
 	dp3 r_temp0.z, r_temp6, c_lightDirections[a0.x+2]
 	dp3 r_temp0.w, r_temp7, c_lightDirections[a0.x+3]
 
 };
 
 
-vertexfragment SpotLightConesPart2ZW&{versionString}= 
+vertexfragment SpotLightConesPart2ZW&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
@@ -2019,27 +2019,27 @@ asm_fragment
 
 
 
-vertexfragment SpotLightConesPart1X&{versionString}= 
+vertexfragment SpotLightConesPart1X&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
 
 	// find vector to light  dot light direction
-	
+
 	dp3 r_temp0.x, r_temp4, c_lightDirections[a0.x]
 };
 
-vertexfragment SpotLightConesPart2X&{versionString}= 
+vertexfragment SpotLightConesPart2X&{versionString}=
 asm_fragment
 {
 	// coneAngle factor = 1.0 - (angle - outer) * 1/d
 	vs_&{versionString}
-	
+
 
 	sub r_temp1.x, r_temp0, c_spotConeHelper1[a0.x]  // (angle from spot center - outer Cone /2)
 
    mul r_temp1.x, r_temp1.x, c_spotConeHelper2[a0.x] // ( angle from inner cone - outer Cone /2)
-  
+
    max r_temp1.x, r_temp1, c_basics.x // assure > 0
    min r_temp1.x, r_temp1, c_basics.z  // clamp to < 1.0
 
@@ -2047,20 +2047,20 @@ asm_fragment
 };
 
 
-vertexfragment SpotLightConesPart1Y&{versionString}= 
+vertexfragment SpotLightConesPart1Y&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
 
 	// find vector to light  dot light direction
-	
+
 	dp3 r_temp0.y, r_temp5, c_lightDirections[a0.x+1]
-	
-	
+
+
 };
 
 
-vertexfragment SpotLightConesPart2Y&{versionString}= 
+vertexfragment SpotLightConesPart2Y&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
@@ -2078,19 +2078,19 @@ asm_fragment
 
 
 
-vertexfragment SpotLightConesPart1Z&{versionString}= 
+vertexfragment SpotLightConesPart1Z&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
 
 	// find vector to light  dot light direction
-	
+
 	dp3 r_temp0.z, r_temp6, c_lightDirections[a0.x+2]
-	
+
 };
-	
-	
-vertexfragment SpotLightConesPart2Z&{versionString}= 
+
+
+vertexfragment SpotLightConesPart2Z&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
@@ -2101,26 +2101,26 @@ asm_fragment
 	mul r_temp1.z, r_temp1, c_spotConeHelper2[a0.x]
 	min r_temp1.z, r_temp1, c_basics.z  ; clamp to < 1.0
 	max r_temp1.z, r_temp1, c_basics.x ; assure > 0
-	
+
 
 	mul r_attenuation.z, r_attenuation, r_temp1 // roll into attenuation.
 };
 
 
 
-vertexfragment SpotLightConesPart1W&{versionString}= 
+vertexfragment SpotLightConesPart1W&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
 
 	// find vector to light  dot light direction
-	
+
 	dp3 r_temp0.w, r_temp7, c_lightDirections[a0.x+3]
-	
+
 	// coneAngle factor = 1.0 - (angle - outer) * 1/d
 };
 
-vertexfragment SpotLightConesPart2W&{versionString}= 
+vertexfragment SpotLightConesPart2W&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
@@ -2129,56 +2129,56 @@ asm_fragment
 	mul r_temp1.w, r_temp1, c_spotConeHelper2[a0.x]
 	min r_temp1.w, r_temp1, c_basics.z  ; clamp to < 1.0
 	max r_temp1.w, r_temp1, c_basics.x ; assure > 0
-	
+
 
 	mul r_attenuation.w, r_attenuation, r_temp1 // roll into attenuation.
 };
 
 
 
-vertexfragment PointSpotVisualizeAttenuationZ&{versionString}= 
+vertexfragment PointSpotVisualizeAttenuationZ&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
 	mov r_diffuse_r2.rgb, r_attenuation.z
-	
+
 };
 
-vertexfragment PointSpotVisualizeAttenuationZW&{versionString}= 
+vertexfragment PointSpotVisualizeAttenuationZW&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
 	dp3 r_diffuse_r2.rgb, r_attenuation.zw, c_basics.zzxx
-	
+
 };
 
-vertexfragment PointSpotVisualizeAttenuationW&{versionString}= 
+vertexfragment PointSpotVisualizeAttenuationW&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
 	mov r_diffuse_r2.rgb, r_attenuation.w
-	
+
 };
 
-vertexfragment PointSpotVisualizeAttenuationX&{versionString}= 
+vertexfragment PointSpotVisualizeAttenuationX&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
 	mov r_diffuse_r2.rgb, r_attenuation.x
-	
+
 };
 
 
-vertexfragment PointSpotVisualizeAttenuationY&{versionString}= 
+vertexfragment PointSpotVisualizeAttenuationY&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
 	mov r_diffuse_r2.rgb, r_attenuation.y
-	
+
 };
 
 
-vertexfragment PointSpotVisualizeAttenuationXY&{versionString}= 
+vertexfragment PointSpotVisualizeAttenuationXY&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
@@ -2189,39 +2189,39 @@ asm_fragment
 
 // finish diffuse completely, and write it out.
 
-vertexfragment CompleteDiffuseHDR&{versionString}= 
+vertexfragment CompleteDiffuseHDR&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
 
 	add r_diffuse_r2, c_ambientLightColor, r_diffuse_r2
-	
+
 	mul oT2.xyz, r_diffuse_r2, c_diffuseMaterialColor
-	
+
 };
 
 
 // finish specular and emit.
 
-vertexfragment CompleteSpecularHDR&{versionString}= 
+vertexfragment CompleteSpecularHDR&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	mul oT3.xyz, r_specular_r2, c_specularMaterialColor
 
-   
-	
+
+
 };
 
 
-vertexfragment CompleteSpecular&{versionString}= 
+vertexfragment CompleteSpecular&{versionString}=
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	mul oD1.xyz, r_specular_r2, c_specularMaterialColor
-	
+
 };
 
 endShaderSource
@@ -2238,47 +2238,47 @@ define VS1UniqueLightingFragments()
 
 shaderSource
 
-vertexfragment CreateReflectionVector1_1 = 
+vertexfragment CreateReflectionVector1_1 =
 asm_fragment
 {
 	vs_1_1
-	
+
 	//INPUTS: Camera space position, camera space normal, r8, r9
 	//OUTPUT: camera space reflection, r11
 	//USES: r0, r1
-	
+
 	// create normalized view vector
 	dp3 r_temp1.w, -r_temp8, -r_temp8
 	rsq r_temp1.w, r_temp1.w
 	mul r_temp1.xyz, -r_temp8, r_temp1.w
-	
+
 	// 2N
-	add r_temp0.xyz, r_temp9, r_temp9   
+	add r_temp0.xyz, r_temp9, r_temp9
 	// N.V
 	dp3 r_temp0.w, r_temp9, r_temp1
-	
+
 	// 2N ( N.V) - V
 	mad r_reflectionVector.xyz, r_temp0, r_temp0.w, -r_temp1
-		
+
 };
 
-vertexfragment SetLight0Offset1_1= 
+vertexfragment SetLight0Offset1_1=
 asm_fragment
 {
-	vs_1_1	
+	vs_1_1
 	mov a0.x, c_basics.x
 };
 
 
-vertexfragment SetLight1Offset1_1= 
+vertexfragment SetLight1Offset1_1=
 asm_fragment
 {
-	vs_1_1	
-	
+	vs_1_1
+
 	mov a0.x, c_basics.z
 };
 
-vertexfragment SetLight2Offset1_1= 
+vertexfragment SetLight2Offset1_1=
 asm_fragment
 {
 	vs_1_1
@@ -2286,14 +2286,14 @@ asm_fragment
 };
 
 
-vertexfragment SetLight3Offset1_1= 
+vertexfragment SetLight3Offset1_1=
 asm_fragment
 {
-	vs_1_1	
+	vs_1_1
 	mov a0.x, c_helperConstant2.y
 };
 
-vertexfragment SetLight4Offset1_1= 
+vertexfragment SetLight4Offset1_1=
 asm_fragment
 {
 	vs_1_1
@@ -2310,13 +2310,13 @@ asm_fragment
 //#######
 
 
-vertexfragment VertexSpecularXYZW1_1= 
+vertexfragment VertexSpecularXYZW1_1=
 asm_fragment
 {
 	vs_1_1
-	
+
 	add r_ndotls, r_ndotls, c_helperConstant2.w
-   
+
 	slt r_ndotlClamp, -r_ndotls, c_basics.x  // create booleans for N.L < 0
 	slt r_temp2, -r_rdotls, c_basics.x  // create booleans for R.L < 0
 	mul r_temp2, r_temp2, r_ndotlClamp // merge flags
@@ -2333,7 +2333,7 @@ asm_fragment
 	expp r_logexp.z, r_logexp.z
 	mul r_logexp.z, r_logexp.z, r_temp2.y // cancel if R.L < 0 for light 2.
 	mad r_specular_r2.rgb, r_logexp.z, c_lightColors[a0.x+1], r_specular_r2  // complete specular for light 1
-	
+
 	logp r_logexp.z, r_rdotls.zzzz
 	mul r_logexp.z, r_logexp.z, c_specularMaterialColor.w // pow(x, shinyness)
 	expp r_logexp.z, r_logexp.z
@@ -2345,20 +2345,20 @@ asm_fragment
 	expp r_logexp.z, r_logexp.z
 	mul r_logexp.z, r_logexp.z, r_temp2.w // cancel if R.L < 0 for light 2.
 	mad r_specular_r2.rgb, r_logexp.z, c_lightColors[a0.x+3], r_specular_r2  // complete specular for light 1
-	
+
 };
 
 
-vertexfragment VertexSpecularXYZ1_1= 
+vertexfragment VertexSpecularXYZ1_1=
 asm_fragment
 {
 	vs_1_1
-	
+
    add r_ndotls.xyz, r_ndotls, c_helperConstant2.w
 	slt r_ndotlClamp.xyz, -r_ndotls, c_basics.x  // create booleans for N.L < 0
 	slt r_temp2.xyz, -r_rdotls, c_basics.x  // create booleans for R.L < 0
 	mul r_temp2.xyz, r_temp2, r_ndotlClamp // merge flags
-	
+
 	logp r_logexp.z, r_rdotls.xxxx
 	mul r_logexp.z, r_logexp.z, c_specularMaterialColor.w // pow(x, shinyness)
 	expp r_logexp.z, r_logexp.z
@@ -2370,7 +2370,7 @@ asm_fragment
 	expp r_logexp.z, r_logexp.z
 	mul r_logexp.z, r_logexp.z, r_temp2.y // cancel if R.L < 0 for light 2.
 	mad r_specular_r2.rgb, r_logexp.z, c_lightColors[a0.x+1], r_specular_r2  // complete specular for light 1
-	
+
 	logp r_logexp.z, r_rdotls.zzzz
 	mul r_logexp.z, r_logexp.z, c_specularMaterialColor.w // pow(x, shinyness)
 	expp r_logexp.z, r_logexp.z
@@ -2381,25 +2381,25 @@ asm_fragment
 
 
 
-vertexfragment VertexSpecularXY1_1= 
+vertexfragment VertexSpecularXY1_1=
 asm_fragment
 {
 	vs_1_1
-	
+
 	// r_temp0 = inbound R.L set
-	
+
 	// use all the channels in r1 and save a temp.
    add r_ndotls.xy, r_ndotls, c_helperConstant2.w
 	slt r_ndotlClamp.xyz, -r_ndotls, c_basics.x  // create booleans for N.L < 0
 	slt r_temp2.zw, -r_rdotls, c_basics.x  // create booleans for R.L < 0
 	mul r_temp2.zw, r_temp2, r_ndotlClamp // merge flags
-		
+
 	logp r_logexp.z, r_rdotls.xxxx
 	mul r_logexp.z, r_logexp.z, c_specularMaterialColor.w // pow(x, shinyness)
 	expp r_logexp.z, r_logexp.z
 	mul r_logexp.z, r_logexp.z, r_temp1.z  // cancel if R.L < 0 for light 1.
 	mul r_specular_r2.rgb, r_logexp.z, c_lightColors[a0.x]  // complete specular for light 1
-		
+
 
 	logp r_logexp.z, r_rdotls.yyyy
 	mul r_logexp.z, r_logexp.z, c_specularMaterialColor.w // pow(x, shinyness)
@@ -2410,26 +2410,26 @@ asm_fragment
 };
 
 
-vertexfragment VertexSpecularX1_1= 
+vertexfragment VertexSpecularX1_1=
 asm_fragment
 {
 	vs_1_1
-	
+
    add r_ndotls.x, r_ndotls, c_helperConstant2.w
 	slt r_ndotlClamp.x, -r_ndotls, c_basics.x  // create booleans for N.L < 0
 	slt r_temp2.x, -r_rdotls, c_basics.x  // create booleans for R.L < 0
 	mul r_temp2.x, r_temp2, r_ndotlClamp // merge flags
-				
+
 	logp r_logexp.z, r_rdotls.x
-	
+
 	mul r_temp1.x, r_logexp.z, c_specularMaterialColor.w // pow(x, shinyness)	for all 4 lights.
-	
+
 	expp r_logexp.z, r_logexp.z
 	mul r_logexp.z, r_logexp.z, r_temp1.y
 
 	mul r_specular_r2.rgb, r_logexp.z, c_lightColors[a0.x]  // complete specular for light 1
-	
-		
+
+
 };
 
 
@@ -2448,27 +2448,27 @@ enddef
 define OffsetToMask( offset count)
 
 	seti integerMask 15
-	
+
 	if (&offset = 1)
 		if (&count > 2)
 			seti integerMask 14
 		endif
-		
+
 		if (&count = 2)
 			seti integerMask 6
 		endif
-		
+
 		if (&count = 1)
 			seti integerMask 2
 		endif
-				
+
 	endif
 
-	if (&offset = 2)	
+	if (&offset = 2)
 		if (&count > 1)
 			seti integerMask 12
 		endif
-		
+
 		if (&count = 1)
 			seti integerMask 4
 		endif
@@ -2478,7 +2478,7 @@ define OffsetToMask( offset count)
 	if (&offset = 3)
 		seti integerMask 8
 	endif
-	
+
 	if (&offset = 0)
 		if (&count > 3)
 			seti integerMask 15
@@ -2487,22 +2487,22 @@ define OffsetToMask( offset count)
 		if (&count = 3)
 			seti integerMask 7
 		endif
-		
+
 		if (&count = 2)
 			seti integerMask 3
 		endif
-		
+
 		if (&count = 1)
 			seti integerMask 1
 		endif
-		
+
 	endif
-	
+
 	if (&offset = 0 and &count = 0)
 		seti integerMask 0
 	endif
-	
-	
+
+
 enddef
 
 
@@ -2516,7 +2516,7 @@ define GenerateMaskString( integerMask)
 	if (&integerMask = 1)
 		set returnedMaskString X
 	endif
-	
+
 	if (&integerMask = 2)
 		set returnedMaskString Y
 	endif
@@ -2579,7 +2579,7 @@ enddef
 define DX8DiffusePassLightFragments(addAmbientFlag  bumpMapThisPass lightOffset lightCount distantLightCount pointLightCount spotLightCount shaderVersion)
 
 	#trace "DX8 Diffuse lighting pass, ambient: &addAmbientFlag TotalCount: &lightCount, Distant: &distantLightCount, Point: &pointLightCount, Spot: &spotLightCount"
-	
+
 	set returnedMaskString ""
 	seti integerMask 0
 
@@ -2597,7 +2597,7 @@ define DX8DiffusePassLightFragments(addAmbientFlag  bumpMapThisPass lightOffset 
 
 	seti finalVertexLightMask 0
 	seti finalPixelLightMask 0
-   
+
 	setb secondSet false
 
 	if (&lightOffset > 3)
@@ -2606,18 +2606,18 @@ define DX8DiffusePassLightFragments(addAmbientFlag  bumpMapThisPass lightOffset 
 
 	create OffsetToMask( 0 &distantLightCount)
 	seti distantMask $integerMask
-	
+
 	create OffsetToMask( &distantLightCount $pointSpotCount)
 	seti pointSpotMask $integerMask
-		
+
 	create OffsetToMask($spotOffset &spotLightCount)
 	seti spotMask $integerMask
-	
-	
-	
-	
+
+
+
+
 	shaderFragment SetLight&{lightOffset}Offset&{shaderVersion}
-	
+
 ###
 # DX8 distant lights for this pass
 ###
@@ -2645,43 +2645,43 @@ define DX8DiffusePassLightFragments(addAmbientFlag  bumpMapThisPass lightOffset 
 						seti distantVertexLightMask  ($distantMask - 1)
 						seti distantPixelLightMask 1
 						seti perPixelLightCount 1
-                  
+
 					else
 					# rare case, only 1 distant light.
 						seti distantVertexLightMask  0
 						seti distantPixelLightMask 1
 						seti perPixelLightCount 1
-					endif	
-					
+					endif
+
 				endif
-						
+
 			else
 				seti distantVertexLightMask $distantMask
 			endif
 		endif
-		
-		
+
+
 		if ($distantPixelLightMask)
 			create GenerateMaskString($distantPixelLightMask)
 			#trace "Distant PixeL LIght Mask: $returnedMaskString"
 			shaderFragment PixelLightingDistantSetup${returnedMaskString}&{shaderVersion}
          seti finalPixelLightMask $distantPixelLightMask
 		endif
-		
-				
+
+
 		if ($distantVertexLightMask)
 			create GenerateMaskString($distantVertexLightMask)
-			
+
 			#trace "Distant Vertex LIght Mask: $returnedMaskString"
-			
+
 			shaderFragment DistantVertexDiffuse${returnedMaskString}&{shaderVersion}
-			
+
 			seti finalVertexLightMask $distantVertexLightMask
 		endif
-		
+
 	endif
-	
-	
+
+
 
 ####
 # DX8 Point and spot for this pass
@@ -2689,21 +2689,21 @@ define DX8DiffusePassLightFragments(addAmbientFlag  bumpMapThisPass lightOffset 
 
 	#trace "final vertex mask so far: $finalVertexLightMask"
 	if ($pointSpotCount)
-	
-		
-		
+
+
+
 		# create a 'bit list' of all pointspot lights.
 		# full list  = Pixel Light List | Vertex Light List
-		
+
 		# 16 max,  4 min clocks.
 		create GenerateMaskString($pointSpotMask)
 		set pointSpotMaskString $returnedMaskString
-		
+
 		#trace "PointSpot Mask: $returnedMaskString"
-		
+
 		shaderFragment PointSpotLightVectors${pointSpotMaskString}&{shaderVersion}
-		
-		
+
+
 		# 1 clock
 		# set address register to '0' or '1' here
 		if ($secondSet)
@@ -2711,8 +2711,8 @@ define DX8DiffusePassLightFragments(addAmbientFlag  bumpMapThisPass lightOffset 
 		else
 			shaderFragment SetLight0Offset&{shaderVersion}
 		endif
-		
-		# 8 clocks max, 4 Minimum				
+
+		# 8 clocks max, 4 Minimum
 		shaderFragment PointSpotAttenuation${pointSpotMaskString}&{shaderVersion}
 
 
@@ -2726,41 +2726,41 @@ define DX8DiffusePassLightFragments(addAmbientFlag  bumpMapThisPass lightOffset 
 
 			#the next fragment needs 'high/low' offset.
 
-			if ($secondSet)			
+			if ($secondSet)
 				shaderFragment SetLight1Offset&{shaderVersion}
 			else
 				shaderFragment SetLight0Offset&{shaderVersion}
 			endif
-				
+
 			shaderFragment SpotLightConesPart2${returnedMaskString}&{shaderVersion}
 		endif
-			
+
 		# at this point, diverge, and create point/spot tangent space vectors.
 		if (&bumpMapThisPass)
-		
+
 			create OffsetToMask(&distantLightCount 1)
 			seti pointSpotPixelLightMask $integerMask
 			seti pointSpotVertexLightMask ($pointSpotMask - $integerMask)
 			seti perPixelLightCount ($perPixelLightCount + 1)
-		
+
 		else
 			seti pointSpotVertexLightMask ($pointSpotMask)
 		endif
-	
+
 		# return the address register to it's original state and address lights.
 		# 1 clock
 		shaderFragment SetLight&{lightOffset}Offset&{shaderVersion}
 		#trace "final vertex mask so far: $finalVertexLightMask"
 		#trace "Point spot vertex mask: $pointSpotVertexLightMask"
 		#trace "Point spot pixel mask: $pointSpotPixelLightMask"
-		
-		if ($pointSpotVertexLightMask)	
+
+		if ($pointSpotVertexLightMask)
 			# 5 max, 2 min
 			create GenerateMaskString($pointSpotVertexLightMask)
 			#trace "PointSpot vertex mask: $returnedMaskString"
 			shaderFragment PointSpotVertexDiffuse${returnedMaskString}&{shaderVersion}
 		endif
-		
+
 		if ($pointSpotPixelLightMask)
 			create GenerateMaskString($pointSpotPixelLightMask)
 			shaderFragment PixelLightingPointSpotSetup${returnedMaskString}&{shaderVersion}
@@ -2770,17 +2770,17 @@ define DX8DiffusePassLightFragments(addAmbientFlag  bumpMapThisPass lightOffset 
 			else
 				shaderFragment WriteLightVectorToTex3&{shaderVersion}
 			endif
-			
+
 		endif
       seti finalPixelLightMask ($finalPixelLightMask + $pointSpotPixelLightMask)
-		
+
 		seti finalVertexLightMask ($finalVertexLightMask + $pointSpotVertexLightMask)
-      
+
       #trace "final pixel mask $finalPixelLightMask"
 
 	endif
-	
-	
+
+
 
 ####
 # DX8 Finalize Diffuse here
@@ -2792,32 +2792,32 @@ define DX8DiffusePassLightFragments(addAmbientFlag  bumpMapThisPass lightOffset 
 		if (&bumpMapThisPass)
 
 			if ($finalVertexLightMask = 0) # all lights were bumpmapped.
-				shaderFragment ZeroDiffuse&{shaderVersion} # zero r_diffuse_r2 so that the ambient can be added to it and the color finalized. 
+				shaderFragment ZeroDiffuse&{shaderVersion} # zero r_diffuse_r2 so that the ambient can be added to it and the color finalized.
 			endif
 		endif
 
 		if ($finalVertexLightMask)
-				
+
 			create GenerateMaskString($finalVertexLightMask)
 			#trace "Final vertex lighting mask: $returnedMaskString"
 			shaderFragment VertexDiffuse${returnedMaskString}&{shaderVersion}
 		endif
 
 	endif
-			
+
 
 	if (&bumpMapThisPass)
 		shaderFragment CompleteVertexDiffuseAddAmbientForPixelLighting&{shaderVersion}
 	else
 
 		if (&addAmbientFlag)
-			shaderFragment CompleteVertexDiffuseAddAmbient&{shaderVersion}	
+			shaderFragment CompleteVertexDiffuseAddAmbient&{shaderVersion}
 		else
-			shaderFragment CompleteVertexDiffuse&{shaderVersion}	
+			shaderFragment CompleteVertexDiffuse&{shaderVersion}
 		endif
 	endif
-	
-		
+
+
 enddef
 
 
@@ -2830,21 +2830,21 @@ enddef
 define DX8SpecularPassLightFragments(lightOffset  lightCount distantLightCount pointLightCount spotLightCount shaderVersion)
 
 	# ##trace "Specular lighting pass, TotalCount: &lightCount, Distant: &distantLightCount, Point: &pointLightCount, Spot: &spotLightCount"
-	
+
 	seti spotOffset (&distantLightCount + &pointLightCount)
 	seti pointSpotCount (&pointLightCount + &spotLightCount)
 
 	create OffsetToMask( &distantLightCount $pointSpotCount)
-		
-	set pointSpotMask $integerMask	
-	
+
+	set pointSpotMask $integerMask
+
 	create OffsetToMask($spotOffset &spotLightCount)
 	set spotMask $integerMask
-	
+
 	shaderFragment CreateReflectionVector&{shaderVersion}
-	
+
 	shaderFragment SetLight&{lightOffset}Offset&{shaderVersion}
-	
+
 ###
 # DX8 specular distant lights for this pass
 ###
@@ -2852,17 +2852,17 @@ define DX8SpecularPassLightFragments(lightOffset  lightCount distantLightCount p
 	if (&distantLightCount)
 		create OffsetToMask(0 &distantLightCount)
 		seti distantMask $integerMask
-		
+
 		create GenerateMaskString($distantMask)
 		# ##trace "Distant light spec mask: $returnedMaskString"
 		# I have to compute NdotL anyway, for shutting off R.L when N.L < 0
-		shaderFragment DistantVertexDiffuse${returnedMaskString}&{shaderVersion} 
+		shaderFragment DistantVertexDiffuse${returnedMaskString}&{shaderVersion}
 		shaderFragment DistantVertexSpecular${returnedMaskString}&{shaderVersion}
 	else
 		seti distantMask 0
 	endif
-	
-	
+
+
 	seti finalVertexSpecularMask $distantMask
 
 ####
@@ -2870,13 +2870,13 @@ define DX8SpecularPassLightFragments(lightOffset  lightCount distantLightCount p
 ####
 
 	if ($pointSpotCount)
-	
+
 		# 16 to 4 clocks
 		create GenerateMaskString($pointSpotMask)
 		set pointSpotMaskString $returnedMaskString
-		
+
 		shaderFragment PointSpotLightVectors${pointSpotMaskString}&{shaderVersion}
-		
+
 		# set address register to '0' or '1' here, address 'pass'
 		# 1 clock
 		if ($secondSet)
@@ -2884,19 +2884,19 @@ define DX8SpecularPassLightFragments(lightOffset  lightCount distantLightCount p
 		else
 			shaderFragment SetLight0Offset&{shaderVersion}
 		endif
-				
-						
+
+
 		shaderFragment PointSpotAttenuation${pointSpotMaskString}&{shaderVersion}
 
 
-		if (&spotLightCount)   
+		if (&spotLightCount)
 			create GenerateMaskString($spotMask)
 
-# address lights.			
+# address lights.
 			shaderFragment SetLight&{lightOffset}Offset&{shaderVersion}
 
 			shaderFragment SpotLightConesPart1${returnedMaskString}&{shaderVersion}
-			
+
 			# address light 'pass' offset.
 			if ($secondSet)
 				shaderFragment SetLight1Offset&{shaderVersion}
@@ -2907,18 +2907,18 @@ define DX8SpecularPassLightFragments(lightOffset  lightCount distantLightCount p
 			shaderFragment SpotLightConesPart2${returnedMaskString}&{shaderVersion}
 
 		endif
-			
-			
+
+
 		# return the address register to it's original state and address lights.
-		
+
 		shaderFragment SetLight&{lightOffset}Offset&{shaderVersion}
-		
+
 		# compute the N.L so I can test for n.l < 0
 		shaderFragment PointSpotVertexDiffuse${pointSpotMaskString}&{shaderVersion}
-		
+
 		# compute R.Ls for point/spot lights.
 		shaderFragment PointSpotVertexSpecular${pointSpotMaskString}&{shaderVersion}
-				
+
 		# combine point/spot mask with distant mask to create final.
 		seti finalVertexSpecularMask 	($finalVertexSpecularMask + $pointSpotMask)
 
@@ -2934,10 +2934,10 @@ define DX8SpecularPassLightFragments(lightOffset  lightCount distantLightCount p
 	# ##trace "finalVertexSpecularMask : $returnedMaskString"
 
 	shaderFragment VertexSpecular${returnedMaskString}&{shaderVersion}
-	
+
 
 # write output color  # 2 clocks
-	shaderFragment CompleteVertexSpecular&{shaderVersion}	
+	shaderFragment CompleteVertexSpecular&{shaderVersion}
 
 
 enddef
@@ -2945,12 +2945,12 @@ enddef
 
 
 define DX9LightFragments(addAmbientFlag  specularEnabled bumpMapThisSection lightOffset lightCount distantLightCount pointLightCount spotLightCount shaderVersion)
-	
-	
+
+
 	#trace "$currentMaterialName"
-	
+
 	#trace "DX9 lighting chunk, Bumpmap: &bumpMapThisSection  ambient: &addAmbientFlag specular: &specularEnabled  light offset: &lightOffset TotalCount: &lightCount, Distant: &distantLightCount, Point: &pointLightCount, Spot: &spotLightCount"
-	
+
 	set returnedMaskString ""
 	seti integerMask 0
 
@@ -2967,7 +2967,7 @@ define DX9LightFragments(addAmbientFlag  specularEnabled bumpMapThisSection ligh
 	seti pointSpotPixelLightMask 0
 
 	seti finalVertexLightMask 0
-	
+
 	setb secondSet false
 
 	if (&lightOffset > 3)
@@ -2976,17 +2976,17 @@ define DX9LightFragments(addAmbientFlag  specularEnabled bumpMapThisSection ligh
 
 	create OffsetToMask( 0 &distantLightCount)
 	seti distantMask $integerMask
-	
+
 	create OffsetToMask( &distantLightCount $pointSpotCount)
 	seti pointSpotMask $integerMask
-		
+
 	create OffsetToMask($spotOffset &spotLightCount)
 	seti spotMask $integerMask
-	
+
 	shaderFragment ZeroHDROutputs&{shaderVersion}
-		
+
 	shaderFragment SetLight&{lightOffset}Offset&{shaderVersion}
-	
+
 ###
 # DX9 distant lights for this call
 ###
@@ -3000,22 +3000,22 @@ define DX9LightFragments(addAmbientFlag  specularEnabled bumpMapThisSection ligh
 	if (&bumpMapThisSection)
 
 		if (&distantLightCount > 1)
-		
+
 			# special 2 light case.
 			if (&distantLightCount = 2 and &lightCount = 2)
 				seti distantVertexLightMask  0
 				seti distantPixelLightMask 3
 				seti perPixelLightCount ($perPixelLightCount+2)
 			endif
-			
+
 			# if there are exactly 2 distants, but still more lights, then bump the first  lights.
-			
+
 			if (&distantLightCount = 2 and &lightCount > 2)
 				seti distantVertexLightMask  0
 				seti distantPixelLightMask 3
 				seti perPixelLightCount 2
 			endif
-			
+
 			# probably the 5 light pie menu case, if this 'call' has 4 distants.
 			# setup 3 pixel lights in this case, and 1 vertex.
 			if (&distantLightCount > 2)
@@ -3023,14 +3023,14 @@ define DX9LightFragments(addAmbientFlag  specularEnabled bumpMapThisSection ligh
 				seti distantVertexLightMask $integerMask
 
 				seti distantVertexLightMask  ($distantVertexLightMask - 7)
-				
+
 				seti distantPixelLightMask 7
 				seti perPixelLightCount 3
 			endif
-			
+
 		else
 			# 1 or less distant lights..
-			
+
 			if ($distantLightCount = 0 )
 				seti distantVertexLightMask  0
 				seti distantPixelLightMask 0
@@ -3040,39 +3040,39 @@ define DX9LightFragments(addAmbientFlag  specularEnabled bumpMapThisSection ligh
 				seti distantPixelLightMask 1
 				seti perPixelLightCount 1
 			endif
-			
-		endif	
-					
+
+		endif
+
 	else
 		seti distantVertexLightMask $distantMask
 	endif
 
 
 
-			
+
 	if ($distantPixelLightMask)
 		create GenerateMaskString($distantPixelLightMask)
 		#trace "Distant PixeL LIght Mask: $returnedMaskString"
 		shaderFragment PixelLightingDistantSetup${returnedMaskString}&{shaderVersion}
-		
+
 		if ($perPixelLightCount = 1)
 			shaderFragment WriteLightVectorToTex4&{shaderVersion}
 		endif
-		
+
 	endif
-		
-				
+
+
 	if ($distantVertexLightMask)
 		create GenerateMaskString($distantVertexLightMask)
-		
+
 		#trace "Distant Vertex LIght Mask: $returnedMaskString"
-	
+
 		shaderFragment DistantVertexDiffuse${returnedMaskString}&{shaderVersion}
-			
+
 		seti finalVertexLightMask $distantVertexLightMask
 	endif
-	
-	
+
+
 
 ####
 # DX9 Point and spot for this call
@@ -3080,19 +3080,19 @@ define DX9LightFragments(addAmbientFlag  specularEnabled bumpMapThisSection ligh
 
 	#trace "final vertex mask so far: $finalVertexLightMask"
 	if ($pointSpotCount)
-			
+
 		# create a 'bit list' of all pointspot lights.
 		# full list  = Pixel Light List | Vertex Light List
-		
+
 		# 16 max,  4 min clocks.
 		create GenerateMaskString($pointSpotMask)
 		set pointSpotMaskString $returnedMaskString
-		
+
 		#trace "PointSpot Mask: $returnedMaskString"
-		
+
 		# a0.x must be the light index. (usually 0 or 4)
 		shaderFragment PointSpotLightVectors${pointSpotMaskString}&{shaderVersion}
-				
+
 		# 1 clock
 		# set address register to '0' or '1' here
 		if ($secondSet)
@@ -3102,9 +3102,9 @@ define DX9LightFragments(addAmbientFlag  specularEnabled bumpMapThisSection ligh
 			shaderFragment SetLight0Offset&{shaderVersion}
 			#trace "light 0 offset"
 		endif
-		
-		# 8 clocks max, 4 Minimum		
-		# this requires a 0 or 1 (1 = second bank of lights)		
+
+		# 8 clocks max, 4 Minimum
+		# this requires a 0 or 1 (1 = second bank of lights)
 		shaderFragment PointSpotAttenuation${pointSpotMaskString}&{shaderVersion}
 
 
@@ -3119,7 +3119,7 @@ define DX9LightFragments(addAmbientFlag  specularEnabled bumpMapThisSection ligh
 			#trace "SpotCone P1 - light offset: &lightOffset"
 			# back to light offset, a 0 or 4.
 			shaderFragment SpotLightConesPart1${returnedMaskString}&{shaderVersion}
-			
+
 			# set light to light block index.
 			if ($secondSet)
 				#trace "SpotCone P2 - light offset: 1"
@@ -3129,41 +3129,41 @@ define DX9LightFragments(addAmbientFlag  specularEnabled bumpMapThisSection ligh
 				shaderFragment SetLight0Offset&{shaderVersion}
 				#trace "SpotCone P2 - light offset: 0"
 			endif
-			
+
 			# requires zero or one.
-			
+
 			shaderFragment SpotLightConesPart2${returnedMaskString}&{shaderVersion}
 
-		
+
 		endif
-			
+
 		# at this point, diverge, and create point/spot tangent space vectors.
 		if (&bumpMapThisSection and $perPixelLightCount < 3)
-		
+
 		    # add another to the counter, so the PS is informed of the light count to expect.
 			seti perPixelLightCount ($perPixelLightCount+1)
 			create OffsetToMask(&distantLightCount 1)
 			seti pointSpotPixelLightMask $integerMask
 			seti pointSpotVertexLightMask ($pointSpotMask - $integerMask)
-		
+
 		else
 			seti pointSpotVertexLightMask ($pointSpotMask)
 		endif
-	
+
 		# return the address register to it's original state and address lights.
 		# 1 clock
 		shaderFragment SetLight&{lightOffset}Offset&{shaderVersion}
 		#trace "final vertex mask so far: $finalVertexLightMask"
 		#trace "Point spot vertex mask: $pointSpotVertexLightMask"
 		#trace "Point spot pixel mask: $pointSpotPixelLightMask"
-		
-		if ($pointSpotVertexLightMask)	
+
+		if ($pointSpotVertexLightMask)
 			# 5 max, 2 min
 			create GenerateMaskString($pointSpotVertexLightMask)
 			#trace "PointSpot vertex mask: $returnedMaskString"
 			shaderFragment PointSpotVertexDiffuse${returnedMaskString}&{shaderVersion}
 		endif
-		
+
 		if ($pointSpotPixelLightMask)
 			create GenerateMaskString($pointSpotPixelLightMask)
 			# ##trace "PointSpot pixel mask: $returnedMaskString"
@@ -3172,18 +3172,18 @@ define DX9LightFragments(addAmbientFlag  specularEnabled bumpMapThisSection ligh
 			if (&distantLightCount = 1)
 				shaderFragment WriteLightVectorToTex5&{shaderVersion}
 			endif
-			
+
 			if (&distantLightCount = 2)
 				shaderFragment WriteLightVectorToTex6&{shaderVersion}
 			endif
-						
+
 		endif
-				
+
 		seti finalVertexLightMask ($finalVertexLightMask + $pointSpotVertexLightMask)
 
 
 	endif
-	
+
 	#trace "final vertex mask before finalize: $finalVertexLightMask"
 
 
@@ -3195,7 +3195,7 @@ define DX9LightFragments(addAmbientFlag  specularEnabled bumpMapThisSection ligh
 
 	if (&bumpMapThisSection)
 		if ($finalVertexLightMask = 0) # all lights were bumpmapped.
-			shaderFragment ZeroDiffuse&{shaderVersion} # zero r_diffuse_r2 so that the ambient can be added to it and the color finalized. 
+			shaderFragment ZeroDiffuse&{shaderVersion} # zero r_diffuse_r2 so that the ambient can be added to it and the color finalized.
 		endif
 	endif
 
@@ -3207,7 +3207,7 @@ define DX9LightFragments(addAmbientFlag  specularEnabled bumpMapThisSection ligh
 		else
 			shaderFragment VertexDiffuse${returnedMaskString}&{shaderVersion}
 		endif
-		
+
 	endif
 
 
@@ -3230,9 +3230,9 @@ define DX9LightFragments(addAmbientFlag  specularEnabled bumpMapThisSection ligh
 	if (&specularEnabled)
 
 		 #trace "Specular lighting pass, TotalCount: &lightCount, Distant: &distantLightCount, Point: &pointLightCount, Spot: &spotLightCount"
-		
+
 		shaderFragment SetLight&{lightOffset}Offset&{shaderVersion}
-		
+
 	###
 	# distant lights for this call
 	###
@@ -3243,14 +3243,14 @@ define DX9LightFragments(addAmbientFlag  specularEnabled bumpMapThisSection ligh
 
 			# recompute all lighting, just to be safe.
 			if ($distantPixelLightMask)
-				shaderFragment DistantVertexDiffuse${returnedMaskString}&{shaderVersion} 
+				shaderFragment DistantVertexDiffuse${returnedMaskString}&{shaderVersion}
 			endif
-			
+
 			shaderFragment DistantVertexSpecular${returnedMaskString}&{shaderVersion}
 		else
 			seti distantMask 0
 		endif
-				
+
 		seti finalVertexSpecularMask $distantMask
 
 	####
@@ -3266,20 +3266,20 @@ define DX9LightFragments(addAmbientFlag  specularEnabled bumpMapThisSection ligh
 
 			# compute R.Ls for point/spot lights.
 			shaderFragment PointSpotVertexSpecular${pointSpotMaskString}&{shaderVersion}
-			
+
 			# combine point/spot mask with distant mask to create final.
 			seti finalVertexSpecularMask 	($finalVertexSpecularMask + $pointSpotMask)
 
 		endif
 
 		create GenerateMaskString($finalVertexSpecularMask)
-		
+
 		set finalSpecularMaskString $returnedMaskString
-		
+
 	####
 	# Finalize Specular here
 	####
-	
+
 		if ($secondSet = false)
 			shaderFragment VertexSpecular${finalSpecularMaskString}&{shaderVersion}
 		else
@@ -3287,17 +3287,17 @@ define DX9LightFragments(addAmbientFlag  specularEnabled bumpMapThisSection ligh
 		endif
 
 		# if we are adding ambient, then this is the only  or 2nd calling of this function, complete specular now and write to output.
-			
+
 		if (&addAmbientFlag)
 			shaderFragment CompleteSpecularHDR&{shaderVersion}
 		endif
-			
+
 	endif # if specular
-		
+
 
 
 	#shaderFragment NoLightingHDR&{shaderVersion}
-		
+
 enddef
 
 
@@ -3307,20 +3307,20 @@ define CheckForSpecular()
 
 	setb doSpecular false
 	setf specIntensity 0.0
-	
-	
+
+
 	if ($stdMatSpecPower > 1)
 		setf  specIntensity ($stdMatSpecCoef.x + $stdMatSpecCoef.y + $stdMatSpecCoef.z)
-		
+
 		if ($specIntensity > 0.30)
 			setb doSpecular true
 		else
 			##trace "Specular coef amazingly low, cancelling specular for this material: $currentMaterialName"
 			seti stdMatSpecPower 0
 		endif
-		
+
 	endif
-	
+
 enddef
 
 
@@ -3334,35 +3334,35 @@ define StandardLightFragmentsSWVS(specularFlag shaderVersion)
 	##trace "------------- $currentMaterialName -- StandardLightFragmentsSWVS, specular Flag: &specularFlag"
 
 	seti totalLights ($distantLightCount + $pointLightCount +$spotLightCount)
-	
+
 	seti slotsLeft 4
 	seti pass1DistantLights 0
 	seti pass1PointLights 0
 	seti pass1SpotLights 0
-	seti pass1PointSpotLights 0 
+	seti pass1PointSpotLights 0
 	setb doSpecular false
-	
+
 
 	create CheckForSpecular()
 
 	# 4 or less light case.
-	
+
 	if ($totalLights < 5)
 		if ($totalLights > 0)
 			create SWVSLightFragments( true $doSpecular 0 $totalLights $distantLightCount $pointLightCount $spotLightCount &shaderVersion)
 			seti totalLights 0
 		endif
 	else
-					
+
 		if ($distantLightCount < 5)
 			seti pass1DistantLights $distantLightCount
 		else
 			seti pass1DistantLights 4
 		endif
-				
+
 		seti slotsLeft (4 - $pass1DistantLights)
 		##trace "Slots left after distant: $slotsLeft"
-					
+
 		if ($pointLightCount > $slotsLeft)  # more point lights than slots left.
 			seti pass1PointLights $slotsLeft   # pass 1 points then are the rest of the slots.
 			seti slotsLeft 0  # no more slots left.
@@ -3370,7 +3370,7 @@ define StandardLightFragmentsSWVS(specularFlag shaderVersion)
 			seti slotsLeft ($slotsLeft - $pointLightCount)  # there was room, compute new slots left
 			seti pass1PointLights $pointLightCount  # consumes all point lights in the first pass.
 		endif
-					
+
 		##trace "Slots left after point: $slotsLeft"
 
 		if ($spotLightCount > $slotsLeft)  # more spot lights than slots left.
@@ -3380,7 +3380,7 @@ define StandardLightFragmentsSWVS(specularFlag shaderVersion)
 			seti slotsLeft ($slotsLeft - $spotLightCount)  # there was room, compute new slots left
 			seti pass1SpotLights $spotLightCount  # consumes all point lights in the first pass.
 		endif
-			
+
 		# start at light zero, no ambient yet, 4 lights...
 		create SWVSLightFragments( false $doSpecular 0 4 $pass1DistantLights $pass1PointLights $pass1SpotLights &shaderVersion)
 
@@ -3389,23 +3389,23 @@ define StandardLightFragmentsSWVS(specularFlag shaderVersion)
 		seti pass2SpotLights ($spotLightCount - $pass1SpotLights)
 
 		seti totalLightsLeft ($pass2DistantLights +  $pass2PointLights + $pass2SpotLights)
-		
+
 		if ($totalLights)
 			create SWVSLightFragments( true $doSpecular 4 $totalLightsLeft $pass2DistantLights $pass2PointLights $pass2SpotLights &shaderVersion)
-		endif			
-		
+		endif
+
 	endif # one/two set of lights in this pass.
-	
-	
+
+
 enddef
 
 
 
 define SWVSLightFragments(addAmbientFlag  specularEnabled lightOffset lightCount distantLightCount pointLightCount spotLightCount shaderVersion)
-	
-	
+
+
 	 ##trace "SWVS lighting chunk,  ambient: &addAmbientFlag specular: &specularEnabled  light offset: &lightOffset TotalCount: &lightCount, Distant: &distantLightCount, Point: &pointLightCount, Spot: &spotLightCount"
-	
+
 	set returnedMaskString ""
 	seti integerMask 0
 
@@ -3420,7 +3420,7 @@ define SWVSLightFragments(addAmbientFlag  specularEnabled lightOffset lightCount
 	seti pointSpotVertexLightMask 0
 
 	seti finalVertexLightMask 0
-	
+
 	setb secondSet false
 
 	if (&lightOffset > 3)
@@ -3429,18 +3429,18 @@ define SWVSLightFragments(addAmbientFlag  specularEnabled lightOffset lightCount
 
 	create OffsetToMask( 0 &distantLightCount)
 	seti distantMask $integerMask
-	
+
 	create OffsetToMask( &distantLightCount $pointSpotCount)
 	seti pointSpotMask $integerMask
-		
+
 	create OffsetToMask($spotOffset &spotLightCount)
 	seti spotMask $integerMask
-	
-	
-	
-	
+
+
+
+
 	shaderFragment SetLight&{lightOffset}Offset&{shaderVersion}
-	
+
 ###
 #  distant lights for this call
 ###
@@ -3456,20 +3456,20 @@ define SWVSLightFragments(addAmbientFlag  specularEnabled lightOffset lightCount
 
 
 
-			
 
-				
+
+
 	if ($distantVertexLightMask)
 		create GenerateMaskString($distantVertexLightMask)
-		
+
 		# ##trace "Distant Vertex LIght Mask: $returnedMaskString"
-	
+
 		shaderFragment DistantVertexDiffuse${returnedMaskString}&{shaderVersion}
-			
+
 		seti finalVertexLightMask $distantVertexLightMask
 	endif
-	
-	
+
+
 
 ####
 # Point and spot for this call
@@ -3477,18 +3477,18 @@ define SWVSLightFragments(addAmbientFlag  specularEnabled lightOffset lightCount
 
 	# ##trace "final vertex mask so far: $finalVertexLightMask"
 	if ($pointSpotCount)
-			
+
 		# create a 'bit list' of all pointspot lights.
 		# full list  = Pixel Light List | Vertex Light List
-		
+
 		# 16 max,  4 min clocks.
 		create GenerateMaskString($pointSpotMask)
 		set pointSpotMaskString $returnedMaskString
-		
+
 		# ##trace "PointSpot Mask: $returnedMaskString"
-		
+
 		shaderFragment PointSpotLightVectors${pointSpotMaskString}&{shaderVersion}
-				
+
 		# 1 clock
 		# set address register to '0' or '1' here
 		if ($secondSet)
@@ -3496,8 +3496,8 @@ define SWVSLightFragments(addAmbientFlag  specularEnabled lightOffset lightCount
 		else
 			shaderFragment SetLight0Offset&{shaderVersion}
 		endif
-		
-		# 8 clocks max, 4 Minimum				
+
+		# 8 clocks max, 4 Minimum
 		shaderFragment PointSpotAttenuation${pointSpotMaskString}&{shaderVersion}
 
 
@@ -3505,44 +3505,44 @@ define SWVSLightFragments(addAmbientFlag  specularEnabled lightOffset lightCount
 		if (&spotLightCount)
 			create GenerateMaskString($spotMask)
 
-			# set light index.			
+			# set light index.
 			shaderFragment SetLight&{lightOffset}Offset&{shaderVersion}
 
 			shaderFragment SpotLightConesPart1${returnedMaskString}&{shaderVersion}
-			
+
 			# set light pass index
 			if ($secondSet)
 				shaderFragment SetLight1Offset&{shaderVersion}
 			else
 				shaderFragment SetLight0Offset&{shaderVersion}
 			endif
-			
+
 			shaderFragment SpotLightConesPart2${returnedMaskString}&{shaderVersion}
 
 		endif
-			
+
 		seti pointSpotVertexLightMask ($pointSpotMask)
-	
+
 		# return the address register to it's original state and address lights.
 		# 1 clock
 		shaderFragment SetLight&{lightOffset}Offset&{shaderVersion}
 		# ##trace "final vertex mask so far: $finalVertexLightMask"
 		# ##trace "Point spot vertex mask: $pointSpotVertexLightMask"
 		# ##trace "Point spot pixel mask: $pointSpotPixelLightMask"
-		
-		if ($pointSpotVertexLightMask)	
+
+		if ($pointSpotVertexLightMask)
 			# 5 max, 2 min
 			create GenerateMaskString($pointSpotVertexLightMask)
 			# ##trace "PointSpot vertex mask: $returnedMaskString"
 			shaderFragment PointSpotVertexDiffuse${returnedMaskString}&{shaderVersion}
 		endif
-			
+
 		seti finalVertexLightMask ($finalVertexLightMask + $pointSpotVertexLightMask)
 
 
 	endif
-	
-	
+
+
 
 ####
 # Finalize Diffuse here
@@ -3557,7 +3557,7 @@ define SWVSLightFragments(addAmbientFlag  specularEnabled lightOffset lightCount
 		else
 			shaderFragment VertexDiffuse${returnedMaskString}&{shaderVersion}
 		endif
-		
+
 	endif
 
 
@@ -3580,9 +3580,9 @@ define SWVSLightFragments(addAmbientFlag  specularEnabled lightOffset lightCount
 	if (&specularEnabled)
 
 		 ##trace "Specular lighting pass, TotalCount: &lightCount, Distant: &distantLightCount, Point: &pointLightCount, Spot: &spotLightCount"
-		
+
 		shaderFragment SetLight&{lightOffset}Offset&{shaderVersion}
-		
+
 	###
 	# distant lights for this call
 	###
@@ -3594,7 +3594,7 @@ define SWVSLightFragments(addAmbientFlag  specularEnabled lightOffset lightCount
 		else
 			seti distantMask 0
 		endif
-				
+
 		seti finalVertexSpecularMask $distantMask
 
 	####
@@ -3602,24 +3602,24 @@ define SWVSLightFragments(addAmbientFlag  specularEnabled lightOffset lightCount
 	####
 
 		if ($pointSpotCount)
-		
+
 			# compute R.Ls for point/spot lights.
-			
+
 			shaderFragment PointSpotVertexSpecular${pointSpotMaskString}&{shaderVersion}
-					
+
 			# combine point/spot mask with distant mask to create final.
 			seti finalVertexSpecularMask 	($finalVertexSpecularMask + $pointSpotMask)
 
 		endif
 
 		create GenerateMaskString($finalVertexSpecularMask)
-		
+
 		set finalSpecularMaskString $returnedMaskString
-		
+
 	####
 	# Finalize Specular here
 	####
-	
+
 		if ($secondSet = false)
 			shaderFragment VertexSpecular${finalSpecularMaskString}&{shaderVersion}
 		else
@@ -3627,16 +3627,16 @@ define SWVSLightFragments(addAmbientFlag  specularEnabled lightOffset lightCount
 		endif
 
 		# if we are adding ambient, then this is the only  or 2nd calling of this function, complete specular now and write to output.
-			
+
 		if (&addAmbientFlag)
 			shaderFragment CompleteSpecular&{shaderVersion}
 		endif
-			
+
 	endif # if specular
-		
 
 
-	
+
+
 enddef
 
 
@@ -3650,7 +3650,7 @@ define BindsForLighting(lightingMode)
 	setv3 finalShaderEmissive (($stdMatEmissiveCoef).xyz)
 
 	setf adjustedSpecular ($stdMatSpecPower *0.4)
-	
+
 	if (&lightingMode = $kFullLighting)
 		bindConstants 18 -bindingID allStandardLightData2 -constantCount 32
 
@@ -3668,7 +3668,7 @@ define BindsForLighting(lightingMode)
 		if (&lightingMode = $kAmbientOnly)
 
 			bindConstants 14 -bindingID immediateData -data ($finalShaderDiffuse, $stdMatAlphaMultiplier) -constantType float
-			
+
 			bindConstants 16 -bindingID ambientLight -constantCount 1 -constantType float
 
 			bindConstants 17 -bindingID immediateData -data ($finalShaderEmissive, 1) -constantType float
@@ -3677,7 +3677,6 @@ define BindsForLighting(lightingMode)
 			bindConstants 14 -bindingID immediateData -data ($finalShaderDiffuse, $stdMatAlphaMultiplier) -constantType float
 		endif
 	endif
-	
+
 
 enddef
-

@@ -44,14 +44,14 @@ define SteamPass(steamTexture speed origin)
          ffTextureCoordsSource 0
          texture &steamTexture
          textureBlend select(texture) multiply(texture diffuse)
-      end 
+      end
 
       stage
          ffTextureCoordsSource 0
          textureMatrixAnimation -targetType fixedFunction -arot sawtooth &speed 0 (0,1) -aorigin ((1, 1) - (&origin))
          texture &steamTexture
          textureBlend multiply(outRegister:alphaReplicate texture) multiply(outRegister texture)
-      end 
+      end
    end
 enddef
 
@@ -73,14 +73,14 @@ define CubeAlphaFalloffTexture()
          vertexFormatPred targetindices 0 false
 
       create DetermineHardwareSupport()
-      
+
       if ($useFixedFunctionPath or $useSWVertexShaderPath)
          pass -fixedFunction
             create LightingStatesNoStdLightsParam(true false)
-            
+
             alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
             depthTest true -enableDepthWrite false
-            
+
             colorScalar @color @alpha
             ffScaleModelTransform @scale
             fillmode $stdMatFillMode
@@ -96,20 +96,20 @@ define CubeAlphaFalloffTexture()
                textureAddressing clamp clamp clamp
 
                textureBlend select(texture:alphaReplicate) multiply(texture colorScalar)
-            end 
+            end
 
             stage
                texture $stdMatBaseTextureName ${stdMatBaseTextureParam}
                ffTextureCoordsSource 0
                textureBlend select(colorScalar) multiply(outRegister texture)
-            end 
+            end
          end
       else
          pass
-         
+
             # supports global wireframe modes and so forth.
             create NonStandardLighting()
-            
+
             alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
             depthTest true -enableDepthWrite false
 
@@ -123,16 +123,16 @@ define CubeAlphaFalloffTexture()
                   dcl_position v0
                   dcl_normal v1
                   dcl_texcoord v2
-                  
+
                   mul r0.xyz, v0, c10.x
                   mov r0.w, v0.wwww
                   m4x4 oPos, r0, c0
                   m3x3 oT0.xyz, v1,c4
-                  
+
                   mov oT1.xy, v2
                endShaderSource
             end
-            
+
             shaderProgram -target pixelProgram -method assemble
                bindConstants 0 -bindingID immediateData -data (@color)
                bindConstants 1 -bindingID immediateData -data (@alpha) -startChannel w
@@ -148,12 +148,12 @@ define CubeAlphaFalloffTexture()
             end
 
 
-            sampler 0 
+            sampler 0
                texture $stdMatEnvCubeTextureName -alphaFalloffCubeMap 64 (0, 1, 0) (-30, 255) 5
                textureMIPFilterHint disabled
                textureAddressing clamp clamp clamp
             end
-            
+
             sampler 1
                texture $stdMatBaseTextureName ${stdMatBaseTextureParam}
             end

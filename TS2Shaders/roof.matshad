@@ -10,20 +10,20 @@ define RoofPreviewMaterial()
          vertexFormatPred normal        0 true
          vertexFormatPred blendindices  0 false
          vertexFormatPred targetindices 0 false
-         
-         pass -fixedFunction         
-            colorScalar (0.5, 0.4, 0.4, 1.0)         
+
+         pass -fixedFunction
+            colorScalar (0.5, 0.4, 0.4, 1.0)
             create LightingStatesNoStdLights()
             depthTest true -enableDepthWrite true
 
-	    alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)		
+	    alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
 
             stage
                textureBlend select(colorScalar) select(colorScalar)
-            end 
+            end
          end
 
-	pass -fixedFunction        
+	pass -fixedFunction
             create LightingStatesNoStdLights()
             fillmode wireframe
 	    cullmode none
@@ -32,7 +32,7 @@ define RoofPreviewMaterial()
 
             stage
                textureBlend select(colorScalar) select(colorScalar)
-            end 
+            end
          end
 
       end
@@ -46,18 +46,18 @@ define RoofPreviewMaterialBack()
          vertexFormatPred normal        0 true
          vertexFormatPred blendindices  0 false
          vertexFormatPred targetindices 0 false
-         
-         pass -fixedFunction         
-            colorScalar (0.25, 0.1, 0.1, 1.0)         
+
+         pass -fixedFunction
+            colorScalar (0.25, 0.1, 0.1, 1.0)
             create LightingStatesNoStdLights()
 
             depthTest true -enableDepthWrite true
 
-	    alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)		
+	    alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
 
             stage
                textureBlend select(colorScalar) select(colorScalar)
-            end 
+            end
          end
 
       end
@@ -70,16 +70,16 @@ define RoofPreviewMaterialStrip()
          vertexFormatPred position      0 true
          vertexFormatPred blendindices  0 false
          vertexFormatPred targetindices 0 false
-         
-         pass -fixedFunction         
-            colorScalar (1.0, 1.0, 1.0, 1.0)         
+
+         pass -fixedFunction
+            colorScalar (1.0, 1.0, 1.0, 1.0)
             create LightingStatesNoStdLights()
 
-            depthTest true -enableDepthWrite false	    
+            depthTest true -enableDepthWrite false
 
             stage
                textureBlend select(colorScalar) select(colorScalar)
-            end 
+            end
          end
 
       end
@@ -92,16 +92,16 @@ define RoofPreviewMaterialUpperStrip()
          vertexFormatPred position      0 true
          vertexFormatPred blendindices  0 false
          vertexFormatPred targetindices 0 false
-         
-         pass -fixedFunction         
-            colorScalar (1.0, 0.0, 0.0, 1.0)         
+
+         pass -fixedFunction
+            colorScalar (1.0, 0.0, 0.0, 1.0)
             create LightingStatesNoStdLights()
 
             depthTest true -enableDepthWrite false
 
             stage
                textureBlend select(colorScalar) select(colorScalar)
-            end 
+            end
          end
 
       end
@@ -115,21 +115,21 @@ define RoofPreviewMaterialTopBoundary()
          vertexFormatPred normal        0 true
          vertexFormatPred blendindices  0 false
          vertexFormatPred targetindices 0 false
-         
-         pass -fixedFunction         
-            colorScalar (0.4, 0, 0.1, 1.0)         
+
+         pass -fixedFunction
+            colorScalar (0.4, 0, 0.1, 1.0)
             create LightingStatesNoStdLights()
 
             depthTest true -enableDepthWrite true
 
-	    alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)		
+	    alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
 
             stage
                textureBlend select(colorScalar) select(colorScalar)
-            end 
+            end
          end
 
-	pass -fixedFunction        
+	pass -fixedFunction
             create LightingStatesNoStdLights()
             fillmode wireframe
             depthTest true -enableDepthWrite false
@@ -137,7 +137,7 @@ define RoofPreviewMaterialTopBoundary()
 
             stage
                textureBlend select(colorScalar) select(colorScalar)
-            end 
+            end
          end
 
 
@@ -151,47 +151,47 @@ define RoofBumps()
          validateRenderShaderContext -vertexFormat position 0 required
          validateRenderShaderContext -vertexFormat normal 0 required
          validateRenderShaderContext -vertexFormat texcoord 0 required
-                          
-         pass 
+
+         pass
             shaderProgram -target vertexProgram -method compile -version 2_0
                bindConstants 0 -bindingID  geomToClip     -constantCount 4
 			      bindConstants 4 -bindingID  geomToCamera   -constantCount 3
-			      bindConstants 7 -bindingID  cameraToGeom   -constantCount 3			      
+			      bindConstants 7 -bindingID  cameraToGeom   -constantCount 3
 			      bindConstants 10 -bindingID allStandardLightData -constantCount 4 -constantType float
-			      bindConstants 14 -bindingID immediateData -data $stdMatDiffCoef		
-			      bindConstants 15 -bindingID ambientLight -constantCount 1 -constantType float	      
+			      bindConstants 14 -bindingID immediateData -data $stdMatDiffCoef
+			      bindConstants 15 -bindingID ambientLight -constantCount 1 -constantType float
 			      bindConstants 18 -bindingID allStandardLightData2 -constantCount 32
-			      
+
 			      shaderSource
 			         float4x4 modelviewproj : register(c0);
 				      float4x3 modelview : register(c4);
-				      float4x3 modelviewInv : register(c7);				      				      
-				      
+				      float4x3 modelviewInv : register(c7);
+
 				      // light direction
-				      float4 lightDir0 : register(c18);					      
-				      float4 lightDir1 : register(c19);	
-				      float4 lightDir2 : register(c20);	
-				      
+				      float4 lightDir0 : register(c18);
+				      float4 lightDir1 : register(c19);
+				      float4 lightDir2 : register(c20);
+
 				      // light colors
-				      float4 lightCol0 : register(c26);	
+				      float4 lightCol0 : register(c26);
 				      float4 lightCol1 : register(c27);
 				      float4 lightCol2 : register(c28);
-				      				      
-				      float4 color : register(c14);		      
+
+				      float4 color : register(c14);
 				      float4 ambient : register(c15);
-				      
-				      struct a2v 
+
+				      struct a2v
                   {
-                     float4 pos		: POSITION;                     
+                     float4 pos		: POSITION;
                      float3 normal	: NORMAL;
                      float2 txcoord	: TEXCOORD0;
-                     float2 tangent	: TEXCOORD1;                     
+                     float2 tangent	: TEXCOORD1;
                   };
 
                   struct v2f
                   {
-                     float4 hpos		 : POSITION;	
-                     float4 color    : COLOR0;                                    
+                     float4 hpos		 : POSITION;
+                     float4 color    : COLOR0;
                      float4 ambient  : COLOR1;
                      float2 txcoord	 : TEXCOORD0;
 	                  float3 lightDir0: TEXCOORD1;
@@ -202,66 +202,66 @@ define RoofBumps()
 	                  float3 lightCol2: TEXCOORD6;
 	                  float3 normal : TEXCOORD7;
                   };
-                  
+
                   v2f VertexMain(a2v IN)
                   {
 	                  v2f OUT;
 
 	                  // vertex position in object space
-	                  float4 pos = float4(IN.pos.x,IN.pos.y,IN.pos.z,1.0);	                  	                  
-	                  
+	                  float4 pos = float4(IN.pos.x,IN.pos.y,IN.pos.z,1.0);
+
 	                  // vertex position in clip space
-	                  OUT.hpos = mul(pos, modelviewproj);	           	                  
-	                  
+	                  OUT.hpos = mul(pos, modelviewproj);
+
 	                  float3 tangent = float3(IN.tangent.x, IN.tangent.y, 0);
-	                  	                  
+
 	                  // compute binormal
 	                  float3 binormal = normalize(cross(IN.normal, tangent));
-	                  
+
 	                  // tangent space matrix
 	                  float3x3 tbn = float3x3(tangent, binormal, IN.normal);
-	                  
-	                  // light direction in object space	                  
+
+	                  // light direction in object space
 	                  float3 lt0 = mul(lightDir0, (float3x3)modelviewInv);
 	                  float3 lt1 = mul(lightDir1, (float3x3)modelviewInv);
 	                  float3 lt2 = mul(lightDir2, (float3x3)modelviewInv);
-	                  
-	                  // light 0 direction in tangent space	                  	                  
-	                  OUT.lightDir0 = normalize(mul(tbn, lt0));	                                  
+
+	                  // light 0 direction in tangent space
+	                  OUT.lightDir0 = normalize(mul(tbn, lt0));
 	                  OUT.lightDir1 = normalize(mul(tbn, lt1));
 	                  OUT.lightDir2 = normalize(mul(tbn, lt2));
-	                  
+
 	                  OUT.lightCol0 = lightCol0;
 	                  OUT.lightCol1 = lightCol1;
 	                  OUT.lightCol2 = lightCol2;
-                  	
-	                  // copy texture coordinates	                  
+
+	                  // copy texture coordinates
 	                  OUT.txcoord=IN.txcoord.xy;
 	                  OUT.color = color;
 	                  OUT.color.a = 1;
-	                  
+
 	                  OUT.ambient = ambient;
 	                  OUT.normal = IN.normal;
 
 	                  return OUT;
                   }
-                  			         
+
 			      endShaderSource
             end # end shader program
-            
-               shaderProgram -target pixelProgram -method compile -version 1_4  #-disassemble "c:\sims2ep3\hlslPS.txt"             
-               
-                  shaderSource    
+
+               shaderProgram -target pixelProgram -method compile -version 1_4  #-disassemble "c:\sims2ep3\hlslPS.txt"
+
+                  shaderSource
                      sampler texmap;
                      sampler normmap;
                      sampler roofnoise;
-                     
+
                      struct v2f
                      {
-                        float4 hpos		 : POSITION;	   
-                        float4 color    : COLOR0;                                                   
+                        float4 hpos		 : POSITION;
+                        float4 color    : COLOR0;
                         float4 ambient  : COLOR1;
-                        float2 txcoord	 : TEXCOORD0;                                                
+                        float2 txcoord	 : TEXCOORD0;
                         float3 lightDir0: TEXCOORD1;
 	                     float3 lightDir1: TEXCOORD2;
 	                     float3 lightDir2: TEXCOORD3;
@@ -272,344 +272,344 @@ define RoofBumps()
                      };
 
                      float4 PixelMain(v2f pi) : COLOR
-                     {  
+                     {
                         // normal map
-                        float4 normal = tex2D(normmap, pi.txcoord);                                       
-                                 
-                        //bump.xyz = 4.0 * (bump.xyz - (0.5).xxx);                            
+                        float4 normal = tex2D(normmap, pi.txcoord);
+
+                        //bump.xyz = 4.0 * (bump.xyz - (0.5).xxx);
 //                        bump.z = pi.normal.z;
-                        //float3 normal = normalize(bump);                                                
-                        
+                        //float3 normal = normalize(bump);
+
                         // color map
-                        float4 color = tex2D(texmap, pi.txcoord);               
-                                                                                                
-                        float diff0 = saturate(dot(pi.lightDir0, normal.xyz));                        
+                        float4 color = tex2D(texmap, pi.txcoord);
+
+                        float diff0 = saturate(dot(pi.lightDir0, normal.xyz));
                         //float diff1 = saturate(dot(pi.lightDir1, normal.xyz));
                         //float diff2 = saturate(dot(pi.lightDir2, normal.xyz));
-                                               
+
                         float4 finalColor;
                         finalColor.rgb = diff0;//(diff0*pi.lightCol0 + diff1*pi.lightCol1 + diff2 + pi.ambient)*pi.color.rgb*color.rgb;
-                        
-                        finalColor.a = 1.0;                        
-                        return finalColor;                                                                                                                    
+
+                        finalColor.a = 1.0;
+                        return finalColor;
                      }
                   endShaderSource
-               end                                                     
-                              
-               
+               end
+
+
                sampler normmap
-                  texture "roof-manor-test-bump"#$stdMatNormalMapTextureName                
+                  texture "roof-manor-test-bump"#$stdMatNormalMapTextureName
                   textureAddressing clamp clamp clamp
                end
-               
+
                sampler 1#texmap
-                  texture $stdMatBaseTextureName                
+                  texture $stdMatBaseTextureName
                   textureAddressing clamp clamp clamp
                end
          end # end pass
-         
+
       end #end shader
    end # end material
-enddef 
+enddef
 
 define RoofSnow()
    material
-      shader -layer 2         
+      shader -layer 2
          validateRenderShaderContext -vertexFormat position 0 required
          validateRenderShaderContext -vertexFormat normal 0 required
          validateRenderShaderContext -vertexFormat texcoord 0 required
          validateRenderShaderContext -vertexFormat texcoord 1 required
-                          
-         pass 
+
+         pass
             alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
             cullmode $stdMatCullMode
             #fillmode wireframe
-            
+
             shaderProgram -target vertexProgram -method compile -version 2_0
-               bindConstants 0 -bindingID  geomToClip     -constantCount 4        
+               bindConstants 0 -bindingID  geomToClip     -constantCount 4
                bindConstants 4 -bindingID  geomToCamera   -constantCount 3
-			      bindConstants 7 -bindingID  cameraToGeom   -constantCount 3			
-			      bindConstants 15 -bindingID ambientLight -constantCount 1 -constantType float	                   			      
-			      bindConstants 18 -bindingID allStandardLightData -constantCount 4 -constantType float			      
-			      
+			      bindConstants 7 -bindingID  cameraToGeom   -constantCount 3
+			      bindConstants 15 -bindingID ambientLight -constantCount 1 -constantType float
+			      bindConstants 18 -bindingID allStandardLightData -constantCount 4 -constantType float
+
 			      shaderSource
 			         float4x4 modelviewproj : register(c0);
 			         float4x3 modelview : register(c4);
-				      float4x3 modelviewInv : register(c7);				      				      
+				      float4x3 modelviewInv : register(c7);
                   // light direction
-				      float4 lightDir0 : register(c18);					      
-				      
+				      float4 lightDir0 : register(c18);
+
                   float4 ambient : register(c15);
-				      				      
-				      struct a2v 
+
+				      struct a2v
                   {
-                     float4 pos		: POSITION;                     
+                     float4 pos		: POSITION;
                      float3 normal	: NORMAL;
-                     float2 tangent	: TEXCOORD0;                     
+                     float2 tangent	: TEXCOORD0;
                   };
 
                   struct v2f
                   {
-                     float4 hpos		 : POSITION;                     
+                     float4 hpos		 : POSITION;
 	                  float4 color : TEXCOORD0;
 	                  float3 camNormal : TEXCOORD1;
-	                  float3 lightDir : TEXCOORD2;	 
-	                  float3 R : TEXCOORD3;    
-	                  float3 tanLightDir : TEXCOORD4;    	                          
+	                  float3 lightDir : TEXCOORD2;
+	                  float3 R : TEXCOORD3;
+	                  float3 tanLightDir : TEXCOORD4;
 	                  float2 bumpCoords : TEXCOORD5;
                   };
-                  
+
                   v2f VertexMain(a2v IN)
                   {
 	                  v2f OUT;
 
 	                  // vertex position in object space
-	                  float4 pos = float4(IN.pos.x,IN.pos.y,IN.pos.z,1.0);	  
-	                  
+	                  float4 pos = float4(IN.pos.x,IN.pos.y,IN.pos.z,1.0);
+
 	                  float3 tangent = float3(IN.tangent.x, IN.tangent.y, 0);
-	                  	                  
+
 	                  // compute binormal
 	                  float3 binormal = normalize(cross(IN.normal, tangent));
-	                  
+
 	                  // tangent space matrix
 	                  float3x3 tbn = float3x3(tangent, binormal, IN.normal);
-	                  
-	                  // light direction in object space	                  
+
+	                  // light direction in object space
 	                  float3 lt0 = mul(lightDir0, (float3x3)modelviewInv);
-	                  
-	                  // light 0 direction in tangent space	                  	                  
+
+	                  // light 0 direction in tangent space
 	                  OUT.tanLightDir = normalize(mul(tbn, lt0));
 	                  OUT.bumpCoords = float2(IN.pos.x, IN.pos.y);
-	                  
-	                  
-	                  
+
+
+
 	                  // vertex position in clip space
-	                  OUT.hpos = mul(pos, modelviewproj);	           	                  
-	                  	                                    	
-	                  // copy texture coordinates	                  	                  	                  
+	                  OUT.hpos = mul(pos, modelviewproj);
+
+	                  // copy texture coordinates
 	                  OUT.camNormal = mul(IN.normal, (float3x3)modelview);
-	                  
+
 	                  float3 cameraSpacePosition = mul( pos, modelview);
-	                  float3 viewVector = normalize(cameraSpacePosition);					
-					      OUT.R = reflect(viewVector, OUT.camNormal);					      
-	                  
+	                  float3 viewVector = normalize(cameraSpacePosition);
+					      OUT.R = reflect(viewVector, OUT.camNormal);
+
 	                  OUT.color.xyz = tangent*0.5f.xxx + 0.5f.xxx;//ambient.xyz;
 	                  OUT.color.w = 1.0;
-	                  OUT.lightDir.xyz = lightDir0.xyz;                     
+	                  OUT.lightDir.xyz = lightDir0.xyz;
 	                  return OUT;
                   }
-                  			         
+
 			      endShaderSource
             end # end shader program
-            
-               shaderProgram -target pixelProgram -method compile -version 2_0 # -disassemble "c:\sims2ep3\hlslPS.txt"                            
-                  shaderSource                         
-                                          
+
+               shaderProgram -target pixelProgram -method compile -version 2_0 # -disassemble "c:\sims2ep3\hlslPS.txt"
+                  shaderSource
+
                      struct v2f
                      {
-                        float4 hpos	: POSITION;                     
+                        float4 hpos	: POSITION;
 	                     float4 color : TEXCOORD0;
 	                     float3 camNormal : TEXCOORD1;
-	                     float3 lightDir : TEXCOORD2;	 
-	                     float3 R : TEXCOORD3;     
-	                     float3 tanLightDir : TEXCOORD4;   	
-   	                  float2 bumpCoords : TEXCOORD5;                                          
+	                     float3 lightDir : TEXCOORD2;
+	                     float3 R : TEXCOORD3;
+	                     float3 tanLightDir : TEXCOORD4;
+   	                  float2 bumpCoords : TEXCOORD5;
                      };
 
                      float4 PixelMain(v2f pi) : COLOR
-                     {                          
-                        return pi.color;   
+                     {
+                        return pi.color;
                         //return float4(0, 0, 0, 1) + 0.8*max(dot(pi.camNormal, pi.lightDir), 0).xxxx + pi.color;
                      }
                   endShaderSource
-               end               
-                                                              
-                                             
+               end
+
+
          end # end pass
-         
+
       end #end shader
    end # end material
 enddef
 
 define RoofSnowPS2()
-   shaderProgram -target pixelProgram -method compile -version 2_0 # -disassemble "c:\sims2ep5\hlslPS.txt"                            
+   shaderProgram -target pixelProgram -method compile -version 2_0 # -disassemble "c:\sims2ep5\hlslPS.txt"
       bindConstants 0 -bindingID	ambientLight -constantCount	1 -constantType	float
-      
-      shaderSource                         
+
+      shaderSource
          float3 ambientLight : register(c0);
-         
+
          sampler normmap;
          struct v2f
          {
-            float4 hpos	: POSITION;                             
-	         float4 color : COLOR0;	                     
+            float4 hpos	: POSITION;
+	         float4 color : COLOR0;
 	         float4 tanHalfAngle : TEXCOORD0;
-	         float3 lightColor : TEXCOORD1;                
-	         float3 tanLightDir : TEXCOORD2;   	
-   	      float2 bumpCoords : TEXCOORD3;                                          
+	         float3 lightColor : TEXCOORD1;
+	         float3 tanLightDir : TEXCOORD2;
+   	      float2 bumpCoords : TEXCOORD3;
          };
 
          float4 PixelMain(v2f pi) : COLOR
-         {                                                  
-            float4 normal0 = 2.0f * (tex2D(normmap, pi.bumpCoords) - 0.5f);                        
+         {
+            float4 normal0 = 2.0f * (tex2D(normmap, pi.bumpCoords) - 0.5f);
             float4 normal1 = 2.0f * (tex2D(normmap, pi.bumpCoords*0.4) - 0.5f);
             float4 normal = 0.5f*(normal0+normal1);
-            
-            float diffuse = saturate(dot(pi.tanLightDir, normal.xyz))*0.6f;                              
+
+            float diffuse = saturate(dot(pi.tanLightDir, normal.xyz))*0.6f;
             return float4(float3(diffuse.xxx*float3(0.9,0.9,1) + ambientLight.xxx*0.8)*pi.lightColor.xyz, 1.0);
          }
       endShaderSource
-   end               
+   end
 
 enddef
 
 define RoofSnowPS1()
-   shaderProgram -target pixelProgram -method compile -version 1_1 # -disassemble "c:\sims2ep5\hlslPS.txt"                            
+   shaderProgram -target pixelProgram -method compile -version 1_1 # -disassemble "c:\sims2ep5\hlslPS.txt"
       bindConstants 0 -bindingID	ambientLight -constantCount	1 -constantType	float
-      
-      shaderSource                         
+
+      shaderSource
          float3 ambientLight : register(c0);
-         
+
          sampler normmap;
          struct v2f
          {
-            float4 hpos	: POSITION;                             
-	         float4 color : COLOR0;	                     
+            float4 hpos	: POSITION;
+	         float4 color : COLOR0;
 	         float4 tanHalfAngle : TEXCOORD0;
-	         float3 lightColor : TEXCOORD1;                
-	         float3 tanLightDir : TEXCOORD2;   	
-   	      float2 bumpCoords : TEXCOORD3;                                          
+	         float3 lightColor : TEXCOORD1;
+	         float3 tanLightDir : TEXCOORD2;
+   	      float2 bumpCoords : TEXCOORD3;
          };
 
          float4 PixelMain(v2f pi) : COLOR
-         {                                                  
-            float4 normal = 2.0f * (tex2D(normmap, pi.bumpCoords) - 0.5f);                        
-            float diffuse = saturate(dot(pi.tanLightDir, normal.xyz))*0.57f;                              
+         {
+            float4 normal = 2.0f * (tex2D(normmap, pi.bumpCoords) - 0.5f);
+            float diffuse = saturate(dot(pi.tanLightDir, normal.xyz))*0.57f;
             return float4(float3(diffuse.xxx*float3(0.85,0.85,1) + ambientLight.xxx)*pi.lightColor.xyz, 1.0);
          }
       endShaderSource
-   end               
+   end
 enddef
 
 define RoofSnow2()
    material
-      shader -layer -2         
+      shader -layer -2
          validateRenderShaderContext -vertexFormat position 0 required
          validateRenderShaderContext -vertexFormat normal 0 required
          validateRenderShaderContext -vertexFormat texcoord 0 required
          validateRenderShaderContext -vertexFormat texcoord 1 required
-                          
-         pass 
+
+         pass
             alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
-            cullmode $stdMatCullMode            
+            cullmode $stdMatCullMode
             #fillmode wireframe
-            
+
             shaderProgram -target vertexProgram -method compile -version 1_1
-               bindConstants 0 -bindingID  geomToClip     -constantCount 4        
+               bindConstants 0 -bindingID  geomToClip     -constantCount 4
                bindConstants 4 -bindingID  geomToCamera   -constantCount 3
-			      bindConstants 7 -bindingID  cameraToGeom   -constantCount 3			
-			      bindConstants 15 -bindingID ambientLight -constantCount 1 -constantType float	                   			      
-			      bindConstants 18 -bindingID allStandardLightData -constantCount 4 -constantType float			      
-			      
-			      if (tsIsDay)         
-                  bindConstants 10 -bindingID immediateData -data (1, 1, 1, 1)         
+			      bindConstants 7 -bindingID  cameraToGeom   -constantCount 3
+			      bindConstants 15 -bindingID ambientLight -constantCount 1 -constantType float
+			      bindConstants 18 -bindingID allStandardLightData -constantCount 4 -constantType float
+
+			      if (tsIsDay)
+                  bindConstants 10 -bindingID immediateData -data (1, 1, 1, 1)
                else
-                  bindConstants 10 -bindingID immediateData -data (0.47, 0.47, 1.2, 1)         
+                  bindConstants 10 -bindingID immediateData -data (0.47, 0.47, 1.2, 1)
                endif
-			      
+
 			      shaderSource
 			         float4x4 modelviewproj : register(c0);
 			         float4x3 modelview : register(c4);
-				      float4x3 modelviewInv : register(c7);				      				      
+				      float4x3 modelviewInv : register(c7);
                   // light direction
 				      float4 lightDir0 : register(c18);
 				      float4 lightColor0 : register(c10);
-				      
-				      				      
+
+
                   float4 ambient : register(c15);
-				      				      
-				      struct a2v 
+
+				      struct a2v
                   {
-                     float4 pos		: POSITION;                     
+                     float4 pos		: POSITION;
                      float3 normal	: NORMAL;
-                     float2 tangent	: TEXCOORD0; 
-                     float2 bumpcoord : TEXCOORD1;                    
+                     float2 tangent	: TEXCOORD0;
+                     float2 bumpcoord : TEXCOORD1;
                   };
 
                   struct v2f
                   {
-                     float4 hpos		 : POSITION;                                          
-	                  float4 color : COLOR0;	                  
+                     float4 hpos		 : POSITION;
+	                  float4 color : COLOR0;
 	                  float4 tanHalfAngle : TEXCOORD0;
 	                  float3 lightColor : TEXCOORD1;
-	                  float3 tanLightDir : TEXCOORD2;    	                          
-	                  float2 bumpCoords : TEXCOORD3;	                  
+	                  float3 tanLightDir : TEXCOORD2;
+	                  float2 bumpCoords : TEXCOORD3;
                   };
-                  
+
                   v2f VertexMain(a2v IN)
                   {
 	                  v2f OUT;
 
 	                  // vertex position in object space
-	                  float4 pos = float4(IN.pos.x,IN.pos.y,IN.pos.z,1.0);	  
-	                  
+	                  float4 pos = float4(IN.pos.x,IN.pos.y,IN.pos.z,1.0);
+
 	                  float3 tangent = float3(IN.tangent.x, IN.tangent.y, 0);
-	                  	                  
+
 	                  // compute binormal
 	                  float3 binormal = normalize(cross(IN.normal, tangent));
-	                  
+
 	                  // tangent space matrix
 	                  float3x3 tbn = float3x3(tangent, binormal, IN.normal);
-	                  
-	                  // light direction in object space	                  
+
+	                  // light direction in object space
 	                  float3 lt0 = mul(lightDir0, (float3x3)modelviewInv);
-	                  
-	                  // light 0 direction in tangent space	                  	                  
+
+	                  // light 0 direction in tangent space
 	                  OUT.tanLightDir = normalize(mul(tbn, lt0));
 	                  OUT.bumpCoords = float2(IN.bumpcoord.x, IN.bumpcoord.y);
-	                  
+
 	                  // compute tangent space view vector
 	                  // object space view point
 	                  float3 viewPoint = mul(float4(0, 0, 0, 1), modelviewInv).xyz;
 	                  float3 viewVecObj = normalize(viewPoint - IN.pos.xyz);
-	                  
+
 	                  // object space light
 	                  float3 lightDirObj = normalize(mul(lightDir0, (float3x3)modelviewInv));
-	                  
+
 	                  // half angle vector in object space
-	                  float3 halfWayVector = normalize(lightDirObj + viewVecObj);	                  
-	                  
+	                  float3 halfWayVector = normalize(lightDirObj + viewVecObj);
+
 	                  // transform half angle vector to tangent space
 	                  OUT.tanHalfAngle.xyz = normalize(mul(tbn, halfWayVector));
-	                  
+
 	                  // specular shadowing term
-	                  OUT.tanHalfAngle.w = max(dot(halfWayVector, IN.normal), 0);	                  
-	                  
+	                  OUT.tanHalfAngle.w = max(dot(halfWayVector, IN.normal), 0);
+
 	                  // vertex position in clip space
-	                  OUT.hpos = mul(pos, modelviewproj);	           	                  
-	                  	                                    		                  
+	                  OUT.hpos = mul(pos, modelviewproj);
+
 	                  OUT.color.xyz = ambient.xyz;
 	                  OUT.color.w = 1.0;
 	                  OUT.lightColor = lightColor0.xyz;
 	                  return OUT;
                   }
-                  			         
+
 			      endShaderSource
             end # end shader program
 
                if ($useHWShader1Path)
-                  create RoofSnowPS1()                           
+                  create RoofSnowPS1()
                else
-                  create RoofSnowPS2()                           
-               endif               
-               
+                  create RoofSnowPS2()
+               endif
+
                sampler normmap
                   texture "snow-ground-bump"
                   textureAddressing tile tile
-               end                                      
-                                             
+               end
+
          end # end pass
-         
+
       end #end shader
    end # end material
 enddef
@@ -652,7 +652,7 @@ define RoofTopMaterial()
       shader -layer 0
          seti snowLevel tsHasSnow
          seti rainLevel tsHasRain
-         
+
          if ($rainLevel >= 1)
             pass -fixedFunction -modifiedEachFrameHint
          else
@@ -662,12 +662,12 @@ define RoofTopMaterial()
                setb doMorphing false
                setb cutoutPass false
                create CommonStandardMaterialSetup()
-               
+
                stage
 				      create StandardShaderTextureState(Base)
 					   textureBlend multiplyScale2(texture outRegister)	multiply(texture outRegister)
 			      end
-               
+
          if ($rainLevel >= 1)
             # first pass at roof rain stage
                stage
@@ -679,7 +679,7 @@ define RoofTopMaterial()
                   textureBlend lerpColorScalarAlpha(outRegister texture) lerpColorScalarAlpha(colorScalar)
                end
          endif
-               
+
             end
 
          if ($snowLevel = 1 and viewerRenderType != $kRenderTypeImposter)
@@ -688,20 +688,20 @@ define RoofTopMaterial()
                depthTest true -enableDepthWrite false
                depthTestFunction acceptIfLessOrEqual
                create LightingStates()
-               
+
                colorScalar (0.25, 0.25, 0.35, 1)
-                
-               stage                  
+
+               stage
                   texture "snow-light-roof-pass1"
                   ffTextureCoordsSource fromPosition
-                  ffTextureMatrix -cameraToGlobal -scalev (6, 6) -invert                                 
+                  ffTextureMatrix -cameraToGlobal -scalev (6, 6) -invert
                   textureAddressing tile tile
                   textureFilterHint bilinear bilinear
-                  textureBlend multiplyAdd(texture diffuse colorScalar) select(texture)               
+                  textureBlend multiplyAdd(texture diffuse colorScalar) select(texture)
                end
-            end            
+            end
          endif
-         
+
       end
    end
 enddef
@@ -710,10 +710,10 @@ define RoofSnowShader()
    create DetermineHardwareSupport()
    if (viewerRenderType != $kRenderTypeImposter)
       if ($useHWShader1Path or $useHWShader2Path)
-		   create RoofSnow2()		
-	   else   
+		   create RoofSnow2()
+	   else
          create RoofSnowFF()
-      endif      
+      endif
    else
       create Null()
    endif
@@ -721,30 +721,30 @@ enddef
 
 define RoofSnowFF()
    material
-      shader -layer 0      
-         pass -fixedFunction         
-            create LightingStates() 
-            create AttenuatedMatCoef(1)                                           
-                                          
+      shader -layer 0
+         pass -fixedFunction
+            create LightingStates()
+            create AttenuatedMatCoef(1)
+
             depthTest true -enableDepthWrite true
             colorScalar (1.0, 0.98, 1.0, 1)
-                        
-            stage               		
+
+            stage
 				   textureBlend multiply(colorScalar diffuse) select(texture)
-            end #end stage                        
+            end #end stage
          end
       end
    end
 enddef
 
 materialDefinition RoofSnowMaterial
-   setDefinition RoofSnowShader   
+   setDefinition RoofSnowShader
    addParam stdMatCullMode none
 end
 
 # texture, lit, normal mappedm, no specular
 materialDefinition RoofTop
-   setDefinition RoofTopMaterial 
+   setDefinition RoofTopMaterial
    addParam   stdMatSpecPower 0
    addParam   stdMatDiffCoef (0.4, 0.385, 0.38)
    addParam   stdMatBaseTextureName roof-manor
@@ -804,33 +804,33 @@ define RoofMaterialFF()
       shader -layer $roofLayer
 
             pass -fixedFunction
-         
-            create LightingStates() 
-            create AttenuatedMatCoef(1)                                           
-                              
-            ffDepthOffset 2            
-            
+
+            create LightingStates()
+            create AttenuatedMatCoef(1)
+
+            ffDepthOffset 2
+
             depthTest true -enableDepthWrite false
-                        
+
             stage
                texture $stdMatBaseTextureName
                textureAddressing clamp clamp
-               ffTextureCoordsSource 0					
+               ffTextureCoordsSource 0
 					textureBlend multiply(texture diffuse) select(texture)
-            end #end stage               
+            end #end stage
 
-                        
-         end #pass      
-      end #end shader   
-   end #end material 
+
+         end #pass
+      end #end shader
+   end #end material
 enddef
 
 materialDefinition RoofMaterialStrips
-   addParam stdMatBaseTextureName roof-manor   
+   addParam stdMatBaseTextureName roof-manor
    addParam stdMatDiffCoef (0.4, 0.385, 0.38)
    addParam stdMatSpecPower 0
    addParam stdMatEmissiveCoef 0,0,0
-   addParam stdMatSpecCoef 0,0,0   
+   addParam stdMatSpecCoef 0,0,0
    addParam roofLayer 2
    setDefinition RoofMaterialFF
 end

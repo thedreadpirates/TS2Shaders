@@ -13,59 +13,59 @@ set  stdMatLightingDebugColor (0.5, 0.5, 0.5)
 # in texture space.
 define StandardDisplayTextureMappingShader()
    shader
-      pass      
+      pass
          shaderProgram -target vertexProgram -method compile -version 1_1
             bindConstants 0 -bindingID geomToClip -constantCount 4
-            bindConstants 4 -bindingID frameInfo 
-            
+            bindConstants 4 -bindingID frameInfo
+
             shaderSource
-         
+
                float4x4 clipSpaceMatrix      : register(c0);
                float4   frameInfo            : register(c4);
-               
+
                struct cVertexIn
                {
                   float3 mPosition : POSITION0;
                   float2 mTexCoord : TEXCOORD0;
                };
-               
+
                struct cVertexOut
                {
                   float4 mClipPosition : POSITION;
                   float2 mTexCoord     : TEXCOORD0;   // z = scale
                   float4 mColor        : COLOR0;
                };
-                
-               
+
+
                cVertexOut VertexMain(cVertexIn vertexIn)
                {
                   const float flipSpeed = 0.3;
                   const float holdTime = 0.5;
-               
+
                   cVertexOut result;
-      
+
                   float  frameTime = frameInfo.w * flipSpeed;
                   float4 hPos = float4(vertexIn.mPosition, 1);
-                  
+
                   float4 clipPos = mul(hPos, clipSpaceMatrix);
                   float4 textureMapPos = float4(2 * vertexIn.mTexCoord.xy - 1, 0.5, 1);
-                  
+
                   float mix = 2 * abs(frac(frameTime) - 0.5);  // triangle wave
                   mix = clamp((1 + 2 * holdTime) * mix - holdTime, 0, 1);     // clipped triangle wave
                   #float mix = 0.5 * cos(radians(180) * frameTime) + 0.5;        // sine wave
-                  
+
                   result.mClipPosition = lerp(clipPos, textureMapPos, mix);
                   result.mTexCoord = vertexIn.mTexCoord;
                   result.mColor = float4(1, 1, 1, 1 - 0.0 * mix); # awaiting extra viz setting.
-                  return result;         
+                  return result;
                }
-               
+
             endShaderSource
          end
-         
+
          alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
          cullmode none  # some uv tris will flip
-         
+
          stage
             texture $stdMatBaseTextureName
             textureBlend multiply(diffuse texture) multiply(diffuse texture)
@@ -84,10 +84,9 @@ define LightingDebugStandardMaterialOverrides()
    set stdMatSpecCoef (0, 0, 0)
    set stdMatEnvCubeCoef (0, 0, 0)
    set stdMatBaseTextureName lightingDebugTexture
-   set stdMatBaseTextureParam "-rampH (4, 4) $stdMatLightingDebugColor $stdMatLightingDebugColor"   
+   set stdMatBaseTextureParam "-rampH (4, 4) $stdMatLightingDebugColor $stdMatLightingDebugColor"
    set stdMatNormalMapTextureEnabled false
 
    set wallpaperTextureName $stdMatBaseTextureName
    set wallpaperTextureParam $stdMatBaseTextureParam
 enddef
-

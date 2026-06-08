@@ -10,13 +10,13 @@ define DX8GaussianBlurFilterPasses(sourceImage scratchTarget finalBlurResult pow
 		depthTest false -enableDepthWrite false
 
 		create GenericFilterVertexShader(0 512 1 1 0 0 1 1 0 0)
-	
+
       if (&powerScaleFlag)
-         create FirstSideGaussianPixelShaderScaled()		
+         create FirstSideGaussianPixelShaderScaled()
       else
          create FirstSideGaussianPixelShader()
       endif
-            
+
 		sampler 0
 			texture "&{sourceImage}"
 			#textureFilterHint point point
@@ -39,9 +39,9 @@ define DX8GaussianBlurFilterPasses(sourceImage scratchTarget finalBlurResult pow
 			texture "&{sourceImage}"
 			#textureFilterHint point point
 			textureAddressing clamp clamp clamp
-			
+
 		end
-		
+
 	end
 
 	# 'right side', add to previous pass
@@ -52,14 +52,14 @@ define DX8GaussianBlurFilterPasses(sourceImage scratchTarget finalBlurResult pow
 		depthTest false -enableDepthWrite false
 
 		create GenericFilterVertexShader(1 512 1 1 0 0 1 1 0 0)
-	
+
       if (&powerScaleFlag)
          create LastSideGaussianPixelShaderScaled()
       else
          create LastSideGaussianPixelShader()
       endif
-      
-				
+
+
 		sampler 0
 			texture "&{sourceImage}"
 			#textureFilterHint point point
@@ -70,29 +70,29 @@ define DX8GaussianBlurFilterPasses(sourceImage scratchTarget finalBlurResult pow
 			texture "&{sourceImage}"
 			#textureFilterHint point point
 			textureAddressing clamp clamp clamp
-		
+
 		end
 		sampler 2
 			texture "&{sourceImage}"
 			#textureFilterHint point point
 			textureAddressing clamp clamp clamp
-	
+
 		end
-		
+
 	end
-	
-	
+
+
 	# top:  emit directly to outbound buffer
 	pass
 		renderClipSpaceRect
 		renderTarget "&{finalBlurResult}"  -fixed (256,256) -bppHint 32 -alphaBitsHint 8 -clearColor (0,0,0,0) -allocateDepthBuffer false
-		
+
 		depthTest false -enableDepthWrite false
 
 		create GenericFilterVertexShader(2 512 1 1 0 0 1 1 0 0)
-	
-		create FirstSideGaussianPixelShader()		
-	
+
+		create FirstSideGaussianPixelShader()
+
 		sampler 0
 			texture "&{scratchTarget}"
 			textureFilterHint point point
@@ -115,47 +115,45 @@ define DX8GaussianBlurFilterPasses(sourceImage scratchTarget finalBlurResult pow
 			texture "&{scratchTarget}"
 			textureFilterHint point point
 			textureAddressing clamp clamp clamp
-			
+
 		end
-		
+
 	end
-	
+
 	# bottom:  emit directly to outbound buffer.
 	pass
-	
+
 		renderClipSpaceRect
 		renderTarget "&{finalBlurResult}"
 		alphaBlend srcFactor(one) add dstFactor(one)
 		depthTest false -enableDepthWrite false
-		
+
 		create GenericFilterVertexShader(3 512 1 1 0 0 1 1 0 0)
-	
+
 		create LastSideGaussianPixelShader()
-				
+
 		sampler 0
 			texture "&{scratchTarget}"
 			textureFilterHint point point
 			textureAddressing clamp clamp clamp
 
 		end
-		
+
 		sampler 1
 			texture "&{scratchTarget}"
 			textureFilterHint point point
 			textureAddressing clamp clamp clamp
 
 		end
-		
+
 		sampler 2
 			texture "&{scratchTarget}"
 			textureFilterHint point point
 			textureAddressing clamp clamp clamp
 
 		end
-		
+
 	end
-	
+
 
 enddef
-
-

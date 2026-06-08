@@ -2,78 +2,78 @@
 
 
 define PassThroughVertexShader()
-	
+
 	shaderProgram -target vertexProgram -method assemble
-	
-		
+
+
 		shaderSource
 			vs_1_1
-			def c0,0,0.0078125,0,0 
+			def c0,0,0.0078125,0,0
 			def c1, 0,0.5,1,2
          def c2, 0.5, -0.5, 0.5, 0.5
          def c11, 0.001953125, -0.001953125 , 0.009125,   -0.00390625
 			dcl_position v0
 			dcl_texcoord v1
-			
+
 			mov oPos, v0
 			mad r0.xy, v0, c2.xy, c2.zw
-         
+
          add oT0.xy, r0, c11.zy
          add oT1.xy, r0, c11.zy
-         
+
 			mad oT2.xy, v0, c1.y, c1.y
-				
+
 		endShaderSource
-	
+
 	end
-	
+
 enddef
 
 
 
 define PassThroughVertexShader2(imageScaleX imageScaleY imageOffsetX imageOffsetY sampleScaleX sampleScaleY sampleOffsetX sampleOffsetY)
-	
+
 	shaderProgram -target vertexProgram -method assemble
-      
+
       bindConstants 1 -bindingID immediateData -data(&imageScaleX, &imageScaleY, &imageOffsetX,&imageOffsetY)
       bindConstants 2 -bindingID immediateData -data(&sampleScaleX, &sampleScaleY, &sampleOffsetX, &sampleOffsetY)
-	
+
 		shaderSource
 			vs_1_1
 			def c0, 0,0.5,1,2
 			dcl_position v0
 			dcl_texcoord v1
-			
+
 			;mov oPos, v0
          mad r0, v0, c0.y, c0.y  ; clip(-1->1) to screen0->1 coords
 
          mad r1.xy, r0, c1.xy, c1.zw  ; apply my scale and offset in 0-1 space.
-     
+
          mad oPos.xy, r1, c0.w, -c0.z  ; screen back to clip
-         
+
          mov oPos.zw, v0
-         
+
          mad oT0.xy, r0, c2.xy, c2.zw  ; apply scale and offset for the sampling
-         
+
 		endShaderSource
-	
+
 	end
-	
+
 enddef
 
 
 define GenericFilterVertexShader(side dimension imageScaleX imageScaleY imageOffsetX imageOffsetY sampleScaleX sampleScaleY sampleOffsetX sampleOffsetY)
-	
+
 	shaderProgram -target vertexProgram -method assemble
-	
+
 		if (&side = 0)
 			create LeftSideOffsets(&dimension)
 		endif
-		
+
 		if (&side = 1)
 			create RightSideOffsets(&dimension)
 		endif
-		
+
 		if (&side = 2)
 			create TopSideOffsets(&dimension)
 		endif
@@ -87,7 +87,7 @@ define GenericFilterVertexShader(side dimension imageScaleX imageScaleY imageOff
 
 		shaderSource
 			vs_1_1
-			
+
          def c10, 0,0.5,1,2
          def c11, 0.001953125, -0.001953125 , -0.00390625,   0.00390625
 			dcl_position v0
@@ -95,27 +95,27 @@ define GenericFilterVertexShader(side dimension imageScaleX imageScaleY imageOff
 
          ; convert clip space to screen (0,0 to 1,1)
          mad r0.xy, v0, c10.y, c10.y   ; -1 -> 1 to -0.5 ->0.5 to 0 -> 1
-         
-         
+
+
          mad r1.xy, r0, c50.xy, c50.zw ; scale for the image write part (to use only a portion of the dest, in top left corner.)
-         
-         ; convert back to -1,-1 -> 1,1 clip space relative 
+
+         ; convert back to -1,-1 -> 1,1 clip space relative
 
          mad oPos.xy, r1, c10.w, -c10.z   ; ScreenXY * 2 - 1
 
          mov oPos.zw, v0
-         
+
          mad r0.xy, r0, c51.xy, c51.zw ; scale the samples if only a portion is needed.
-         
+
 			add oT0.xy, r0, c4
-			add oT1.xy, r0, c5	
-			add oT2.xy, r0, c6	
-			add oT3.xy, r0, c7	
-				
+			add oT1.xy, r0, c5
+			add oT2.xy, r0, c6
+			add oT3.xy, r0, c7
+
 		endShaderSource
-	
+
 	end
-	
+
 enddef
 
 
@@ -123,7 +123,7 @@ enddef
 define LeftSideOffsets(textureSize)
 
 	setf texelSize (-1.0/&textureSize)
-	
+
 	setf texelSizeX2 ($texelSize * 2)
 	setf texelSizeX3 ($texelSize * 3)
 
@@ -143,7 +143,7 @@ enddef
 define RightSideOffsets(textureSize)
 
 	setf texelSize (1.0/&textureSize)
-	
+
 	setf texelSizeX2 ($texelSize * 2)
 	setf texelSizeX3 ($texelSize * 3)
 	setf texelSizeX4 ($texelSize * 4)
@@ -165,7 +165,7 @@ enddef
 define TopSideOffsets(textureSize)
 
 	setf texelSize (-1.0/&textureSize)
-	
+
 	setf texelSizeX2 ($texelSize * 2)
 	setf texelSizeX3 ($texelSize * 3)
 	setf pixelOffset ((-1.0/&textureSize)/2)
@@ -185,7 +185,7 @@ enddef
 define BottomSideOffsets(textureSize)
 
 	setf texelSize (1.0/&textureSize)
-	
+
 	setf texelSizeX2 ($texelSize * 2)
 	setf texelSizeX3 ($texelSize * 3)
 	setf texelSizeX4 ($texelSize * 4)
@@ -222,7 +222,7 @@ enddef
 define FirstSideGaussianPixelShader()
 
 	shaderProgram -target pixelProgram -method assemble
-		
+
 			shaderSource
 				ps_1_1
 
@@ -240,11 +240,11 @@ define FirstSideGaussianPixelShader()
 				mad r0, t1, c1.a, r0
 				mad r0, t2, c2.a, r0
 				mad r0, t3, c3.a, r0
-			
+
 			endShaderSource
 
-	end	
-		
+	end
+
 
 enddef
 
@@ -253,7 +253,7 @@ enddef
 define FirstBoxFilterPixelShader()
 
 	shaderProgram -target pixelProgram -method assemble
-		
+
 			shaderSource
 				ps_1_1
 
@@ -268,11 +268,11 @@ define FirstBoxFilterPixelShader()
 				mad r0, t1, c0.a, r0
 				mad r0, t2, c0.a, r0
 				mad r0, t3, c0.a, r0
-			
+
 			endShaderSource
 
-	end	
-		
+	end
+
 
 enddef
 
@@ -281,7 +281,7 @@ enddef
 define LastBoxFilterPixelShader()
 
 	shaderProgram -target pixelProgram -method assemble
-		
+
 			shaderSource
 				ps_1_1
 
@@ -294,11 +294,11 @@ define LastBoxFilterPixelShader()
 				mul r0, t0, c0.a
 				mad r0, t1, c0.a, r0
 				mad r0, t2, c0.a, r0
-			
+
 			endShaderSource
 
-	end	
-		
+	end
+
 
 enddef
 
@@ -308,14 +308,14 @@ enddef
 define LastSideGaussianPixelShader()
 
 	shaderProgram -target pixelProgram -method assemble
-		
+
 			shaderSource
 				ps_1_1
-				
+
 				def c0,0,0,0,0.025089606
 				def c1,0,0,0,0.143369176
-				def c2,0,0,0,0.215053763				
-				
+				def c2,0,0,0,0.215053763
+
 				tex t0
 				tex t1
 				tex t2
@@ -323,11 +323,11 @@ define LastSideGaussianPixelShader()
 				mul r0, t0, c2.a
 				mad r0, t1, c1.a, r0
 				mad r0, t2, c0.a, r0
-			
+
 			endShaderSource
 
-	end	
-		
+	end
+
 
 enddef
 
@@ -338,7 +338,7 @@ enddef
 define FirstSideGaussianPixelShaderScaled()
 
 	shaderProgram -target pixelProgram -method assemble
-		
+
 			shaderSource
 				ps_1_1
 
@@ -346,8 +346,8 @@ define FirstSideGaussianPixelShaderScaled()
 				def c1,0,0,0,0.143369176
 				def c2,0,0,0,0.215053763
 				def c3,0,0,0,0.23297491
-            
-            
+
+
 				tex t0   ;  3 pixels to the 'left'
 				tex t1
 				tex t2
@@ -357,12 +357,12 @@ define FirstSideGaussianPixelShaderScaled()
 				mad r0, t1, c1.a, r0
 				mad r0, t2, c2.a, r0
 				mad r0, t3, c3.a, r0
-			
+
             mul r0, r0, r0 ; pow(2)
 			endShaderSource
 
-	end	
-		
+	end
+
 
 enddef
 
@@ -371,14 +371,14 @@ enddef
 define LastSideGaussianPixelShaderScaled()
 
 	shaderProgram -target pixelProgram -method assemble
-		
+
 			shaderSource
 				ps_1_1
-				
+
 				def c0,0,0,0,0.025089606
 				def c1,0,0,0,0.143369176
-				def c2,0,0,0,0.215053763				
-				
+				def c2,0,0,0,0.215053763
+
 				tex t0
 				tex t1
 				tex t2
@@ -386,12 +386,12 @@ define LastSideGaussianPixelShaderScaled()
 				mul r0, t0, c2.a
 				mad r0, t1, c1.a, r0
 				mad r0, t2, c0.a, r0
-            
+
 			   mul r0, r0, r0 ; pow(2)
 			endShaderSource
 
-	end	
-		
+	end
+
 
 enddef
 
@@ -409,9 +409,9 @@ define DX8GaussianFilter()
 		depthTest false -enableDepthWrite false
 
 		create GenericFilterVertexShader(0 256 1 1 0 0 1 1 0 0)
-	
-		create FirstSideGaussianPixelShader()		
-	
+
+		create FirstSideGaussianPixelShader()
+
 		sampler 0
 			texture "bloomA"
 			textureFilterHint point point
@@ -428,7 +428,7 @@ define DX8GaussianFilter()
 			texture "bloomA"
 			textureFilterHint point point
 		end
-		
+
 	end
 
 	# 'right side', add to previous pass
@@ -439,9 +439,9 @@ define DX8GaussianFilter()
 		depthTest false -enableDepthWrite false
 
 		create GenericFilterVertexShader(1 256 1 1 0 0 1 1 0 0)
-	
+
 		create LastSideGaussianPixelShader()
-				
+
 		sampler 0
 			texture "bloomA"
 			textureFilterHint point point
@@ -455,21 +455,21 @@ define DX8GaussianFilter()
 			texture "bloomA"
 			textureFilterHint point point
 		end
-		
+
 	end
-	
-	
+
+
 	# top:  emit directly to outbound buffer
 	pass
 		renderClipSpaceRect
 		renderTarget "bloomFinal"  -fixed (256,256) -bppHint 32 -alphaBitsHint 8 -clearColor (0,0,0,0) -allocateDepthBuffer false
-		
+
 		depthTest false -enableDepthWrite false
 
 		create GenericFilterVertexShader(2 256 1 1 0 0 1 1 0 0)
-	
-		create FirstSideGaussianPixelShader()		
-	
+
+		create FirstSideGaussianPixelShader()
+
 		sampler 0
 			texture "bloomB"
 			textureFilterHint point point
@@ -486,49 +486,49 @@ define DX8GaussianFilter()
 			texture "bloomB"
 			textureFilterHint point point
 		end
-		
+
 	end
-	
+
 	# bottom:  emit directly to outbound buffer.
 	pass
-	
+
 		renderClipSpaceRect
 		renderTarget "bloomFinal"
 		alphaBlend srcFactor(one) add dstFactor(one)
 		depthTest false -enableDepthWrite false
-		
+
 		create GenericFilterVertexShader(3 256 1 1 0 0 1 1 0 0)
-	
+
 		create LastSideGaussianPixelShader()
-				
+
 		sampler 0
 			texture "bloomB"
 			textureFilterHint point point
 		end
-		
+
 		sampler 1
 			texture "bloomB"
 			textureFilterHint point point
 		end
-		
+
 		sampler 2
 			texture "bloomB"
 			textureFilterHint point point
 		end
-		
+
 	end
-	
-	
-	
+
+
+
 	pass
-	
+
 		renderClipSpaceRect
 		renderTarget viewerRenderTarget
 		alphaBlend srcFactor(one) add dstFactor(invSrcColor)
 		depthTest false -enableDepthWrite false
-		
+
 		create PassThroughVertexShader()
-	
+
 		shaderProgram -target pixelProgram -method assemble
 			shaderSource
 				ps_1_1
@@ -536,14 +536,14 @@ define DX8GaussianFilter()
 				mov r0, t0
 			endShaderSource
 		end
-				
+
 		sampler 0
 			texture "bloomFinal"
 		end
-	
+
 	end
-	
-	
+
+
 enddef
 
 
@@ -553,18 +553,18 @@ enddef
 
 define DX8WideBoxFilter(sourceBuffer scratchBuffer finalBuffer size)
 
-   
+
 	pass
 		renderClipSpaceRect
 		renderTarget "&{scratchBuffer}" #-fixed (&size, &size) -bppHint 32 -alphaBitsHint 8 -clearColor (0,0,0,0) -allocateDepthBuffer false
 		depthTest false -enableDepthWrite false
 
       seti doubleSize (&size * 2)
-      
+
 		create GenericFilterVertexShader(0 &size 0.5 0.5 0 0 1 1 0 0)   # only write 1/2 the image, but sample the entire texture space.
-	
-		create FirstBoxFilterPixelShader()		
-	
+
+		create FirstBoxFilterPixelShader()
+
 		sampler 0
 			texture "&{sourceBuffer}"
 			#textureFilterHint point point
@@ -585,23 +585,23 @@ define DX8WideBoxFilter(sourceBuffer scratchBuffer finalBuffer size)
 			#textureFilterHint point point
          textureAddressing clamp clamp clamp
 		end
-		
+
 	end
-   
+
 
 	# 'right side', add to previous pass
 	pass
 		renderClipSpaceRect
-		
+
       renderTarget "&{scratchBuffer}"
-      
+
 		alphaBlend srcFactor(one) add dstFactor(one)
 		depthTest false -enableDepthWrite false
 
 		create GenericFilterVertexShader(1 &size 0.5 0.5 0 0 1 1 0 0)
-	
+
 		create LastBoxFilterPixelShader()
-				
+
 		sampler 0
 			texture "&{sourceBuffer}"
 			#textureFilterHint point point
@@ -617,19 +617,19 @@ define DX8WideBoxFilter(sourceBuffer scratchBuffer finalBuffer size)
 			#textureFilterHint point point
          textureAddressing clamp clamp clamp
 		end
-		
+
 	end
-	
+
    #<
    pass
 		renderClipSpaceRect
 		renderTarget "&{finalBuffer}"  #-fixed (&size, &size) -bppHint 32 -alphaBitsHint 8 -clearColor (0,0,0,0) -allocateDepthBuffer false
-		
+
 		depthTest false -enableDepthWrite false
-      
+
       # Image scales, Image Offset,   sampleScale Sample Offset
       create PassThroughVertexShader2(1 1 0 0  0.5 0.5 0 0.5)
-      
+
       shaderProgram -target pixelProgram -method assemble
          shaderSource
             ps_1_1
@@ -637,29 +637,29 @@ define DX8WideBoxFilter(sourceBuffer scratchBuffer finalBuffer size)
             mov r0,t0
          endShaderSource
       end
-      
+
       sampler 0
          texture "&{scratchBuffer}"
   			#textureFilterHint point point
          textureAddressing clamp clamp clamp
       end
-      
+
    end
    #>
-   
-   
-	
+
+
+
 	# top:  emit directly to outbound buffer
 	pass
 		renderClipSpaceRect
 		renderTarget "&{finalBuffer}"  #-fixed (&size, &size) -bppHint 32 -alphaBitsHint 8 -clearColor (0,0,0,0) -allocateDepthBuffer false
-		
+
 		depthTest false -enableDepthWrite false
 
 		create GenericFilterVertexShader(2 &size 0.5 0.5 0 0 0.5 0.5 0 0.5)  # sample half, write half
-	
-		create FirstBoxFilterPixelShader()		
-	
+
+		create FirstBoxFilterPixelShader()
+
 		sampler 0
 			texture "&{scratchBuffer}"
 			#textureFilterHint point point
@@ -680,40 +680,40 @@ define DX8WideBoxFilter(sourceBuffer scratchBuffer finalBuffer size)
 			#textureFilterHint point point
          textureAddressing clamp clamp clamp
 		end
-		
+
 	end
-	
+
 	# bottom:  emit directly to outbound buffer.
 	pass
-	
+
 		renderClipSpaceRect
 		renderTarget "&{finalBuffer}"
 		alphaBlend srcFactor(one) add dstFactor(one)
 		depthTest false -enableDepthWrite false
-		
+
 		create GenericFilterVertexShader(3 &size 0.5 0.5 0 0 0.5 0.5 0 0.5 )
-	
+
 		create LastBoxFilterPixelShader()
-				
+
 		sampler 0
 			texture "&{scratchBuffer}"
 			#textureFilterHint point point
          textureAddressing clamp clamp clamp
 		end
-		
+
 		sampler 1
 			texture "&{scratchBuffer}"
 			#textureFilterHint point point
          textureAddressing clamp clamp clamp
 		end
-		
+
 		sampler 2
 			texture "&{scratchBuffer}"
 			#textureFilterHint point point
          textureAddressing clamp clamp clamp
 		end
-		
+
 	end
-	
-   
+
+
 enddef

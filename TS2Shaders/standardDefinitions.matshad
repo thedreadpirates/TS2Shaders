@@ -26,7 +26,7 @@ seti kRenderTypePoolReflection	7
 seti kRenderTypeShadowBlur 8
 seti kRenderTypeOceanReflection 9
 seti kRenderTypeCensorInMirror  10
-seti kRenderTypeThumbnail       11 
+seti kRenderTypeThumbnail       11
 seti kViewerRenderTypeCensor    12
 seti kViewerRenderTypeFamilyThumbnail 13
 seti kRenderTypeMIPDebug	     15
@@ -53,27 +53,27 @@ setb  mirrorReflectionsEnabled false
 
 
 
-define SetupSkinningStateAndPredicates()  
- 
+define SetupSkinningStateAndPredicates()
+
 	setb doSkinning	false
- 
+
 	if (isEnabled(skinning)	and	hasVertexFormat(blendindices, 0))
 		setb doSkinning	true
 	else
 		setb doSkinning	false
 	endif
-   
+
 	if ($doSkinning)
 		validateRenderShaderContext	-vertexFormat blendindices 0 required
 	endif
-   
+
 	if (isEnabled(skinning))
 		validateRenderShaderContext	-flag skin required
 	else
 		validateRenderShaderContext	-flag skin unsupported
 
 	endif
-   
+
 enddef
 
 
@@ -82,26 +82,26 @@ enddef
 
 
 define SetupMorphingStateAndPredicates()
-   
+
    seti	numPosMorphs 0
-   seti	numNormMorphs 0	
-   
+   seti	numNormMorphs 0
+
 	if (isEnabled(morphing)	and	hasVertexFormat(targetindices, 0))
 		setb doMorphing	true
 		seti numPosMorphs  (vertexFormatRange(positiondelta) + 1)
 		seti numNormMorphs (vertexFormatRange(normaldelta)	 + 1)
-		
+
 		if ($numPosMorphs =	0)
 			setb doMorphing	false
 		endif
-		
+
    else
 		setb doMorphing	false
 		seti numPosMorphs  0
 		seti numNormMorphs 0
-   endif  
+   endif
 
-   
+
    if ($doMorphing)
 	  validateRenderShaderContext -vertexFormat	targetindices 0	required
 
@@ -109,7 +109,7 @@ define SetupMorphingStateAndPredicates()
 		validateRenderShaderContext	-vertexFormat positiondelta	0 required
 		validateRenderShaderContext	-vertexFormat positiondelta	(1,3) unsupported
 	endif
-	
+
 	if ($numPosMorphs =	2)
 		validateRenderShaderContext	-vertexFormat positiondelta	(0,2) required
 		validateRenderShaderContext	-vertexFormat positiondelta	(2,2) unsupported
@@ -119,17 +119,17 @@ define SetupMorphingStateAndPredicates()
 		validateRenderShaderContext	-vertexFormat positiondelta	(0,3) required
 		validateRenderShaderContext	-vertexFormat positiondelta	3 unsupported
 	endif
-	
+
 	if ($numPosMorphs =	4)
 		validateRenderShaderContext	-vertexFormat positiondelta	(0,4) required
 	endif
-	
-	
+
+
 	if ($numNormMorphs = 1)
 		validateRenderShaderContext	-vertexFormat normaldelta 0	required
 		validateRenderShaderContext	-vertexFormat normaldelta (1,3)	unsupported
 	endif
-	
+
 	if ($numNormMorphs = 2)
 		validateRenderShaderContext	-vertexFormat normaldelta (0,2)	required
 		validateRenderShaderContext	-vertexFormat normaldelta (2,2)	unsupported
@@ -139,16 +139,16 @@ define SetupMorphingStateAndPredicates()
 		validateRenderShaderContext	-vertexFormat normaldelta (0,3)	required
 		validateRenderShaderContext	-vertexFormat normaldelta 3	unsupported
 	endif
-	
+
 	if ($numNormMorphs = 4)
 		validateRenderShaderContext	-vertexFormat normaldelta (0,4)	required
 	endif
-	
-	
-   elseif (isEnabled(morphing))	  
+
+
+   elseif (isEnabled(morphing))
 		validateRenderShaderContext	-vertexFormat targetindices	0 unsupported
    endif
-   
+
    if (isEnabled(morphing))
 		validateRenderShaderContext	-flag morph	required
 
@@ -157,7 +157,7 @@ define SetupMorphingStateAndPredicates()
 		validateRenderShaderContext	-flag morph	unsupported
 	  #flagPred	morph false
    endif
-   
+
 enddef
 
 define SupportedRenderShaderContextFFPredicates()
@@ -167,39 +167,39 @@ define SupportedRenderShaderContextFFPredicates()
    set nd (numLightsOfType(directional))
    set np (numLightsOfType(point))
    set ns (numLightsOfType(spot))
-      
+
    # 000
    if ($nd = 0 and $np = 0 and $ns = 0)
       supportedRenderShaderContexts -lightCounts directional (0,0) point (0,0) spot (0,0)
-      
+
    # 001
-   elseif ($nd = 0 and $np = 0 and $ns > 0)      
+   elseif ($nd = 0 and $np = 0 and $ns > 0)
       supportedRenderShaderContexts -lightCounts directional (0,0) point (0,0) spot (1,8)
-      
+
    # 010
    elseif ($nd = 0 and $np > 0 and $ns = 0)
       supportedRenderShaderContexts -lightCounts directional (0,0) point (1,8) spot (0,0)
-      
+
    # 011
    elseif ($nd = 0 and $np > 0 and $ns > 0)
       supportedRenderShaderContexts -lightCounts directional (0,0) point (1,8) spot (1,8)
-      
+
    # 100
    elseif ($nd > 0 and $np = 0 and $ns = 0)
       supportedRenderShaderContexts -lightCounts directional (1,8) point (0,0) spot (0,0)
-      
+
    # 101
-   elseif ($nd > 0 and $np = 0 and $ns > 0)      
+   elseif ($nd > 0 and $np = 0 and $ns > 0)
       supportedRenderShaderContexts -lightCounts directional (1,8) point (0,0) spot (1,8)
-      
+
    # 110
    elseif ($nd > 0 and $np > 0 and $ns = 0)
       supportedRenderShaderContexts -lightCounts directional (1,8) point (1,8) spot (0,0)
-      
-   # 111   
+
+   # 111
    else
-      supportedRenderShaderContexts -lightCounts directional (1,8) point (1,8) spot (1,8)     
-   endif      
+      supportedRenderShaderContexts -lightCounts directional (1,8) point (1,8) spot (1,8)
+   endif
 enddef
 
 
@@ -237,10 +237,10 @@ enddef
 
 define NonStandardLighting()
    validateRenderShaderContext -numLights drawState	  (numLightsOfType(drawState))
-   validateRenderShaderContext -numLights linearFog	  (numLightsOfType(linearFog))	 
+   validateRenderShaderContext -numLights linearFog	  (numLightsOfType(linearFog))
    validateRenderShaderContext -numLights $kShapeColorLight (numLightsOfType(${kShapeColorLight}))
    validateRenderShaderContext -numLights $kAdditiveLight (numLightsOfType(${kAdditiveLight}))
-   
+
    if (numLightsOfType(drawState) != 0)
 	  nonStandardLight drawState 0
    endif
@@ -248,11 +248,11 @@ define NonStandardLighting()
    if (numLightsOfType(linearFog) != 0)
 	  nonStandardLight linearFog 0
    endif
-   
+
    if (numLightsOfType(${kAdditiveLight}) != 0)
 	  tsUserLight additiveLight 0
    endif
-   
+
    # the shade light must be more selectively applied.
    # the remaining non-standard	lights don't need shader controllers.
 enddef
@@ -269,22 +269,22 @@ define StandardShaderFBAlphaState(alphaBlendMode)
    if (strcmp("&{alphaBlendMode}", "none") != 0)
       depthTest	true -enableDepthWrite false
    endif
-   
+
    # just like photoshop's "Normal" mode in the layer panel, alpha is a transparency/opacity control.
    if (strcmp("&{alphaBlendMode}", "blend") = 0)
 	  alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
    endif
-   
+
    # doesn't play well with thumbnail compositing
    if (strcmp("&{alphaBlendMode}", "additive") = 0)
 	  alphaBlend srcFactor(srcAlpha) add dstFactor(one)
    endif
-      
+
    # Useful for glows/light splash that need to be composited onto other things, like thumbnails.
    if (strcmp("&{alphaBlendMode}", "addNoSrcAlphaScale") = 0)
 	  alphaBlend srcFactor(one) add dstFactor(one)
    endif
-   
+
    alphaTest $stdMatAlphaTestEnabled $stdMatAlphaRefValue
    alphaTestFunction acceptIfGreaterOrEqual
 enddef
@@ -320,7 +320,7 @@ define StandardShaderEnvCubeMapState(texCoordSource)
    if (not $stdMatEnvCubeLockedToCamera)
 	  ffTextureMatrix -orientCameraToGlobal
    endif
-   
+
    textureAddressing clamp clamp clamp
 enddef
 

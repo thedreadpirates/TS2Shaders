@@ -1,5 +1,5 @@
 #
-# Materials for overlays. These include decals and outdoor 
+# Materials for overlays. These include decals and outdoor
 # object shadows.
 #
 
@@ -28,7 +28,7 @@ define OverlayMaterialDef()
          pass -fixedFunction
             create LightingStatesNoStdLights()
             fillmode $stdMatFillMode
-            
+
             # can be overridden by code
             if ($overlayAdditive)
                alphaBlend srcFactor(srcAlpha) add dstFactor(one)
@@ -37,7 +37,7 @@ define OverlayMaterialDef()
             else
                alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
             endif
-            
+
             if ($overlayOverlapDepthTest)
                depthTest true -enableDepthWrite true
                depthTestFunction acceptIfLess
@@ -50,11 +50,11 @@ define OverlayMaterialDef()
                else
                   depthTestFunction acceptIfLessOrEqual
                endif
-               
+
                alphaTest true 0
                alphaTestFunction acceptIfGreater
             endif
-            
+
             stage
                # is overridden by code except in debug mode.
                texture "reggrid2"
@@ -85,24 +85,24 @@ define OverlayShadowMaterialDef()
          vertexFormatPred targetindices 0 false
 
          create DetermineHardwareSupport()
-         
+
             pass -fixedFunction
 
             create LightingStatesNoStdLights()
             fillmode $stdMatFillMode
-            
+
             alphaBlend srcFactor(zero) add dstFactor(srcColor)
-            
+
             depthTest true -enableDepthWrite true
             depthTestFunction acceptIfLess
             alphaTest true 100
             alphaTestFunction acceptIfGreater
-                                    
+
             #stencilFunction acceptIfEqual -refValue 0
             #stencilOperation -onPass incrementSaturate
-            
-            ffDepthOffset 1                        
-            
+
+            ffDepthOffset 1
+
             stage
                texture "reggrid2"                        # is overridden by code except in debug mode.
                textureAddressing clamp clamp
@@ -118,19 +118,19 @@ define OverlayShadowMaterialDef()
                # blockiness via the alpha test -- the entire shadow is the shadow colour.
                textureBlend select(outRegister) multiply(texture outRegister)
                # what you'd do for soft shadows: use shadow texture alpha to blend between 1, 1, 1 and the shadow colour.
-               #textureBlend lerpOutRegisterAlpha(outRegister texture) multiply(texture outRegister)   
+               #textureBlend lerpOutRegisterAlpha(outRegister texture) multiply(texture outRegister)
             end
             if (not $lmIntegratedShadows and $isGround and ($useHWShader2Path or $useHWShader1Path))
                stage
                   if ($isGround)
                      texture "floorLightMap_0"
                      ffTextureCoordsSource fromPosition
-                     ffTextureMatrix -cameraToGlobal -scale (1/64)                     
+                     ffTextureMatrix -cameraToGlobal -scale (1/64)
                   else
                      texture "floorLightMap_0"
                      ffTextureCoordsSource 0
                   endif
-                  
+
                   textureAddressing tile tile
                   textureBlend lerpTextureAlpha(outRegister diffuse) select(outRegister)
                end

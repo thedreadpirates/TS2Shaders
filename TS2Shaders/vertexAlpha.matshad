@@ -5,10 +5,10 @@
 #extraparam int stdMatLayer 0 -32 32 ; layer for render order
 
 define VertexAlpha()
-      
+
       material
 
-    
+
          shader -layer ($stdMatLayer * 18 + 17)
             validateRenderShaderContext -vertexFormat  position      0 required
             validateRenderShaderContext -vertexFormat color         0 required
@@ -17,9 +17,9 @@ define VertexAlpha()
 			create SetupCommonHWShaderVariablesAndPredicates()
          # since the DX8 path won't run here, I want the software VS  on DX7/dx8 cards to assume ubyte4.
          setb ubyte4Supported true
-         
+
 			pass
-				
+
                alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
                depthTest true -enableDepthWrite false
 
@@ -27,41 +27,40 @@ define VertexAlpha()
 					create BindsForHardwareVS2Transforms($doSkinning $doMorphing)
 					create TransformFragments($doSkinning false false $doMorphing $numPosMorphs $numNormMorphs false 2_0)
 					shaderFragment VertexAlphaSupport2_0
-					
+
                end
-                
+
                colorScalar (1,1,1) 1 -applyShapeColor 0
-               
+
                stage
                   textureBlend select(diffuse colorScalar) select(diffuse colorScalar)
-               end 
-               
+               end
+
             end
          end
-         
-          
-         
+
+
+
          # backup shader for materials without color in their vertices (bad case, but better than flashing red)
          shader -layer ($stdMatLayer * 18 + 17)
             validateRenderShaderContext -vertexFormat  position      0 required
 
             pass -fixedFunction
-				
+
                create LightingStatesNoStdLights()
 
                colorScalar (1,1,1) 1
-				
+
                stage
                   textureBlend select(colorScalar) select(colorScalar)
-               end 
+               end
             end
-						 
+
          end
-         
+
       end
-      
-      
-      
+
+
+
    enddef
 #endshader VertexAlpha
-

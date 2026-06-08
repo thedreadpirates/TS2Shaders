@@ -34,18 +34,18 @@ define VS_SinCosApprox1Constants(c0 c1 c2)
    const4f &c1  (1,  -1/2, 1 / 24,  -1 / 720 )
    const4f &c2  (1,  -1/6, 1 / 120, -1 / 5040)
 enddef
- 
+
 # rDst can be the same as rSrc
 define VS_SinCosApprox1(rDst rSrc t0 c0 c1 c2)
-   mad  &{rDst}.x,  &{rSrc}.x, &{c0}.w,  &{c0}.y  # bring argument into -pi, .., +pi range 
-   expp &{rDst}.y,  &{rDst}.x 
-   mad  &{rDst}.x,  &{rDst}.y, &{c0}.z, -&{c0}.x 
-   dst  &{t0}.xy,   &{rDst}.x, &{rDst}.x  # generate 1, (&rDst.x)^2, .. (&rDst.x)^6 
+   mad  &{rDst}.x,  &{rSrc}.x, &{c0}.w,  &{c0}.y  # bring argument into -pi, .., +pi range
+   expp &{rDst}.y,  &{rDst}.x
+   mad  &{rDst}.x,  &{rDst}.y, &{c0}.z, -&{c0}.x
+   dst  &{t0}.xy,   &{rDst}.x, &{rDst}.x  # generate 1, (&rDst.x)^2, .. (&rDst.x)^6
    mul  &{t0}.z,    &{t0}.y,   &{t0}.y
    mul  &{t0}.w,    &{t0}.y,   &{t0}.z
-   mul  &{rDst},    &{t0},     &{rDst}.x  # generate &rDst.x, (&rDst.x)^3, .., (&rDst.x)^7 
-   dp4  &{rDst}.y,  &{rDst},   &{c2}      # compute sin(&rDst.x) 
-   dp4  &{rDst}.x,  &{t0},     &{c1}      # compute cos(&rDst.x) 
+   mul  &{rDst},    &{t0},     &{rDst}.x  # generate &rDst.x, (&rDst.x)^3, .., (&rDst.x)^7
+   dp4  &{rDst}.y,  &{rDst},   &{c2}      # compute sin(&rDst.x)
+   dp4  &{rDst}.x,  &{t0},     &{c1}      # compute cos(&rDst.x)
 enddef
 
 
@@ -57,19 +57,19 @@ enddef
 define VS_NormalOffsetProgram(vertexOffset)
    shaderProgram
       vsAsm "vs_1_1"
-      
+
       vsConstants -geomToCam              0  # .. 2
       vsConstants -camToClip              3  # .. 7
       const4f                            c8  (&vertexOffset, 0, 0, 1)
-      
+
       vsAsm
          dcl_position0 v0
          dcl_normal0   v1
-                   
+
          # transform normal to camera space
          mov r0.w, c8.w
          m3x3 r0, v1, c0
-                  
+
          m4x3 r2, v0, c0         # position in camera space.
          mov r2.w, c8.w
          mad  r2, r0, c8.x, r2   # add offset.
@@ -105,17 +105,17 @@ define VS_PointLight(oDir oClr rP rL0 rL1 rOne rT0 rT1)
    add &{rT0}, -&{rP}, &{rL0}    # r
    dp3 &{rT1}, &{rT0}, &{rT0}    # d^2
    rsq &{rT1}.w, &{rT1}          # 1/d
-   
+
    mul &{oDir}, &{rT0},  &{rT1}.w      #  oDir = r^
-   
+
    # not mad because can't have two constants in one line:
    mul &{rT0}, &{rT1}, &{rL0}.w
 
    add &{rT0}, &{rT0}, &{rOne}         # 1 + falloff * d^2
-   
+
    rcp &{rT0},  &{rT0}.x                # 1 / (1 + falloff * d^2)
-  
-   # mad &{rT1}, &{rT1}.x, &{rT1}.w, -&{rL1}.w   #  d^2 * -(1 / d) - 
+
+   # mad &{rT1}, &{rT1}.x, &{rT1}.w, -&{rL1}.w   #  d^2 * -(1 / d) -
 
    mul &{oClr}, &{rT0}.x, &{rL1}       # color * strength
 #mov &{oClr}, &{rL1}       # color * strength
@@ -129,15 +129,15 @@ define VS_SpotLight(oDir oClr rP rL0 rL1 rL2 rOne rT0 rT1)
    add &{rT0}, -&{rP}, &{rL1}    # r
    dp3 &{rT1}, &{rT0}, &{rT0}    # d^2
    rsq &{rT0}.w, &{rT1}          # 1/d
-   
+
    mul &{oDir}, &{rT0},  &{rT0}.w      #  oDir = r^
-   
+
    # not mad because can't have two constants in one line:
-   mul &{rT0}, &{rT1}, &{rL1}.w 
+   mul &{rT0}, &{rT1}, &{rL1}.w
    add &{rT0}, &{rT0}, &{rOne}      # 1 + falloff * d^2
-   
+
    rcp &{rT0}, &{rT0}               # 1 / (1 + falloff * d^2)
-   
+
    mul &{oClr}, &{rT0}, &{rL2}
 enddef
 
@@ -150,19 +150,19 @@ define VS_ApplyPhongLighting(rDst rSrc rN rE rExp rHalf rT0)
    # find H = (L + E) / 2
    add &{rT0}, &{rSrc}, &{rE}
    mul &{rT0}, &{rT0},  &{rHalf}
-   
+
    # normalize H
    create VS_Normalize(&{rT0} &{rT0})
-   
+
    # N.H in camera space.
    dp3 &{rT0}.y, &{rN}, &{rT0}
- 
+
    # N.L in camera space.
    dp3 &{rT0}.x, &{rN}, &{rSrc}
- 
+
    # lit: (N.L) (N.S) -> clamped diff and spec
    #mov &{rDst}, &{rT0}.x
-   
+
    mov &{rT0}.w,  &{rExp}    # exponent
    lit &{rDst},   &{rT0}
 enddef
@@ -176,46 +176,46 @@ enddef
 define VSLightingTest()
    material
       shader
-         pass 
+         pass
             shaderProgram
                shaderSource vs_1_1
-               vsConstants -geomToClip             0 
+               vsConstants -geomToClip             0
                vsConstants -geomToCam              4
                const4f                             c7 (0, 10, 0.5, 1)   # all used
                vsConstants -camDirLights           10 4
                vsConstants -camPointLights         18 1
-               
-               vsAsm 
+
+               vsAsm
                   dcl_position0 v0
                   dcl_normal0   v1
                   dcl_texcoord0 v2
                endasm
 
-               vsAsm 
+               vsAsm
                   # position to camera space
-                  m4x4 oPos, v0, c0 
-               
+                  m4x4 oPos, v0, c0
+
                   # r0 = N^
                   # r1 = P
                   # r2 = E^
                   # r3..r5 temp
-                  
+
                   # transform normal to camera space
                   #mov r0.w, c7.w
                   m3x3 r0, v1, c4
-                  
+
                   create VS_Normalize(r0 r0)
-                  
+
                   # position in camera space, P
                   mov  r1.w, c7.w
                   m4x3 r1,   v0, c4
-                                    
+
                   # vector from point to eye, E
                   mov r2, -r1
                   create VS_Normalize(r2 r2)
-                  
+
                   #############################
-                  
+
                   # r6  = dirTemp
                   # r7  = colourTemp
                   # r8  = intensity output
@@ -227,7 +227,7 @@ define VSLightingTest()
                   mov r10, c7.x
 
                   # Diffuse lights
-                  create VS_DirectionalLight(r6 r7 c10 c11)   
+                  create VS_DirectionalLight(r6 r7 c10 c11)
                          # oDir oClr rL0 rL1
                   create VS_ApplyPhongLighting(r8 r6 r0 r2 c7.y c7.z r3)
                          # (rDst rSrc rN rE rExp rHalf rT0)
@@ -235,7 +235,7 @@ define VSLightingTest()
                   mad r9,  r8.x, r7, r9
                   mad r10, r8.y, r7, r10
 
-                  create VS_DirectionalLight(r6 r7 c12 c13)   
+                  create VS_DirectionalLight(r6 r7 c12 c13)
                          # oDir oClr rL0 rL1
                   create VS_ApplyPhongLighting(r8 r6 r0 r2 c7.y c7.z r3)
                          # (rDst rSrc rN rE rExp rHalf rT0)
@@ -243,7 +243,7 @@ define VSLightingTest()
                   mad r9,  r8.x, r7, r9
                   mad r10, r8.y, r7, r10
 
-                  create VS_DirectionalLight(r6 r7 c14 c15)   
+                  create VS_DirectionalLight(r6 r7 c14 c15)
                          # oDir oClr rL0 rL1
                   create VS_ApplyPhongLighting(r8 r6 r0 r2 c7.y c7.z r3)
                          # (rDst rSrc rN rE rExp rHalf rT0)
@@ -251,7 +251,7 @@ define VSLightingTest()
                   mad r9,  r8.x, r7, r9
                   mad r10, r8.y, r7, r10
 
-                  create VS_DirectionalLight(r6 r7 c16 c17)   
+                  create VS_DirectionalLight(r6 r7 c16 c17)
                          # oDir oClr rL0 rL1
                   create VS_ApplyPhongLighting(r8 r6 r0 r2 c7.y c7.z r3)
                          # (rDst rSrc rN rE rExp rHalf rT0)
@@ -260,7 +260,7 @@ define VSLightingTest()
                   mad r10, r8.y, r7, r10
 
                   # Point lights
-                  create VS_PointLight(r6 r7 r1 c18 c19 c7.w r3 r4)   
+                  create VS_PointLight(r6 r7 r1 c18 c19 c7.w r3 r4)
                          # oDir oClr rP rL0 rL1 rOne rT0 rT1
                   create VS_ApplyPhongLighting(r8 r6 r0 r2 c7.y c7.z r3)
                          # (rDst rSrc rN rE rExp rHalf rT0)
@@ -269,21 +269,21 @@ define VSLightingTest()
                   mad r9,  r8.y, r7, r9
                   mad r10, r8.z, r7, r10
                   #add r10, r8.z, r10     # white spec highlight
-                  
-                  
+
+
                   # oD0 = 0.25 * diffuse color.
                   mul r3, c7.z, r9
                   mul oD0.xyz, c7.z, r3
-                  
+
                   # oD1 = spec color.
                   mov oD1.xyz, r10
                endasm
             end
-         
+
             #colorScalar -lightRadiance directional 0 ($stdMatDiffCoef * (0.25).xxx)
             #colorScalar ($stdMatDiffCoef * (0.25).xxx)
             colorScalar ((1).xxx)
-         
+
             stage
                textureBlend multiplyScale4(diffuse colorScalar) select(colorScalar)
             end

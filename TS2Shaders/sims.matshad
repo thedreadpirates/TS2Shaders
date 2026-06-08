@@ -34,7 +34,7 @@ enddef
 
 
 # special layer for the censor shader. This ensures that the censor shader can
-# be skipped during the censor render itself. The number is referred to from 
+# be skipped during the censor render itself. The number is referred to from
 # C++ code.
 seti kCensorShaderLayer -1
 
@@ -44,27 +44,27 @@ define CensorCompositingMaterial()
       shader -layer ($kCensorShaderLayer)
          pass
             renderTarget viewerRenderTarget
-          
-            # vertex program            
+
+            # vertex program
             shaderProgram -target vertexProgram -method assemble
                shaderSource
                   vs_1_1
                   dcl_position v0
                   dcl_texcoord v1
-                  
+
                   mov oPos, v0
                   mov oT0.xy, v1
-                  
+
                endShaderSource
             end
-        
+
             # pixel program
             stage
                texture "CensorTexture"
-         
+
                textureFilterHint point point
                textureAddressing clamp clamp clamp
-         
+
                textureBlend select(texture) select(texture)
             end
          end
@@ -73,7 +73,7 @@ define CensorCompositingMaterial()
 enddef
 
 materialDefinition CensorMaterial
-   setDefinition CensorCompositingMaterial   
+   setDefinition CensorCompositingMaterial
 end
 
 
@@ -84,16 +84,16 @@ define PlumbBobAnimatedColor()
 			attribute myAlpha float1 0.843
 		end
 
-	
-	
+
+
 		shader -layer (18 * 17 + 17)
-			
+
 			validateRenderShaderContext -vertexFormat position	0 required
 			validateRenderShaderContext -vertexFormat normal	0 required
 
 			create DetermineHardwareSupport()
 			create SetupCommonHWShaderVariablesAndPredicates()
-			
+
 
 			if ($useFixedFunctionPath)
 				pass -fixedFunction
@@ -107,20 +107,20 @@ define PlumbBobAnimatedColor()
 					stage
 						colorScalar @myColor @myAlpha
 						textureBlend multiplyScale4(diffuse colorScalar) multiply(diffuse colorScalar)
-					end 
-					
+					end
+
 				end # pass
 			else
 
 				# empircally, there are NO lights associated with the plumb bob, so I won't bother to compute them.
 				pass
-				
+
 					shaderProgram -target vertexProgram -method link
 						create BindsForHardwareVS1Transforms(false false)
 						shaderFragment TransformPositionRigidNoLighting1_1
 						shaderFragment NoLighting1_1
 					end
-					
+
 					depthTest true -enableDepthWrite false
 					alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
 
@@ -128,17 +128,17 @@ define PlumbBobAnimatedColor()
 						colorScalar @myColor @myAlpha
 						textureBlend multiplyScale4(diffuse colorScalar) select(colorScalar)
 					end  #stage
-					
+
 				end # pass
 			endif
-        
-         
-         
+
+
+
 		end # shader
 	end #material
-   
+
 enddef
-   
+
 
 
 # New material for use of new plumb bob
@@ -156,7 +156,7 @@ end
 #########################################################
 # Sims Shaders
 #
-# These include a version of the standard material 
+# These include a version of the standard material
 # (SimStandardMaterial) that is used for things
 # such as hair and faces, and SimSkin, which is
 # used for a body with composited textures.
@@ -232,7 +232,7 @@ setb contentViewer false
 # the lighting.txt file was 'tuned' using a DX7 sim material with a 0.4 multiplier, instead of 0.5 (x2 on the blender side to get back to 1.0)
 # what this lead to was a desired look on dx7 cards, but dx8 and dx7 were washed out, being 20% brighter.
 # so this fudge factor scales sims in dx8 and dx9 'down' by this amount to bring them into line with the "broken" dx7.
-# for now, this is a temp fix for E3 2004, but this might live on forever. 
+# for now, this is a temp fix for E3 2004, but this might live on forever.
 # in a perfect world, this factor will be removed and the game lighting 're tuned' to use the unscaled lighting.
 # this will probably need to happen anyway, with new materials and lighting models planned in the expansion packs.
 
@@ -249,22 +249,22 @@ define SimSkin()
 
 	setb hasSecondUV (hasVertexFormat(texcoord, 1))
 	#trace "SIMSKIN $currentMaterialName   UV2: $hasSecondUV Eye: $eyeGizmoEnable"
-	
-		
+
+
 		# if it has eyes, then it's a face too.
 		# .x = U shift (up/down) of eye, y = V shift (left/right) of eye, z = left eye stretch, w = right eye stretch
 		# might be switched to a 'look at' vector, so the VS can compute the offsets directly.
 
-   # body may stil get these attributes, but the VS attached to the material only looks at these if a 2nd UV exists and 
+   # body may stil get these attributes, but the VS attached to the material only looks at these if a 2nd UV exists and
    # eyeGizmoEnable is true.
-   
+
 	attributes
       attribute eyeDirection float2 (0, 0)
 		attribute l_eyeStretch float1 (0)
 		attribute r_eyeStretch float1 (0)
 	end
 
-	create SimsShaderPreCreate()    
+	create SimsShaderPreCreate()
 	create DetermineHardwareSupport()
 
 	# always composite on the CPU for anything other than dx9.
@@ -272,12 +272,12 @@ define SimSkin()
 	#	#trace "Using CPU composited textures"
 	#	setb useCPUCompositedTextures true
 	#endif
-			
-	
+
+
 	#if ($useCPUCompositedTextures)
 
 		# pass through base texture name
-		
+
 		if ($numTexturesToComposite)
 			if (strcmp("${compositeBaseTextureName}", "") != 0)
 				set stdMatBaseTextureName $compositeBaseTextureName
@@ -286,13 +286,13 @@ define SimSkin()
 				set stdMatBaseTextureEnabled false
 			endif
 		endif
-      
-		
+
+
 		# do nothing is stdMatBaseTextureName is non-null, then just leave it alone...
 		# this is contentViewer case.
 
-		
-								
+
+
 		if ($useHWShader2Path and $bumpMapping)
 			if (strcmp("${compositeBumpTextureName}", "") != 0)
 				set stdMatNormalMapTextureName $compositeBumpTextureName
@@ -302,34 +302,34 @@ define SimSkin()
 				if (strcmp("${stdMatNormalMapTextureName}", "") = 0)
 					setb stdMatNormalMapTextureEnabled false
 				endif
-				
+
 				#otherwise, leave everything alone, it's a non-compositing simSkin
-				
+
 			endif
 		endif
-		
-		setb bViewerIsThumbnail (viewerRenderType = $kViewerRenderTypeFamilyThumbnail)			   
-					
+
+		setb bViewerIsThumbnail (viewerRenderType = $kViewerRenderTypeFamilyThumbnail)
+
 		# we only want to render thumbnails in fixed function and we want to do two passes to correct alpha for the thumbnail
 		if ($useHWShader2Path and not $bViewerIsThumbnail)
 			create CreateSimStandardMaterialDX9()
 		endif
-		
+
 	#	if ($useHWShader1Path)
 	#		create CreateSimStandardMaterialDX8()
 	#	endif
-		
+
 		if ($useSWVertexShaderPath)
 			create CreateSimStandardMaterialSWVS()
 		endif
-		
+
 		if ($useFixedFunctionPath or $useHWShader1Path or ($bViewerIsThumbnail and not $useSWVertexShaderPath))
 			create CreateSimStandardMaterialFixedFunction()
-		endif      
+		endif
 	#<
 	else
 
-		
+
 		# backup case for Content viewer, which can have no compositing.
 
 		if (strcmp("${baseTexture0}","") = 0)
@@ -337,29 +337,29 @@ define SimSkin()
 		    setb contentViewer true
 			create SimStandardMaterial()
 		else
-		
+
 			if ($useHWShader2Path)
 				#trace "HW2 GPU COMPOSITE: $currentMaterialName"
 				create DX9SimSkinCompositingMaterial()
 			endif
-			
-			
+
+
 			if ($useHWShader1Path)
 				#trace "HW1: $currentMaterialName"
 				create CreateSimSkinPerPixelCompositingMaterialPS1()
 			endif
-					
-			
+
+
 			if ($useFixedFunctionPath)
 				create CreateSimPerPixelCompositingMaterialFixedFunction()
 			endif
-			
+
 		endif
-		
-	
+
+
 	endif
 	#>
-	
+
 
 end
 
@@ -372,19 +372,19 @@ setb simHairFlag false
 
 define SimHair()
    setb simHairFlag true
-	
+
 	if (strcmp("${baseTexture0}","") = 0 or $numTexturesToComposite = 0)
 		create SimStandardMaterial()
 	else
 		create SimSkin()
 	endif
-	
+
 enddef
 
 
 
 # Any Sim materials (clothes/skin) that do not use composited textures use
-# the following material. 
+# the following material.
 
 #beginshader SimStandardMaterial
 #description Similar to standard material, but used on Sims themselves (fewer options).
@@ -399,24 +399,24 @@ enddef
 
 define SimStandardMaterial()
 
-   
+
 	create DetermineHardwareSupport()
 
    setb bViewerIsThumbnail (viewerRenderType = $kViewerRenderTypeFamilyThumbnail)
-	
+
 	if ($useHWShader2Path and not $bViewerIsThumbnail)
 		create CreateSimStandardMaterialDX9()
 	endif
-		
+
 
    if ($useSWVertexShaderPath)
 		create CreateSimStandardMaterialSWVS()
 	endif
-		
+
 	if ($useFixedFunctionPath or $useHWShader1Path or ($bViewerIsThumbnail and not $useSWVertexShaderPath))
 		create CreateSimStandardMaterialFixedFunction()
 	endif
-		
+
 
 enddef
 
@@ -435,16 +435,16 @@ define SimMaterialSetup()
 
    # no sim material can have specular, since they might diverse and cause seams.
    setf stdMatSpecPower 0
-   
-	seti lightingMode $kNoLighting     
+
+	seti lightingMode $kNoLighting
 
 	create SetupCommonHWShaderVariablesAndPredicates()
 
-	if (numLightsOfType(${kShapeColorLight}) > 0 ) 
+	if (numLightsOfType(${kShapeColorLight}) > 0 )
 		seti stdMatShapeColorIndex 0
 		set stdMatAlphaBlendMode blend
 	endif
-		
+
 	#trace "Light counts: DISTANT: $distantLightCount, POINT: $pointLightCount, SPOT $spotLightCount"
 
 	create BumpTextureCount()
@@ -452,14 +452,14 @@ define SimMaterialSetup()
 	if ($stdMatNormalMapTextureEnabled = false)
 		seti bumpTextureCount 0
 	endif
-	
-   
+
+
 	#trace "Bump texture count: 	$bumpTextureCount"
 	#trace "ShapeColor Index for this Sim Material is: $stdMatShapeColorIndex"
-   
+
    create TestForEyeMotion()
 
-				
+
 enddef
 
 
@@ -471,11 +471,11 @@ define BumpTextureCount()
 
 
 	if ($bumpMapping)
-	
+
 		if (strcmp("${bumpTexture0}","")!=0)
 			seti bumpTextureCount ($bumpTextureCount +1)
 		endif
-		
+
 		if (strcmp("${bumpTexture1}","")!=0)
 			seti bumpTextureCount ($bumpTextureCount +1)
 		endif
@@ -483,7 +483,7 @@ define BumpTextureCount()
 		if (strcmp("${bumpTexture2}","")!=0)
 			seti bumpTextureCount ($bumpTextureCount +1)
 		endif
-		
+
 		if (strcmp("${bumpTexture3}","")!=0)
 			seti bumpTextureCount ($bumpTextureCount +1)
 		endif
@@ -503,11 +503,11 @@ define BumpTextureCount()
 		if (strcmp("${bumpTexture7}","")!=0)
 			seti bumpTextureCount ($bumpTextureCount +1)
 		endif
-		
+
 	endif
 
 	setb  hasTangents (hasVertexFormat(tangent,0))
-	
+
 
 
 enddef
@@ -515,13 +515,13 @@ enddef
 
 #==============================================================================
 # Macro	for	setting	alpha blending and alpha test state	for sim hair materials.
-define SimHairAlphaState(alphaBlendMode)   
+define SimHairAlphaState(alphaBlendMode)
    #trace "SimHairAlphaState: $currentMaterialName, Alpha Blending Mode: &{alphaBlendMode}"
    if (strcmp("&{alphaBlendMode}", "blend") = 0)
 	  alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
 	  depthTest	true -enableDepthWrite true
-	  alphaTest true 60	 	 
-     alphaTestFunction acceptIfGreater	
+	  alphaTest true 60
+     alphaTestFunction acceptIfGreater
    elseif (strcmp("&{alphaBlendMode}", "additive") = 0)
      alphaBlend srcFactor(srcAlpha) add dstFactor(one)
 	  depthTest	true -enableDepthWrite false
@@ -532,11 +532,3 @@ define SimHairAlphaState(alphaBlendMode)
      alphaTestFunction acceptIfGreaterOrEqual
    endif
 enddef
-
-
-
-
-
-
-
-

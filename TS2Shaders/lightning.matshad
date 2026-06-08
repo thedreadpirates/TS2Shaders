@@ -1,7 +1,7 @@
 # lightning shaders
 #
 # contributors :  bpt 09-25-02
-#           
+#
 
 define LightningIonization()
    material
@@ -33,17 +33,17 @@ define LightningIonization()
                textureTransformType vector3
 
                ffTextureMatrix -orientToCamera
-               
+
                textureAddressing clamp clamp clamp
 
                # choose diffuse vertex color supplied by model
                # use alpha channel from cube map texture lookup
                textureBlend addSigned(diffuse texture:alphaReplicate) select(texture)
-               
+
                # debugging to show alpha channel
                # textureBlend select(texture:alphaReplicate) select(texture)
                # textureBlend select(colorScalar) select(colorScalar)
-            end 
+            end
          end
       end
       # fallback to geometry specified properties
@@ -62,7 +62,7 @@ define LightningIonization()
 
             stage
               textureBlend select(diffuse) select(diffuse)
-            end 
+            end
          end
       end
    end
@@ -97,19 +97,19 @@ define LightningGlow()
                textureMIPFilterHint disabled
 
                ffTextureCoordsSource fromNormal
-               textureTransformType vector3               
+               textureTransformType vector3
 
                ffTextureMatrix -orientToCamera
-               
+
                textureAddressing clamp clamp clamp
 
                # choose diffuse vertex color supplied by model
                # use alpha channel from cube map texture lookup
                textureBlend addSigned(diffuse texture:alphaReplicate) select(texture)
-               
+
                # debugging to show alpha channel
                # textureBlend select(texture:alphaReplicate) select(texture)
-            end 
+            end
          end
       end
       # fallback to geometry specified properties
@@ -128,13 +128,13 @@ define LightningGlow()
 
             stage
                textureBlend select(diffuse) select(diffuse)
-            end 
+            end
          end
       end
    end
 enddef
 
- 
+
 define LightningCore()
    material
       attributes
@@ -163,19 +163,19 @@ define LightningCore()
                textureMIPFilterHint disabled
 
                ffTextureCoordsSource fromNormal
-               textureTransformType vector3               
+               textureTransformType vector3
 
                ffTextureMatrix -orientToCamera
-               
+
                textureAddressing clamp clamp clamp
 
                # choose diffuse vertex color supplied by model
                # use alpha channel from cube map texture lookup
                textureBlend addSigned(diffuse texture:alphaReplicate) select(texture)
-               
+
                # debugging to show alpha channel
                # textureBlend select(texture:alphaReplicate) select(texture)
-            end 
+            end
          end
       end
       # fallback to geometry specified properties
@@ -194,7 +194,7 @@ define LightningCore()
 
             stage
                textureBlend select(diffuse) select(diffuse)
-            end 
+            end
          end
       end
    end

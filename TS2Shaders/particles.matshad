@@ -18,7 +18,7 @@ setb stdPMInvertDepth   false
 setb stdPMDebugFill     false
 
 set stdParticleCompositeTexture ""
- 
+
 define StandardParticlesMaterial()
    material
       # put ourselves two layers above the standard, plus
@@ -29,19 +29,19 @@ define StandardParticlesMaterial()
       else
       shader -layer ($stdMatLayer * 18 + 17)   # 17 for alpha blend
       endif
-      
+
          vertexFormatPred position 0 true
          vertexFormatPred texcoord 0 true
          vertexFormatPred color    0 true
          vertexFormatPred blendindices  0 false
          vertexFormatPred targetindices 0 false
-         
+
          numLightsPred environmentCube (numLightsOfType(environmentCube))
 
          pass -fixedFunction
             create LightingStatesNoStdLights()
             ffPerVertexColor -enable true -diff vertexDiffuse
-            
+
             if $stdPMDebugFill
                alphaBlend srcFactor(one) add dstFactor(zero)
             elseif $stdPMAdditive
@@ -51,12 +51,12 @@ define StandardParticlesMaterial()
             else
                alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
             endif
-               
+
             depthTest $stdPMDoDepthTest -enableDepthWrite $stdPMDoDepthWrite
             if ($stdPMInvertDepth)
                depthTestFunction acceptIfGreater
             endif
-            
+
 
 	    if ($UseNewAlphaMask)
 		if (not $stdPMDebugFill)
@@ -73,37 +73,37 @@ define StandardParticlesMaterial()
 			alphaTestFunction acceptIfGreaterOrEqual     # is this the default? remove if so...
 		endif
 	   endif
-	   
+
 
             # the particle system takes care of whether lighting is applied,
-            # by setting kGeomSkipIllumination appropriately.                        
+            # by setting kGeomSkipIllumination appropriately.
             if (not tsIsDay) #if its night time
-               colorScalar (0.8, 0.8, 0.8, 1) 
+               colorScalar (0.8, 0.8, 0.8, 1)
             else
                colorScalar (1, 1, 1, 1) # for day time
             endif
-            
+
             fillmode $stdMatFillMode  # so we pick up on wireframe.
             cullmode none
 
             create LightingStatesNoStdLights()
-            
+
             stage
                texture $stdParticleTexture
-               
+
                textureAddressing clamp clamp
 
                textureBlend multiply(texture diffuse) multiply(texture diffuse)
             end
-            
+
             if (strcmp("$stdParticleCompositeTexture", "()") != 0)
                # alpha composite over the top
                stage
                   texture $stdParticleCompositeTexture
-                  
+
                   textureAddressing clamp clamp
                   ffTextureCoordsSource 0
-   
+
                   textureBlend lerpTextureAlpha(texture outRegister) select(outRegister)
                end
             elseif (numLightsOfType(environmentCube) > 0)
@@ -114,21 +114,21 @@ define StandardParticlesMaterial()
                # We don't (yet) support particle "lighting" with composite particles.
                stage
                   textureBlend multiply(colorScalar outRegister) multiply(colorScalar outRegister)
-               end            
+               end
             endif
          end
       end
-      
-      
-      
+
+
+
       # since particles tend to be transparent, the fallback will be to not draw them.
-      shader 
-       
+      shader
+
       end #shader
-      
-      
-      
-      
+
+
+
+
    end
 enddef
 
@@ -146,7 +146,7 @@ define StandardParticleModelMaterial()
       # TODO: do ltScale properly; but we'll probably move this functionality into
       # standard material before we tackle that.
       set ltScale 2
-      
+
       attributes
          attribute color float3
          attribute alpha float1
@@ -159,16 +159,16 @@ define StandardParticleModelMaterial()
          vertexFormatPred texcoord 0 true
          vertexFormatPred blendindices  0 false
          vertexFormatPred targetindices 0 false
-         
+
          create DetermineHardwareSupport()
 
          pass -fixedFunction
             ffMatCoef -amb ($stdMatDiffCoef * (1 / $ltScale).xxx) -ambAlpha $stdMatAlphaMultiplier -diff ($stdMatDiffCoef * (1 / $ltScale).xxx) -diffAlpha $stdMatAlphaMultiplier -emit ($stdMatEmissiveCoef * (1 / $ltScale).xxx) -emitAlpha $stdMatAlphaMultiplier -spec $stdMatSpecCoef -specPow $stdMatSpecPower
             addSpecular true
-            
+
             # normalize normals because of scale
             create LightingStatesParam(true false)
-            
+
             # We should be able to call StandardShaderFBAlphaState here, but
             # because this wasn't done originally, there are a bunch of existing
             # materials that have blend set to "none" where they should be set to
@@ -180,41 +180,41 @@ define StandardParticleModelMaterial()
                alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
                depthTest true -enableDepthWrite true
             endif
-            
+
             alphaTest $stdMatAlphaTestEnabled $stdMatAlphaRefValue
-            alphaTestFunction acceptIfGreaterOrEqual              
+            alphaTestFunction acceptIfGreaterOrEqual
 
             colorScalar @color @alpha
-            
+
             ffScaleModelTransform @scale
-            
+
             fillmode $stdMatFillMode
 
-            stage               
+            stage
                create StandardShaderTextureState(Base)
-                              
+
                # outRegister is previous stage. For first stage, diffuse.
                if $stdMatBaseTextureAlphaReplicate
                   textureBlend multiplyScale${ltScale}(texture:alphaReplicate outRegister) multiply(texture outRegister)
                else
                   textureBlend multiplyScale${ltScale}(texture outRegister) multiply(texture outRegister)
                endif
-            end                        
-            
+            end
+
             stage
                textureBlend multiply(colorScalar outRegister) multiply(colorScalar outRegister)
-            end 
+            end
          end
-         
+
          if (strcmp("${stdMatEnvCubeMode}", "reflection") = 0)
             pass -fixedFunction
                create LightingStatesParam(true false)
-   
+
                alphaBlend srcFactor(one) add dstFactor(one)
                ffScaleModelTransform @scale
                colorScalar $stdMatEnvCubeCoef 1
                fillmode $stdMatFillMode
-               
+
                stage
                   if ($cubeMapSupport)
                      create StandardShaderEnvCubeMapState(fromReflectionVector)
@@ -224,10 +224,10 @@ define StandardParticleModelMaterial()
                   endif
                end
             end
-         endif         
+         endif
       end
-      
-      
+
+
       # non textured opaque fallback.
       shader -layer ($stdMatLayer * 18)
          pass -fixedFunction
@@ -235,20 +235,19 @@ define StandardParticleModelMaterial()
                ffScaleModelTransform @scale
                colorScalar @color @alpha
                ffMatCoef -amb ($stdMatDiffCoef * (0.5).xxx) -ambAlpha $stdMatAlphaMultiplier -diff ($stdMatDiffCoef * (0.5).xxx) -diffAlpha $stdMatAlphaMultiplier -emit ($stdMatEmissiveCoef * (0.5).xxx) -emitAlpha $stdMatAlphaMultiplier -spec $stdMatSpecCoef -specPow $stdMatSpecPower
-   
+
             stage
                textureBlend multiplyScale2(diffuse colorScalar) select(colorScalar)
             end
-            
+
          end
-      
+
       end
-      
+
       # do-nothing fallback
-     
+
       shader
       end
-      
+
    end
 enddef
-

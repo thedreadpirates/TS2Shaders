@@ -9,7 +9,7 @@ materialDefinition pizzaSteam
    addParam stdMatLightingEnabled false
    addParam stdMatAlphaBlendMode blend
    addParam stdMatAlphaTestEnabled false
-   addParam stdMatAlphaMultiplier  0.016 
+   addParam stdMatAlphaMultiplier  0.016
    addParam stdMatBaseTextureAlphaReplicate false
    addParam stdMatDiffCoef (1, 1, 1)
    addParam stdMatBaseTextureEnabled true

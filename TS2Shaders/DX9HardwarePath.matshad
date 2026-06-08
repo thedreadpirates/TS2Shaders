@@ -3,7 +3,7 @@ include standardFragmentBuilder.matShad
 
 define DX9HardwarePath()
 
-	
+
 	if (viewerRenderType = $kRenderTypeShadow)
 	   create ShadowRenderDX9()
 	elseif (viewerRenderType = $kRenderTypeShadowMap)
@@ -11,42 +11,42 @@ define DX9HardwarePath()
 	else
 		create DX9StandardMaterialRendering()
 	endif
-	
-enddef		
+
+enddef
 
 define ShadowMapDX9()
-   
+
    shader
-      viewerRenderTypePred $kRenderTypeShadowMap   
-      
+      viewerRenderTypePred $kRenderTypeShadowMap
+
       create SetupCommonHWShaderVariablesAndPredicates()
-      	   
-	   pass					
-			
+
+	   pass
+
 			shaderProgram -method link -target vertexProgram
 				create BindsForHardwareVS2Transforms(true $doMorphing)
 				create TransformFragments($doSkinning true false $doMorphing $numPosMorphs $numNormMorphs false 2_0)
 			end
-						
+
 			create ShadowMapPS()
 		end
 	end
 enddef
 
-		
+
 define	DX9StandardMaterialRendering()
-				
+
 	setf diffuseColorAccum 0
 	setf specularColorAccum 0
 	seti totalLights 0
 	seti perPixelLightCount 0
 	setb alphaBlendingOn false
-	
-	
+
+
 	if (strcmp("${stdMatAlphaBlendMode}", "none") )
 		setb alphaBlendingOn true
 	endif
-		
+
 	seti  layerNumber ($stdMatLayer	* 18 + $stdMatAddLayer	+ ($alphaBlendingOn ? 17 : 0))
 
 
@@ -66,35 +66,35 @@ define	DX9StandardMaterialRendering()
 			validateRenderShaderContext -vertexFormat texcoord 0 required
 		endif
 
-	
+
 		create DetermineLightingMode()
-	
+
 		# what to do with objects that already have blend mode set?
-	
-	
-		if (numLightsOfType(${kShapeColorLight}) != 0  and  $stdMatAlphaTestEnabled = false)				   
-		   
-		   if (strcmp("${stdMatAlphaBlendMode}", "blend") = 0)		   
+
+
+		if (numLightsOfType(${kShapeColorLight}) != 0  and  $stdMatAlphaTestEnabled = false)
+
+		   if (strcmp("${stdMatAlphaBlendMode}", "blend") = 0)
 		      pass
 				   create NonStandardLighting()
 				   depthTest true -enableDepthWrite true
 				   #colorWriteEnable -red false -green false -blue false -alpha false
-				   alphaBlend srcFactor(zero) add dstFactor(one)				   
+				   alphaBlend srcFactor(zero) add dstFactor(one)
 
 				   create VS2GeometryProcessing($kNoLighting false)
-   					
+
                shaderProgram -method assemble -target pixelProgram
-                  shaderSource 
+                  shaderSource
                      ps_1_1
                      def c0,0,0,0,0
                      mov r0, c0
                   endShaderSource
-               end               
-			   end		   
+               end
+			   end
 		   endif
-						
+
 		endif
-		
+
 		setb bumpMappingFlag false
 
 		if ($stdMatNormalMapTextureEnabled and $lightingMode = $kFullLighting)
@@ -102,37 +102,37 @@ define	DX9StandardMaterialRendering()
 				setb bumpMappingFlag true
 			endif
 		endif
-		
+
       if ($updateEachFrameFlag)
          pass -modifiedEachFrameHint
       else
          pass
-      endif               
-      
+      endif
+
 			fillmode $stdMatFillMode
 			cullmode $stdMatCullMode
-                        
+
 			seti perPixelLightCount 0
-			
+
 			create NonStandardLighting()
-	
+
 			create VS2GeometryProcessing($lightingMode $bumpMappingFlag)
-				
+
 			if ($lightingMode = $kNoLighting)
-			
+
 				if ($alphaBlendingOn or $stdMatAlphaTestEnabled)
 					create StandardShaderFBAlphaState($stdMatAlphaBlendMode)
 				endif
-				
+
 				create UnlitPixelShader()
-			
+
 			else
 				create PixelShader2Rendering($bumpMappingFlag $perPixelLightCount)
 			endif
 
-						
+
 		end
-		
+
 		create DX9SnowPass()
 	end
 
@@ -143,61 +143,61 @@ define	DX9StandardMaterialRendering()
          shader
          end
        endif
-        
-        
+
+
          #lit, transformed, untextured fallback.
       shader  -layer ($layerNumber)
          validateRenderShaderContext -vertexFormat position 0 required
          validateRenderShaderContext -viewerRenderType viewerRenderType
-              
+
          pass
             shaderProgram -target vertexProgram -method link
                create BindsForHardwareVS2Transforms($doSkinning $doMorphing)
-              
+
                create BindsForLighting($lightingMode)
                create StandardMaterialFragmentBuilder($lightingMode  false false false 2_0)
             end
-              
+
             stage
                textureBlend select(diffuse) select(diffuse)
             end
          end # pass
-                      
+
       end #shader
-            
-       
+
+
           # non lit, non textured fallback.
-          
+
          shader  -layer ($layerNumber)
             validateRenderShaderContext -vertexFormat position 0 required
             validateRenderShaderContext -viewerRenderType viewerRenderType
-            
-            pass               
-               
+
+            pass
+
                shaderProgram -target vertexProgram -method link
                   create BindsForHardwareVS2Transforms($doSkinning $doMorphing)
-      
+
                   create TransformFragments($doSkinning $stdMatReduceBoneWeights false $doMorphing $numPosMorphs $numNormMorphs false 2_0)
-      
+
                end #vs
-               
+
                colorScalar ($stdMatDiffCoef) 1.0
-               
+
                stage
                   textureBlend select(colorScalar) select(colorScalar)
                end #stage
             end # pass
-            
+
          end #shader
-         
-          
+
+
          # fake lit, non textured, basic transform fallback.
-               
+
          shader  -layer ($layerNumber)
             validateRenderShaderContext -vertexFormat position 0 required
             validateRenderShaderContext -viewerRenderType viewerRenderType
-            
-            pass               
+
+            pass
                shaderProgram -target vertexProgram -method assemble
                   create BindsForHardwareVS2Transforms(false false)
                   shaderSource
@@ -209,25 +209,25 @@ define	DX9StandardMaterialRendering()
                      m4x4 oPos, v0, c4
                      dp3 oD0, v1, c18
                   endShaderSource #ss
-      
+
                end #vs
-               
+
                colorScalar ($stdMatDiffCoef) 1.0
-               
+
                stage
                   textureBlend multiply(diffuse colorScalar) select(colorScalar)
                end #stage
             end #pass
-            
+
          end #shader
-         
-        
+
+
         # don't do a damn thing fallback.
       shader
       end
    endif
-   
-   
+
+
 
 
 enddef
@@ -237,75 +237,75 @@ define DX9SnowPass()
    setb shouldShowSnowOnObject true
 
 	# disabling snow on certain materials
-   if (strstr("$currentMaterialName", "shadow") != 0 or strcmp("${stdMatAlphaBlendMode}", "none") != 0 or strstr("$currentMaterialName", "zengarden_surfacequadrant01") != 0 or strstr("$currentMaterialName", "_lit") != 0 or strstr("$currentMaterialName", "_unlit") != 0) 
+   if (strstr("$currentMaterialName", "shadow") != 0 or strcmp("${stdMatAlphaBlendMode}", "none") != 0 or strstr("$currentMaterialName", "zengarden_surfacequadrant01") != 0 or strstr("$currentMaterialName", "_lit") != 0 or strstr("$currentMaterialName", "_unlit") != 0)
 		setb shouldShowSnowOnObject false
    endif
-   
+
 	if ($weatherLightCount > 0 and $shouldShowSnowOnObject)
-		
+
 		pass
-		   alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)		      
-		   
+		   alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
+
 		   depthTest true -enableDepthWrite false
-		   depthTestFunction acceptIfEqual		   
-		   
+		   depthTestFunction acceptIfEqual
+
 		   shaderProgram -method link -target vertexProgram
 				create BindsForHardwareVS2Transforms($doSkinning $doMorphing)
-				create BindsForLighting($lightingMode)				   
+				create BindsForLighting($lightingMode)
 				create TransformFragments($doSkinning $stdMatReduceBoneWeights false $doMorphing $numPosMorphs $numNormMorphs true 2_0)
 				#trace "$currentMaterialName : $doSkinning $stdMatReduceBoneWeights $bonesPerVertex"
 				shaderFragment ObjectSnowShader2_0
 			end
 
-         # now write a pixel shader               		   
-         shaderProgram -target pixelProgram -method compile -version 2_0 # -disassemble "c:\sims2ep5\hlslPS2_0.txt"                            
+         # now write a pixel shader
+         shaderProgram -target pixelProgram -method compile -version 2_0 # -disassemble "c:\sims2ep5\hlslPS2_0.txt"
             bindConstants 0 -bindingID	ambientLight -constantCount	1 -constantType	float
-            
-            if ($stdMatShapeColorIndex = 0)		
-		         bindConstants 1	-bindingID shapeColorIndex0	
+
+            if ($stdMatShapeColorIndex = 0)
+		         bindConstants 1	-bindingID shapeColorIndex0
 	         else
 		         bindConstants 1	-bindingID immediateData -data (1,1,1,1) -constantType float
 	         endif
-	         
+
 	         bindConstants 2	-bindingID immediateData -data (0.9,0.9,1.0,1) # day
 	         if (tsIsInNeighborhood)
-	            bindConstants 3	-bindingID immediateData -data (2,2,4,1)  # night	         
+	            bindConstants 3	-bindingID immediateData -data (2,2,4,1)  # night
 	         else
-	            bindConstants 3	-bindingID immediateData -data (1.3,1.3,5.1,1)  # night	         
+	            bindConstants 3	-bindingID immediateData -data (1.3,1.3,5.1,1)  # night
 	         endif
-         
-            shaderSource   
+
+            shaderSource
                float3 ambientLight : register(c0);
                float4  shapeColor   : register(c1);
                float4 dayLightColor : register(c2);
                float4 nightLightColor : register(c3);
-                                                                   
+
                sampler NoiseSampler;
-               float4 PixelMain(float snow : TEXCOORD0, 
-		               float2 noiseUV : TEXCOORD1,		                  
+               float4 PixelMain(float snow : TEXCOORD0,
+		               float2 noiseUV : TEXCOORD1,
 		               float3 camNormal : TEXCOORD2,
 		               float3 diffuse : TEXCOORD3) : COLOR0
                {
-	               float4 result;	                  	                  
+	               float4 result;
 	               float4 n1 = tex2D(NoiseSampler, noiseUV*7.0f);
 	               float4 n2 = tex2D(NoiseSampler, noiseUV*5.0f);
 	               float4 n = (n1+n2)*0.5f;
-	               float snowColor = saturate((snow*2) - n.r);	                  
-	               result.w = snowColor; // blend alpha	
-	               float3 lightColor = ambientLight.x < 0.3 ? nightLightColor.xyz : dayLightColor.xyz;                  	                  
+	               float snowColor = saturate((snow*2) - n.r);
+	               result.w = snowColor; // blend alpha
+	               float3 lightColor = ambientLight.x < 0.3 ? nightLightColor.xyz : dayLightColor.xyz;
 	               result.xyz = (diffuse.xxx*lightColor.xyz + ambientLight.xyz);
 	               return(result*shapeColor);
                }
 
             endShaderSource
-         end               
-         
+         end
+
          sampler NoiseSampler
             texture "snow-object-noise"
             textureAddressing tile tile
-         end                                              
+         end
 		end
-	endif     
+	endif
 enddef
 
 
@@ -325,19 +325,19 @@ define VS2GeometryProcessing(lightingMode perPixelLightingFlag)
 	endif
 
 
-	shaderProgram -target vertexProgram -method link 
+	shaderProgram -target vertexProgram -method link
 
 		create BindsForHardwareVS2Transforms($doSkinning $doMorphing)
-			
+
 		create BindsForLighting(&lightingMode)
-	
+
 		# send mode, version and enable HDR (since PS2 is on the backend)
-	
+
 		create StandardMaterialFragmentBuilder(&lightingMode  &perPixelLightingFlag true false 2_0)
 
 	end # end the shader
-	
-	
+
+
 	create VertexShaderTextureMatrixAnimation()
 
 
@@ -351,10 +351,10 @@ define 	BindsForHardwareVS2Transforms(skinFlag morphFlag)
 	bindConstants 0 -bindingID cameraToClip -constantCount 4 -constantType float
 	bindConstants 4 -bindingID geomToClip -constantCount 4 -constantType float
 	bindConstants 8 -bindingID geomToCamera -constantCount 3 -constantType float
-	
+
 
 	# enough for 60 bones.
-	if (&skinFlag) 
+	if (&skinFlag)
 		bindConstants 56 -bindingID posesToCameraPacked -constantCount 180 -constantType float
 	endif
 
@@ -367,9 +367,9 @@ define 	BindsForHardwareVS2Transforms(skinFlag morphFlag)
 			bindConstants 253 -bindingID cameraToGlobal -constantCount 3
 		endif
 	endif
-	
 
-		
+
+
 enddef
 
 
@@ -378,20 +378,20 @@ enddef
 define ShadowRenderDX9()
 
 		#trace "Shadow render type for: $currentMaterialName"
-		shader 
+		shader
 			viewerRenderTypePred $kRenderTypeShadow
 
          create SetupCommonHWShaderVariablesAndPredicates()
-		
+
 			pass
 				setb $stdMatReduceBoneWeights true
-				setb hasTexcoords false								
-				
+				setb hasTexcoords false
+
 				create VS2GeometryProcessing($kNoLighting false)
-				
+
 				shaderProgram -method assemble -target pixelProgram
 					bindConstants 0 -bindingID immediateData -data ($stdMatShadowColor) -constantType float
-					
+
 					shaderSource
 						ps_1_1
 						mov r0, c0
@@ -400,7 +400,7 @@ define ShadowRenderDX9()
 
 			end
 		end
-		
+
 enddef
 
 
@@ -408,12 +408,12 @@ enddef
 
 define UnlitPixelShader()
 
-	
+
 	if (strcmp("${stdMatAlphaBlendMode}", "none") != 0)
 		create StandardShaderFBAlphaState($stdMatAlphaBlendMode)
 	endif
-	
-	
+
+
 	if ($stdMatBaseTextureEnabled)
 		create UnlitTexturePixelShader()
 	else
@@ -427,28 +427,28 @@ enddef
 
 define UnlitTexturePixelShader()
 
-   # don't wanna apply ambience lighting on objects emissive settings on them   
+   # don't wanna apply ambience lighting on objects emissive settings on them
 
-   setb hasEmissive (($stdMatEmissiveCoef).x > 0 or ($stdMatEmissiveCoef).y > 0 or ($stdMatEmissiveCoef).z > 0 or tsIsLightMaterial("${currentMaterialName}"))       
+   setb hasEmissive (($stdMatEmissiveCoef).x > 0 or ($stdMatEmissiveCoef).y > 0 or ($stdMatEmissiveCoef).z > 0 or tsIsLightMaterial("${currentMaterialName}"))
 	setv3 evalDiffuse (($stdMatDiffCoef + $stdMatEmissiveCoef).xyz)
 	seti textureLights 0
 	seti textureLights (numLightsOfType(environmentCube))  # a color that scales bright thingies at night
-	
+
 	shaderProgram -target pixelProgram -method assemble
 		bindConstants 0 -bindingID immediateData -data ($evalDiffuse, $stdMatAlphaMultiplier)
-		bindConstants 1 -bindingID shapeColorIndex0 
-		
+		bindConstants 1 -bindingID shapeColorIndex0
+
 		if (not $hasEmissive and $textureLights)
          bindConstants 3 -bindingID allTextureLights -constantCount 1
       endif
 
-		
+
 		shaderSource
 			ps_1_1
 			def c2,1,1,1,1
 			tex t0
 		endShaderSource
-		
+
 		if ($stdMatBaseTextureAlphaReplicate)
 			shaderSource
 				mul r0.rgb, c0, t0.a
@@ -466,15 +466,15 @@ define UnlitTexturePixelShader()
 				mul r0, r0, c1  ; apply shape color if needed.
 			endShaderSource
 		endif
-				
-		if (not $hasEmissive and strcmp("${stdMatTextureCoordAnimMode}",	"none") = 0 and $textureLights)				
+
+		if (not $hasEmissive and strcmp("${stdMatTextureCoordAnimMode}",	"none") = 0 and $textureLights)
 		   shaderSource
 		      mul r0, r0, c3 ; apply environment color
 		   endShaderSource
-		endif		
-				
+		endif
+
 	end
-	
+
 	sampler 0
 		texture $stdMatBaseTextureName
 		textureAddressing $stdMatBaseTextureAddressingU $stdMatBaseTextureAddressingV $stdMatBaseTextureAddressingW
@@ -488,24 +488,24 @@ enddef
 define UnlitDiffuseOnlyPixelShader()
 
 	setv3 evalDiffuse (($stdMatDiffCoef).xyz)
-	
+
 	setf alpha ($stdMatUntexturedDiffAlpha * $stdMatAlphaMultiplier)
 
 	shaderProgram -target pixelProgram -method assemble
 		bindConstants 0 -bindingID immediateData -data ($evalDiffuse, $alpha)
-		bindConstants 1 -bindingID shapeColorIndex0 
-		
+		bindConstants 1 -bindingID shapeColorIndex0
+
 		shaderSource
 			ps_1_1
 			mov r0, c0
 		endShaderSource
-		
+
 		if ($stdMatShapeColorIndex = 0)
 			shaderSource
 				mul r0, r0, c1  ; apply shape color if needed.
 			endShaderSource
 		endif
-		
+
 	end
 
 enddef

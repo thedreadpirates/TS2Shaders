@@ -18,14 +18,14 @@ define NeighborhoodTerrainPrepWorkSWVS()
 			shaderFragment TransformPositionRigidNoLighting2_x
 			shaderFragment NoLighting2_x
 		end
-						
+
 		colorScalar (0.0, 0.0, 0.0, 1.0)
-			      
+
 		stage
 			textureBlend select(colorScalar) select(colorScalar)
-		end 
+		end
 	end
-	
+
 enddef
 
 
@@ -46,7 +46,7 @@ define NeighborhoodWaterlineStraddleSWVS()
 			create TransformFragments(false false true false 0 0 false 2_x)
 			shaderFragment TerrainWaterMaskTexGenUVZero2_x
 		end
-				
+
 		alphaBlend srcFactor(one) add dstFactor(srcAlpha)
 		cullmode none # so that reflections don't "creep under" edge of terrain
 		#colorScalar (0.0, 1.0, 0.1, 0.0)
@@ -56,20 +56,20 @@ define NeighborhoodWaterlineStraddleSWVS()
 
 		depthTest true -enableDepthWrite true
 		depthTestFunction accept
-					
+
 		stage
 			# above water -- clip by using depth-based 0/1 texture.
 			texture blackWhite
 			textureAddressing clamp clamp
 			textureFilterHint point point
 			textureMIPFilterHint disabled
-		           
+
 			textureBlend select(texture) select(texture)
-		end 
+		end
 
 	end
-	
-	
+
+
 enddef
 
 
@@ -84,67 +84,67 @@ define NeighborhoodWaterlineStraddleStandardCameraSWVS()
 			shaderFragment TransformPositionRigidNoLighting2_x
 			shaderFragment NoLighting2_x
 		end
-				
+
 		#alphaBlend srcFactor(one) add dstFactor(zero)
-		
+
 		cullmode none # so that reflections don't "creep under" edge of terrain
 		colorScalar (0.0, 0.0, 0.0, 1.0)
 
 		stage
 			textureBlend select(colorScalar) select(colorScalar)
-		end 
+		end
 
 	end
 
-	
+
 enddef
 
 
 # ==============================================================================
 # Material for terrain geometry that is partially or completely under water.
 define NeighborhoodUnderWaterTerrainSWVS()
-   
-   
+
+
 	pass
-	
+
 		shaderProgram -target vertexProgram -method assemble
 			create BindsForSoftwareVSTransforms(false false)
-	
+
 			setf normalizerScale (1.0/($waterHeight))
 
 			setv4 texgenData ($normalizerScale, 1, $waterHeight, -0.5)
-	
+
 			bindConstants 11 -bindingID immediateData -data $texgenData
-	
+
 			shaderSource
 				vs_1_1
-				
+
 				def c12,0, 0.5 ,1,2
 				dcl_position v0
-				
+
 				m4x4 oPos, v0, c4     ; geom to clip
-			
+
 				mad r0.xyz, v0.zzz, -c11.xxx, c11.yy     ; normalize this from 0 to 1.
-				
+
 				mov oT0.xy, r0
-			
+
 				add oT1.xy, r0, -c11.ww     ; shift by 0.5, so that the 'clip texture', ends up at the water level.
 
 				mov oD0, c12.y
 			endShaderSource
-			
+
 		end
-		
+
 		alphaBlend srcFactor(zero) add dstFactor(srcColor)
-		
+
 		cullmode none # so that reflections don't "creep under" edge of terrain
-		
+
 		alphaTest true 128
 		alphaTestFunction acceptIfGreater
 
 		# apply depth-based gradient texture to terrain that is under water.
 
-	
+
 		stage
 			texture $waterGradientTexture
 			textureAddressing clamp clamp
@@ -159,7 +159,7 @@ define NeighborhoodUnderWaterTerrainSWVS()
 			textureMIPFilterHint disabled
 			textureBlend select(outRegister) select(texture)
 		end
-	
+
 	#<
 		stage
 			textureBlend select(diffuse) select(diffuse)
@@ -167,7 +167,7 @@ define NeighborhoodUnderWaterTerrainSWVS()
 #>
 
 	end
-	
+
 enddef
 
 # ==============================================================================
@@ -182,9 +182,9 @@ define NeighborhoodMainTerrainShaderSWVS()
 	   if (not $isImposter)
 		   shaderProgram -target vertexProgram -method link
 			   create BindsForSoftwareVSTransforms(false false)
-   				
+
 			   setv4 texgenData (1.0/$nhoodPaintTextureScale, 1.0/$nhoodPaintTextureScale, $alphaMapScaleU, $alphaMapScaleV )
-   					
+
 			   bindConstants 11 -bindingID immediateData -data  $texgenData -constantType float
 			   # no morphs, skins or normals
 			   shaderFragment TransformPositionRigidNoLighting2_x
@@ -196,44 +196,44 @@ define NeighborhoodMainTerrainShaderSWVS()
 
 			   setv4 texgenData (1.0/$nhoodPaintTextureScale, 1.0/$nhoodPaintTextureScale, $alphaMapScaleU, $alphaMapScaleV )
 			   bindConstants 11 -bindingID immediateData -data $texgenData
-   					
+
 			   shaderSource
 				   vs_1_1
-   				
+
 				   def c12,0, 0.5 ,1,2
 				   def c13, 0.0076923, 0.25, 0, 0
-				   dcl_position v0				   
+				   dcl_position v0
 				   m4x4 oPos, v0, c4
-                              
+
                mov oT0.xy, c13.yy
                mul oT1.xy, c11.xy, v0.xy
             endShaderSource
-		   end		
+		   end
 		endif
-		
+
 		alphaBlend srcFactor(srcAlpha) add dstFactor(one)
 		cullmode none # so that reflections don't "creep under" edge of terrain
-		                     
+
 		#colorScalar $nhoodSunDirBiased
-		         
+
 		depthTest true -enableDepthWrite false
 		depthTestFunction acceptIfEqual
-		
+
 		colorScalar 1.0,1.0,1.0,1.0
-				
+
 		stage
 			texture $alphaMap
 			textureAddressing clamp clamp
 			textureBlend select(colorScalar) select(texture)
-		end 
-				
+		end
+
 		stage
 			texture $paintTexture
 			textureAddressing tile tile
 			textureBlend multiply(texture outRegister) select(outRegister)
-		end 
+		end
 	end
-	
+
 enddef
 
 
@@ -243,21 +243,21 @@ enddef
 
 define NeighborhoodWaterSWVS()
 	shader	-layer (($waterLayer) * 18 + 17)
-	
+
 		validateRenderShaderContext -viewerRenderType viewerRenderType
-		
+
 		pass
-		
+
 			fillmode $stdMatFillMode
-		
+
 			alphaBlend srcFactor(one) add dstFactor(srcAlpha)
-			
+
 			shaderProgram -target vertexProgram -method assemble
 				create BindsForSoftwareVSTransforms(false false)
 				shaderSource
-				
+
 					vs_1_1
-					
+
 					def c50, 0, 0.5,1,2
 					def c11, 0,0,1,0
 					def c12, 0.2,0.5,0.7, 0.1
@@ -265,32 +265,32 @@ define NeighborhoodWaterSWVS()
 					dcl_normal v1
 					m4x3 r0.xyz, v0, c8  ; to camera space
 					m3x3 r3.xyz, v1, c8
-					
+
 					mov r0.w, c50.z
 					m4x4 oPos, r0, c0     ; camera to clip
-					
+
 					dp3 r1.w, r0, r0
 					rsq r1, r1.w
 					mul r1, r1.w, r0 ; r1= view vector.
-					
+
 					dp3 r2, r3, -r1 ; view dot normal
 					max r2, r2, c50.x
-					
+
 					add r3, c50.z, -r2
-					
+
 					mul oD0.xyz, r3, c12
 					mov oD0.w, r2
-					
+
 				endShaderSource
 			end
-			
-			
+
+
 			stage
 				textureBlend select(diffuse) select(diffuse)
 			end
 		end
-		
-	
+
+
 	end
 enddef
 
@@ -300,21 +300,21 @@ enddef
 # drawn as well.
 # the layer ID of any under-water objects (so
 define NeighborhoodWaterEdgeSWS()
-   
+
 	pass
-   
+
 		alphaBlend srcFactor(one) add dstFactor(zero)
 		cullmode none # we want to render the father side of the water edge also
-	            
+
 		stage
 			texture $waterEdgeTexture
 			textureAddressing tile tile
 			#ffTextureMatrix -scalev (1/$waterEdgeTextureScale, 1/$waterEdgeTextureScale)
 			#ffTextureCoordsSource 0
 			textureBlend select(texture) select(diffuse)
-		end 
+		end
 	end
-	
+
 enddef
 
 # ==============================================================================
@@ -324,19 +324,19 @@ define NeighborhoodTerrainEdgeSWVS()
 
 	pass
 		alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
-        
+
 		stage
 			texture $terrainEdgeTexture
 			textureAddressing tile tile
-			
+
 			#ffTextureMatrix -scalev (1/$terrainEdgeTextureScale, 1/$terrainEdgeTextureScale)
 			#ffTextureCoordsSource 0
-			
+
 			textureBlend multiply(texture diffuse) select(texture)
-             
+
          end
 	end
-	
+
 enddef
 
 
@@ -352,53 +352,53 @@ define NeighborhoodTerrainLightingSWVS()
 
 			setf textureScale (1.0/($waterHeight))
 			setv4 texgenData ($textureScale, 1, $waterHeight, -0.5)
-			bindConstants 11 -bindingID immediateData -data $texgenData			
-					
+			bindConstants 11 -bindingID immediateData -data $texgenData
+
 			shaderSource
 				vs_1_1
-				
+
 				def c12,0, 0.5 ,1,2
 				def c13, 0.0078125, 0.00078125, 0, 0
 				dcl_position v0
          endShaderSource
-         				
-         if (not $isImposter)                  				
-				shaderSource  "dcl_texcoord v1"
-         endif				
 
-         shaderSource				
+         if (not $isImposter)
+				shaderSource  "dcl_texcoord v1"
+         endif
+
+         shaderSource
 				m4x4 oPos, v0, c4
-			
+
 				mad r0.xyz, v0.zzz, -c11.xxx, c11.yy     ; normalize this from 0 to 1.
-				
+
 				add oT0.xy, r0, -c11.ww     ; shift by 0.5, so that the 'clip texture', ends up at the water level.
-				
+
 		   endShaderSource
 
-         if ($isImposter)            
-            shaderSource                
+         if ($isImposter)
+            shaderSource
                mul oT1.xy, v0.xy, c13.yy
             endShaderSource
          else
             shaderSource "mul oT1.xy, v1, c13.xx"
          endif
-														
+
 		end
-		
+
 		# setup for SRC * DEST, standard lightmap.
-		
+
 		alphaBlend srcFactor(destColor) add dstFactor(zero)
-		
+
 		alphaTest true 128
 		alphaTestFunction acceptIfGreater
 
 		fillmode $stdMatFillMode
-		
+
 		# not really important to do this?
-		
+
 		depthTest true -enableDepthWrite false
       depthTestFunction acceptIfEqual
-		
+
 		colorScalar (1,1,1,1)
 
 		stage
@@ -408,13 +408,13 @@ define NeighborhoodTerrainLightingSWVS()
 			textureFilterHint point point
 			textureMIPFilterHint disabled
 			textureBlend select(texture:alphaReplicate) select(texture:invert)
-			                  
-		end 
-		            
+
+		end
+
 		stage
 			texture "nhoodLightMap"
 			textureBlend multiply(texture outRegister:alphaReplicate) select(outRegister)
-		end  
+		end
 
 	end
 
@@ -428,18 +428,18 @@ enddef
 define NeighborhoodTerrainHighlightSWVS()
 
 	pass
-	
+
 		shaderProgram -target vertexProgram -method link
 			create BindsForSoftwareVSTransforms(false false)
 			#setv4 texgenData (1,  1, 0.0, 0.0)
-						
+
 			#bindConstants 11 -bindingID immediateData -data $texgenData
-						
+
 			shaderFragment TransformPositionRigidNoLighting2_x
 			shaderFragment NoTextureMagic2_x
-						
+
 		end
-		
+
 		alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
 		fillmode $stdMatFillMode
 		colorScalar (1, 1, 1, $highlightAlpha)
@@ -449,10 +449,7 @@ define NeighborhoodTerrainHighlightSWVS()
 			textureAddressing tile tile
 
 			textureBlend select(texture) multiply(texture colorScalar)
-		end 
-	end     
-	
+		end
+	end
+
 enddef
-
-
-

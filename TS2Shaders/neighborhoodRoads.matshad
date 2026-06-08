@@ -14,76 +14,76 @@ seti  nhoodRoadLayer -1
 # ==============================================================================
 define NHoodRoadMaterialDef()
 
-   material   
+   material
 		shader -layer ($nhoodRoadLayer * 8)
 			viewerRenderTypePred $kRenderTypeNormal
-         
+
 			create DetermineHardwareSupport()
-         
+
 			if ($useSWVertexShaderPath)
 				 pass
 					shaderProgram -target vertexProgram -method link
 						create BindsForSoftwareVSTransforms(false false)
 						setv4 texgenData ( 0, 0 , 1/($terrainWidth),  1/($terrainWidth))
-									
+
 						bindConstants 11 -bindingID immediateData -data $texgenData
-									
+
 						create TransformFragments( false false true false 0 0 false 2_x)
 						shaderFragment Copy2DTexcoords2_x
-						shaderFragment TerrainLightmapTexgenUVOne2_x		
+						shaderFragment TerrainLightmapTexgenUVOne2_x
 					end
-				
+
 					alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
 					fillmode $stdMatFillMode
   					colorScalar (1, 1, 1, 1)
-		            
+
 					stage
 						texture $stdMatBaseTextureName
 						textureAddressing clamp clamp
 						textureBlend select(texture) select(texture)
-					end 
+					end
 					stage
 						texture "nhoodLightMap"
 						textureBlend multiply(texture outRegister) select(outRegister)
-					end  
+					end
 
 
 				end
-            
-         
+
+
          else
-         
+
          # temp force to FF to prevent flicker
 			if (0) #$useFixedFunctionPath = false)
-			
+
 				#create PixelShaderNHoodRoadMaterialDef()
             setb foo false
-            
-			else 
-				pass -fixedFunction                  
+
+			else
+				pass -fixedFunction
 					create LightingStatesNoStdLights()
 					alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
 					fillmode $stdMatFillMode
 					colorScalar (1, 1, 1, 1)
-		                  
+
 					stage
 						texture $stdMatBaseTextureName
 						textureAddressing clamp clamp
 						ffTextureCoordsSource 0
 						textureBlend select(texture) select(texture)
-					end 
+					end
 					stage
 						texture "nhoodLightMap"
 						ffTextureMatrix -cameraToGlobal -scale ($terrainWidth) -invert
 						ffTextureCoordsSource fromPosition
 						textureBlend multiply(texture outRegister) select(outRegister)
-					end  
+					end
 				end
 			endif
-			
-			
+
+
          endif
-			
+
       end
       shader
          viewerRenderTypePred viewerRenderType
@@ -103,17 +103,17 @@ enddef
 # Don't clamp it like a normal road texture.
 define NHoodSupportMaterial(materialName textureName)
 
-   materialDefinition &materialName   
+   materialDefinition &materialName
       setDefinition StandardMaterial
       addParam   stdMatLightingEnabled true
       addParam   stdMatDiffCoef (1.0, 1.0, 1.0)
-      
+
       addParam   stdMatBaseTextureName &textureName
-      
+
       addParam   stdMatBaseTextureEnabled true
       addParam   stdMatAlphaBlendMode blend
    end
-   
+
 enddef
 
 

@@ -8,30 +8,30 @@ setb hasShapeColor false
 
 define RugMaterialFF()
    material
-      shader -layer $rugLayer         
+      shader -layer $rugLayer
 
-         if ($hasShapeColor)         
+         if ($hasShapeColor)
             pass -fixedFunction -modifiedEachFrameHint
          else
             pass -fixedFunction
          endif
-         
-            create LightingStates() 
-            create AttenuatedMatCoef(1)                       
-                    
-                              
-            ffDepthOffset 2            
-            
+
+            create LightingStates()
+            create AttenuatedMatCoef(1)
+
+
+            ffDepthOffset 2
+
             #alphaTest true 127
             #alphaTestFunction acceptIfGreater
             alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
-            depthTest true -enableDepthWrite false                        
-            
+            depthTest true -enableDepthWrite false
+
             colorScalar (0.8, 0.8, 0.8, 1)
-            
+
             if ($hasShapeColor)
                tsEdithShapeColor $currentMaterialName
-               
+
                stage
                   texture $rugTexture
                   ffTextureCoordsSource 0
@@ -39,9 +39,9 @@ define RugMaterialFF()
 					   # the light map has been prescaled by 0.5
 					   textureBlend multiply(texture colorScalar) select(texture)
                end
-               
+
             else
-                                                      
+
                stage
                   texture "floorLightMap_${page}"
                   ffTextureCoordsSource 1
@@ -49,132 +49,132 @@ define RugMaterialFF()
 					   # the light map has been prescaled by 0.5
 					   textureBlend multiply(texture colorScalar) select(texture)
                end
-                                                             
+
                stage
                   texture $rugTexture
                   textureAddressing clamp clamp
-                  ffTextureCoordsSource 0					
+                  ffTextureCoordsSource 0
 					   textureBlend multiplyScale2(texture outRegister) select(texture)
-               end #end stage               
-            endif            
-                        
-         end #pass      
-      end #end shader   
-   end #end material 
+               end #end stage
+            endif
+
+         end #pass
+      end #end shader
+   end #end material
 enddef
 
 setv3 matdiffuse (0.8, 0.8, 0.8)
 
 define RugMaterialGen()
-   material      
-      create DetermineHardwareSupport()         
-      
+   material
+      create DetermineHardwareSupport()
+
       #trace "$currentMaterialName : $forceFF"
-      
+
       if (not $hasShapeColor and ($useHWShader1Path or $useHWShader2Path))
          create RugMaterialHW()
       else
          create RugMaterialFF()
 
-         # ultimate fallback pass? no light map, one stage. 
+         # ultimate fallback pass? no light map, one stage.
 		   shader -layer $rugLayer
 			   validateRenderShaderContext -vertexFormat position 0 required
 			   validateRenderShaderContext -vertexFormat normal 0 required
-			   validateRenderShaderContext -vertexFormat texcoord 0 required			   
-   			
+			   validateRenderShaderContext -vertexFormat texcoord 0 required
+
 			   pass -fixedFunction
 				   create LightingStates()
 				   create AttenuatedMatCoef(1)
-				   
-				   ffDepthOffset 2                        
+
+				   ffDepthOffset 2
                alphaTest true 127
                alphaTestFunction acceptIfGreater
-               depthTest true -enableDepthWrite false                        
+               depthTest true -enableDepthWrite false
 
 				   stage
 					   texture $rugTexture
 					   textureAddressing clamp clamp
 					   ffTextureCoordsSource 0
 					   textureBlend multiplyScale2(texture diffuse) select(outRegister)
-				   end 
+				   end
 			   end
 			end
       endif
-   end # material 
+   end # material
 enddef
 
 define RugMaterialHW()
    shader -layer $rugLayer
       validateRenderShaderContext -vertexFormat position 0 required
-      validateRenderShaderContext -vertexFormat texcoord 0 required         
-      
+      validateRenderShaderContext -vertexFormat texcoord 0 required
+
       pass
          #alphaTest true 127
          #alphaTestFunction acceptIfGreater
          	alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
 			depthTest true -enableDepthWrite false
-			depthTestFunction acceptIfLess				
-					               
+			depthTestFunction acceptIfLess
+
          shaderProgram -target vertexProgram -method compile -version 1_1
             bindConstants 0 -bindingID geomToCamera -constantCount 3
-            bindConstants 3 -bindingID cameraToClipWithDepthOffset -constantCount 4 -data(2, 2, 2, 2) 
-            
+            bindConstants 3 -bindingID cameraToClipWithDepthOffset -constantCount 4 -data(2, 2, 2, 2)
+
             shaderSource
-               float4x3 geomToCameraMatrix  : register(c0);                  
+               float4x3 geomToCameraMatrix  : register(c0);
                float4x4 cameraToClipWithDOMatrix : register(c3);
-               
+
                struct cVertexIn
                {
-                  float3 mPosition : POSITION0;   
-                  float2 mTC0 : TEXCOORD0;                  
-                  float2 mTC1 : TEXCOORD1;
-               };
-               
-               struct cVertexOut
-               {
-                  float4 mClipPosition : POSITION;                     
+                  float3 mPosition : POSITION0;
                   float2 mTC0 : TEXCOORD0;
                   float2 mTC1 : TEXCOORD1;
                };
-               
+
+               struct cVertexOut
+               {
+                  float4 mClipPosition : POSITION;
+                  float2 mTC0 : TEXCOORD0;
+                  float2 mTC1 : TEXCOORD1;
+               };
+
                cVertexOut VertexMain(cVertexIn vertexIn)
-               {                 
-                  cVertexOut result;                                                                        
+               {
+                  cVertexOut result;
                   float3 pos = mul(float4(vertexIn.mPosition, 1), geomToCameraMatrix);
-                  result.mClipPosition = mul(float4(pos, 1), cameraToClipWithDOMatrix);                     
+                  result.mClipPosition = mul(float4(pos, 1), cameraToClipWithDOMatrix);
                   result.mTC0 = vertexIn.mTC0;
                   result.mTC1 = vertexIn.mTC1;
-                  return result;         
+                  return result;
                }
-               
+
             endShaderSource
-         end   
+         end
 
          shaderProgram -target pixelProgram -method assemble
             bindConstants 0 -bindingID immediateData -data($matdiffuse, 1)
-            
+
             shaderSource
                ps_1_1
                def c2, 1,1,1,1
                tex t0 ; base
                tex t1 ; lightmap
-               
-               mul r0, t0, t1  ; base floor * light map                              
+
+               mul r0, t0, t1  ; base floor * light map
                mul_x2 r0.rgb, r0, c0 ; scale at the end to prevent precision/LDR errors
-               mov r0.a, t0.a               
+               mov r0.a, t0.a
             endShaderSource
          end # end shader program
-                     
+
          sampler 0
             texture $rugTexture
             textureAddressing clamp clamp
          end
-         
+
          sampler 1
 				texture "floorLightMap_${page}"
 			end
       end
-   end   
+   end
 enddef
 
 define TerrainCutoutMaterial()
@@ -188,35 +188,35 @@ define TerrainCutoutMaterial()
                create TerrainCutoutMaterialVS()
             endif
          else
-            create TerrainCutoutMaterialFF()      
+            create TerrainCutoutMaterialFF()
          endif
-      end #end shader   
+      end #end shader
    end #end material
 enddef
 
 define TerrainCutoutShadowMapMaterialVS()
    pass
       depthTest true -enableDepthWrite true
-      
+
       shaderProgram -target vertexProgram -method compile -version 1_1
-         bindConstants 0 -bindingID geomToClip -constantCount 4						
-         
+         bindConstants 0 -bindingID geomToClip -constantCount 4
+
 	      shaderSource
-		      float4x4 clipSpaceMatrix  : register(c0);			   
-         
+		      float4x4 clipSpaceMatrix  : register(c0);
+
 	      struct InputVertex
 		      {
-			      float3 position: POSITION0;	
-			      float2 texcoord : TEXCOORD0;				
+			      float3 position: POSITION0;
+			      float2 texcoord : TEXCOORD0;
 		      };
-            
+
 		      struct OutputVertex
 		      {
 			      float4 clipPosition : POSITION;
 			      float2 texcoord : TEXCOORD0;
-			      float2 depth  : TEXCOORD1;					
+			      float2 depth  : TEXCOORD1;
 		      };
-            
+
 		      OutputVertex VertexMain( InputVertex i)
 		      {
 			      OutputVertex o;
@@ -225,94 +225,94 @@ define TerrainCutoutShadowMapMaterialVS()
 			      o.depth = o.clipPosition.zw;
 			      return o;
 		      }
-	      endShaderSource  
+	      endShaderSource
       end # end shader program
-      
-      shaderProgram -target pixelProgram -method compile -version 2_0                        
-         shaderSource   
+
+      shaderProgram -target pixelProgram -method compile -version 2_0
+         shaderSource
             sampler alphaTex;
             struct cInputPixel
-            {               
+            {
                float2 texcoord : TEXCOORD0;
-               float2 depth : TEXCOORD1;               
+               float2 depth : TEXCOORD1;
             };
-            
+
             float4 PixelMain(cInputPixel pi) : COLOR
-            { 
+            {
                float4 color = tex2D(alphaTex, pi.texcoord);
                float4 depth;
                depth.x = pi.depth.x / pi.depth.y;
-               depth.y = depth.x * depth.x;    
-               depth.z = depth.x * depth.y;                                                          
+               depth.y = depth.x * depth.x;
+               depth.z = depth.x * depth.y;
                float4 retVal = color.a < 0.5f ? depth.xyzx : 1.0f.xxxx;
                return retVal;
             }
          endShaderSource
-      end # end shader program    
-      
+      end # end shader program
+
       sampler alphaTex
          texture $rugTexture
-         textureAddressing clamp clamp         
+         textureAddressing clamp clamp
       end
-   end  
+   end
 enddef
 
 define TerrainCutoutMaterialVS()
    pass
       alphaTest true 127
       alphaTestFunction $alphaFunc
-      depthTest true -enableDepthWrite true            
+      depthTest true -enableDepthWrite true
 
       shaderProgram -target vertexProgram -method compile -version 1_1
-         bindConstants 0 -bindingID geomToClip -constantCount 4						
-			
+         bindConstants 0 -bindingID geomToClip -constantCount 4
+
 			shaderSource
-			   float4x4 clipSpaceMatrix  : register(c0);			   
-			
+			   float4x4 clipSpaceMatrix  : register(c0);
+
 			struct InputVertex
 				{
 					float3 position: POSITION0;
 					float2 texcoord : TEXCOORD0;
 				};
-				
+
 				struct OutputVertex
 				{
 					float4 clipPosition : POSITION;
-					float2 txBase  : TEXCOORD0;					
+					float2 txBase  : TEXCOORD0;
 				};
-				
+
 				OutputVertex VertexMain( InputVertex i)
 				{
 				   OutputVertex o;
 				   o.clipPosition = mul(float4(i.position, 1), clipSpaceMatrix);
-				   o.txBase   = i.texcoord;				   
+				   o.txBase   = i.texcoord;
 				   return o;
 				}
-			endShaderSource  
+			endShaderSource
       end # end shader program
-            
-                                                                                                                        
-      stage
-         texture $rugTexture
-         textureAddressing clamp clamp         
-			textureBlend select(texture) select(texture)
-      end #end stage                                 
-   end #pass                
-enddef
 
-define TerrainCutoutMaterialFF()
-   pass -fixedFunction                                     
-      alphaTest true 127
-      alphaTestFunction $alphaFunc
-      depthTest true -enableDepthWrite true                        
-                                                                                                                        
+
       stage
          texture $rugTexture
          textureAddressing clamp clamp
-         ffTextureCoordsSource 0					
 			textureBlend select(texture) select(texture)
-      end #end stage                                 
-   end #pass                
+      end #end stage
+   end #pass
+enddef
+
+define TerrainCutoutMaterialFF()
+   pass -fixedFunction
+      alphaTest true 127
+      alphaTestFunction $alphaFunc
+      depthTest true -enableDepthWrite true
+
+      stage
+         texture $rugTexture
+         textureAddressing clamp clamp
+         ffTextureCoordsSource 0
+			textureBlend select(texture) select(texture)
+      end #end stage
+   end #pass
 enddef
 
 
@@ -320,27 +320,27 @@ define TerrainCutoutMaterialStencil()
    material
       shader -layer 6
          if (viewerRenderType = $kRenderTypeImposter)
-            pass -fixedFunction                                                 
+            pass -fixedFunction
                alphaTest true 127
                alphaTestFunction acceptIfGreater
                alphaBlend srcFactor(zero) add dstFactor(one)
                depthTest true -enableDepthWrite true
-                           
+
                #stencilFunction acceptIfEqual -refValue 0
                #stencilOperation -onPass incrementSaturate
-               
-               ffDepthOffset 2                        
-                
+
+               ffDepthOffset 2
+
                colorScalar (1, 1, 1, 0)
                stage
                   texture $rugTexture
                   textureAddressing clamp clamp
-                  ffTextureCoordsSource 0					
+                  ffTextureCoordsSource 0
 			         textureBlend select(texture) select(texture)
-               end #end stage                                 
-            end #pass         
+               end #end stage
+            end #pass
          endif
-      end #end shader      
+      end #end shader
    end # end material
 enddef
 
@@ -366,7 +366,7 @@ materialDefinition RugMaterialEdithColor
 end
 
 materialDefinition poolshapemask_mask
-   addParam rugTexture poolshape-body-mask   
+   addParam rugTexture poolshape-body-mask
    addParam alphaFunc acceptIfLess
    setDefinition TerrainCutoutMaterial
 end
@@ -381,26 +381,26 @@ materialDefinition poolshapemask_maskstencil
    setDefinition TerrainCutoutMaterialStencil
 end
 
-materialDefinition dirtPileMask_1      
+materialDefinition dirtPileMask_1
    addParam alphaFunc accept
    addParam rugTexture dirtPileMask-mask-small
    setDefinition TerrainCutoutMaterial
 end
 
 materialDefinition dirtPileMask_2
-   addParam rugTexture dirtPileMask-mask-small   
+   addParam rugTexture dirtPileMask-mask-small
    addParam alphaFunc acceptIfLess
    setDefinition TerrainCutoutMaterial
 end
 
 materialDefinition dirtPileMask_3
-   addParam rugTexture dirtPileMask-mask-med   
+   addParam rugTexture dirtPileMask-mask-med
    addParam alphaFunc acceptIfLess
    setDefinition TerrainCutoutMaterial
 end
 
 materialDefinition dirtPileMask_4
-   addParam rugTexture dirtPileMask-mask-large   
+   addParam rugTexture dirtPileMask-mask-large
    addParam alphaFunc acceptIfLess
-   setDefinition TerrainCutoutMaterial   
+   setDefinition TerrainCutoutMaterial
 end

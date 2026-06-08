@@ -1,26 +1,26 @@
 setb PoolWallCurved false
 
 define WallsPS3()
-   shaderProgram -target pixelProgram -method compile -version 3_0                        
-      bindConstants 2 -bindingID allTextureLights -constantCount 1      
-      
+   shaderProgram -target pixelProgram -method compile -version 3_0
+      bindConstants 2 -bindingID allTextureLights -constantCount 1
+
       if ($PoolWallCurved)
          bindConstants 1 -bindingID immediateData -data ( 0.0, 0.38, 1, 1)
       else
          bindConstants 1 -bindingID immediateData -data ( 1.0, 0.0, 0, 0)
       endif
-      
-      shaderSource                                                          
+
+      shaderSource
          float4 textureLight : register(c2);
          float4 curvedWall   : register(c1);
-                        
-         
+
+
          sampler base;
          sampler lightmap;
          sampler caustics;
          sampler shadowMap;
          struct cInputPixel
-         {               
+         {
             float2 txBase    : TEXCOORD0;
 			   float2 txLightMap: TEXCOORD1;
 			   float2 txCaustics: TEXCOORD2;
@@ -28,21 +28,21 @@ define WallsPS3()
 			   float4 shadowTex : TEXCOORD4;
 			   float  dotNL     : COLOR0;
          };
-         
+
          float OffsetLookup(sampler2D map, float4 loc, float4 offset)
-         {	               
+         {
 	         return tex2Dproj(map, loc+offset).r;
          }
-         
-         
+
+
          float4 PixelMain(cInputPixel pi) : COLOR
-         {         
-            float4 baseColor     = tex2D(base, pi.txBase);                                                
-            float4 lightMapColor = tex2D(lightmap, pi.txLightMap);  
-            lightMapColor = textureLight.r < 0.5 ? (lightMapColor) : 0.5f.xxxx;                            
+         {
+            float4 baseColor     = tex2D(base, pi.txBase);
+            float4 lightMapColor = tex2D(lightmap, pi.txLightMap);
+            lightMapColor = textureLight.r < 0.5 ? (lightMapColor) : 0.5f.xxxx;
             float4 causticsColor = tex2D(caustics, pi.txCaustics);
-            float4 result = baseColor * saturate(lightMapColor*2.0);                                   
-            
+            float4 result = baseColor * saturate(lightMapColor*2.0);
+
             float4 vTexCoords[25];
             vTexCoords[0] = float4(-0.000976563f, -0.000976563f, 0.0f, 0.0f );
             vTexCoords[1] = float4(-0.000976563f, -0.000488281f, 0.0f, 0.0f );
@@ -76,48 +76,48 @@ define WallsPS3()
                                     {0.0631915,0.0557663,0.0383276, 0.0338240},
                                     {0.0492136,0.0557663,0.0492136,0.0338240},
                                     {0.0232468,0.0338240,0.0383276,0.0338240}};
-                                    
+
             float lastWeight = 0.0232468;
-            
+
             float4 depth = (pi.vPosLight.z / pi.vPosLight.w) - 0.011;
-            
+
             float lightAmount = 0.0f;
-            
+
             float4 depths[6];
             int i = 0;
             for(int j = 0; j < 6; i+=4, ++j)
-            {     
-               float4 results;                                     
+            {
+               float4 results;
                results.x = OffsetLookup(shadowMap, pi.shadowTex, vTexCoords[i]);
                results.y = OffsetLookup(shadowMap, pi.shadowTex, vTexCoords[i+1]);
                results.z = OffsetLookup(shadowMap, pi.shadowTex, vTexCoords[i+2]);
                results.w = OffsetLookup(shadowMap, pi.shadowTex, vTexCoords[i+3]);
-               depths[j] = results > depth ? vWeights[j] : float4(0.0, 0.0, 0.0, 0.0);                     
-            }   
+               depths[j] = results > depth ? vWeights[j] : float4(0.0, 0.0, 0.0, 0.0);
+            }
             float lastDepth = OffsetLookup(shadowMap, pi.shadowTex, vTexCoords[24]);
             lightAmount += lastDepth <= depth ? lastWeight : 0.0f;
-            lightAmount += dot(depths[0] + depths[1] + depths[2] + depths[3] + depths[4] + depths[5], pi.dotNL);                                                                                                                                                                                                                                    
-            
+            lightAmount += dot(depths[0] + depths[1] + depths[2] + depths[3] + depths[4] + depths[5], pi.dotNL);
+
             return result*0.8 + causticsColor*textureLight*lightAmount*pi.txBase.y + 0.2*result*lightAmount;
          }
       endShaderSource
-   end # end shader program      
+   end # end shader program
 enddef
 
 define WallsPS2()
-   shaderProgram -target pixelProgram -method compile -version 2_0                        
-      bindConstants 2 -bindingID allTextureLights -constantCount 1         
-      
-      shaderSource                                                          
+   shaderProgram -target pixelProgram -method compile -version 2_0
+      bindConstants 2 -bindingID allTextureLights -constantCount 1
+
+      shaderSource
          float4 textureLight : register(c2);
-                        
-         
+
+
          sampler base;
          sampler lightmap;
          sampler caustics;
          sampler shadowMap;
          struct cInputPixel
-         {               
+         {
             float2 txBase    : TEXCOORD0;
 			   float2 txLightMap: TEXCOORD1;
 			   float2 txCaustics: TEXCOORD2;
@@ -125,23 +125,23 @@ define WallsPS2()
 			   float4 shadowTex : TEXCOORD4;
 			   float  dotNL     : COLOR0;
          };
-         
+
          float OffsetLookup(sampler2D map, float4 loc, float4 offset)
-         {	               
+         {
 	         return tex2Dproj(map, loc+offset).r;
          }
-         
-         
+
+
          float4 PixelMain(cInputPixel pi) : COLOR
-         {         
-            float4 baseColor     = tex2D(base, pi.txBase);                                                
-            float4 lightMapColor = tex2D(lightmap, pi.txLightMap);                              
+         {
+            float4 baseColor     = tex2D(base, pi.txBase);
+            float4 lightMapColor = tex2D(lightmap, pi.txLightMap);
             lightMapColor = textureLight.r < 0.5 ? lightMapColor : 0.5f.xxxx;
             float4 causticsColor = tex2D(caustics, pi.txCaustics);
-            float4 result = baseColor * saturate(lightMapColor*2.0);                                   
-            
+            float4 result = baseColor * saturate(lightMapColor*2.0);
+
             float4 depth = (pi.vPosLight.z / pi.vPosLight.w) - 0.011;
-            
+
             float4 vTexCoords[16];
             vTexCoords[0] = float4(-0.000732422f, -0.000732422f, 0.0f, 0.0f );
             vTexCoords[1] = float4(-0.000732422f, -0.000244141f, 0.0f, 0.0f );
@@ -159,33 +159,33 @@ define WallsPS2()
             vTexCoords[13] = float4(0.000732422f, -0.000244141f, 0.0f, 0.0f );
             vTexCoords[14] = float4(0.000732422f, 0.000244141f, 0.0f, 0.0f );
             vTexCoords[15] = float4(0.000732422f, 0.000732422f, 0.0f, 0.0f );
-            
+
             float4 vWeights[4] = {{0.0479224,0.0615335,0.0615335,0.0479224},
                                   {0.0615335,0.0790106,0.0790106,0.0615335},
                                   {0.0615335,0.0790106,0.0790106,0.0615335},
                                   {0.0479224,0.0615335,0.0615335,0.0479224}};
-            
+
             float4 depths[4];
             int i = 0;
             for(int j = 0; j < 4; i+=4, ++j)
-            {     
-               float4 results;                                     
+            {
+               float4 results;
                results.x = OffsetLookup(shadowMap, pi.shadowTex, vTexCoords[i]);
                results.y = OffsetLookup(shadowMap, pi.shadowTex, vTexCoords[i+1]);
                results.z = OffsetLookup(shadowMap, pi.shadowTex, vTexCoords[i+2]);
                results.w = OffsetLookup(shadowMap, pi.shadowTex, vTexCoords[i+3]);
-               depths[j] = results > depth ? vWeights[j] : float4(0.0, 0.0, 0.0, 0.0);                     
-            }                           
-            float lightAmount = dot(depths[0] + depths[1] + depths[2] + depths[3], pi.dotNL);            
-                                                                                                                                                                                                                  
+               depths[j] = results > depth ? vWeights[j] : float4(0.0, 0.0, 0.0, 0.0);
+            }
+            float lightAmount = dot(depths[0] + depths[1] + depths[2] + depths[3], pi.dotNL);
+
             return result*0.8 + causticsColor*textureLight*lightAmount*pi.txBase.y + 0.2*result*lightAmount;
          }
       endShaderSource
-   end # end shader program      
+   end # end shader program
 enddef
 
 define PixelShaderWallsWithShadowMapping()
-   shader -layer $floorLayer  
+   shader -layer $floorLayer
       validateRenderShaderContext -vertexFormat position  0 required
       validateRenderShaderContext -vertexFormat texcoord  0 required
       validateRenderShaderContext -vertexFormat texcoord  1 required
@@ -193,109 +193,109 @@ define PixelShaderWallsWithShadowMapping()
       pass -modifiedEachFrameHint -renderEachFrame
          setf scaleU (1.0 / $floorMaterialScaleU)
 			setf scaleV (1.0 / $floorMaterialScaleV)
-			setv3 evalDiffuse ($stdMatDiffCoef.xyz)						
-			      
+			setv3 evalDiffuse ($stdMatDiffCoef.xyz)
+
          shaderProgram -target vertexProgram -method compile -version 1_1
             bindConstants 0 -bindingID geomToClip -constantCount 4
 			   bindConstants 4 -bindingID immediateData -data ( $scaleU, $scaleV, 1, 1)
-			   bindConstants 5 -bindingID geomToGlobal -constantCount 3			   
+			   bindConstants 5 -bindingID geomToGlobal -constantCount 3
 			   bindConstants 8 -bindingID immediateData -data ( 1, -2.5, 0, 0.3)
 			   bindConstants 9 -bindingID immediateData -data ( 1,  1, 1, 0)
 			   bindConstants 10 -bindingID immediateData -data ( 0, 0, 0, 0 )
-			   bindConstants 11 -bindingID cameraToLightClip -constantCount 4			   			   
-			   bindConstants 15 -bindingID cameraToLightClipAdj -constantCount 4				   
-			   bindConstants 19 -bindingID sunLightDir 
-      		
+			   bindConstants 11 -bindingID cameraToLightClip -constantCount 4
+			   bindConstants 15 -bindingID cameraToLightClipAdj -constantCount 4
+			   bindConstants 19 -bindingID sunLightDir
+
 		      shaderSource
 			      float4x4 clipSpaceMatrix    : register(c0);
 			      float4   textureConstants   : register(c4);
-			      float4x3 objToGlobal        : register(c5);			      
+			      float4x3 objToGlobal        : register(c5);
 			      float4   projCaustics0 : register(c8);
 			      float4   projCaustics1 : register(c9);
 			      float4   projCaustics2 : register(c10);
 			      float4x4 lightClipSpaceMatrix : register(c11);
-			      float4x4 lightClipSpaceMatrixAdj : register(c15);			      			      
-			      float4   sunlightDir   : register(c19);			      
-			      
-      		
+			      float4x4 lightClipSpaceMatrixAdj : register(c15);
+			      float4   sunlightDir   : register(c19);
+
+
 		      struct InputVertex
 			      {
 				      float3 position: POSITION0;
 				      float3 normal : NORMAL0;
 				      float2 tc0 : TEXCOORD0;
-				      float2 tc1 : TEXCOORD2;							      	      
+				      float2 tc1 : TEXCOORD2;
 			      };
-      			
+
 			      struct OutputVertex
 			      {
 				      float4 clipPosition : POSITION;
 				      float2 txBase    : TEXCOORD0;
 				      float2 txLightMap: TEXCOORD1;
 				      float2 txCaustics: TEXCOORD2;
-				      float4 vPosLight : TEXCOORD3;				      
+				      float4 vPosLight : TEXCOORD3;
 				      float4 shadowTex : TEXCOORD4;
-				      float2  dotNL     : COLOR0;				      				      
+				      float2  dotNL     : COLOR0;
 			      };
-      			
+
 			      OutputVertex VertexMain( InputVertex i)
 			      {
 				      OutputVertex o;
-					   
+
 				      o.clipPosition = mul(float4(i.position, 1), clipSpaceMatrix);
 				      o.txBase = textureConstants * i.tc0;
 				      o.txLightMap = i.tc1;
 				      float3 wPosition = mul(i.position, objToGlobal);
 				      float3 wPos = wPosition*0.3;
 				      o.txCaustics.x = (wPos.x * projCaustics0.x) + (wPos.y * projCaustics0.y) + (wPos.z * projCaustics0.z);
-				      o.txCaustics.y = (wPos.x * projCaustics1.x) + (wPos.y * projCaustics1.y) + (wPos.z * projCaustics1.z);				   
-				      o.vPosLight = mul(float4(wPosition, 1), lightClipSpaceMatrix);						      				      
-				      o.dotNL = dot(i.normal, sunlightDir.xyz) > 0.11f ? 1.0f : 0.0f;		 
-				      o.shadowTex = mul(float4(wPosition, 1), lightClipSpaceMatrixAdj);     
+				      o.txCaustics.y = (wPos.x * projCaustics1.x) + (wPos.y * projCaustics1.y) + (wPos.z * projCaustics1.z);
+				      o.vPosLight = mul(float4(wPosition, 1), lightClipSpaceMatrix);
+				      o.dotNL = dot(i.normal, sunlightDir.xyz) > 0.11f ? 1.0f : 0.0f;
+				      o.shadowTex = mul(float4(wPosition, 1), lightClipSpaceMatrixAdj);
 				      return o;
 			      }
-		      endShaderSource  
+		      endShaderSource
          end # end shader program
-         
+
          #if ($psVersion >= 3)
          #   create WallsPS3()
          #else
             create WallsPS2()
          #endif
-         
-            
+
+
          sampler base
-	         texture ${wallpaperTextureName} 
-	         if (viewerRenderType = $kRenderTypeThumbnail)			   
+	         texture ${wallpaperTextureName}
+	         if (viewerRenderType = $kRenderTypeThumbnail)
                   textureAddressing tile tile
                else
                   textureAddressing clamp tile
              endif
          end
-         
+
          sampler lightmap
             if (varExists(page))
                texture "wallLightMap_${page}"
             else
                texture "wallLightMap_0"
             endif
-            
+
             textureAddressing tile tile
-         end      
+         end
 
          sampler caustics
             texture causticsTile
             textureAddressing tile tile
          end
-         
+
          sampler shadowMap
             texture poolRenderTarget
             textureFilterHint point point
             textureMIPFilterHint disabled
             textureAddressing clamp clamp
          end
-         
+
       end
-   end		   
+   end
 enddef
 
 
@@ -307,42 +307,42 @@ define PS2WallRendering(wallBumpMaps)
 # Basemap * (LightMap * (normal dot incidence))
 # TexKill = cutout - 0.5
 
-   
+
    shader -layer $wallLayer
 		validateRenderShaderContext -vertexFormat position 0 required
 		validateRenderShaderContext -vertexFormat normal 0 required
 		validateRenderShaderContext -vertexFormat texcoord 0 required
 		validateRenderShaderContext -vertexFormat texcoord 1 required
 		validateRenderShaderContext -vertexFormat texcoord 2 required
-		
+
 		if ($caustics)
-			create PixelShaderWallsWithShadowMapping()			
+			create PixelShaderWallsWithShadowMapping()
 		else
-			pass 		   		
+			pass
 			   fillmode $stdMatFillMode
 
 			   create FirstPassWallVertexShader($caustics)
-   			
-   	
+
+
 			   shaderProgram -target pixelProgram -method assemble
-   			
+
 				   bindConstants 1 -bindingID immediateData -data ($wallHighlightIntensity)
-   				
+
 				   shaderSource
 					   ps_2_0
 					   def c0, 0,0.5,1,2
                endShaderSource
-               
+
                if ($wallMaskOK)
 					   shaderSource "dcl_2d s0 ; cutout"
                endif
-               
+
                shaderSource
 					   dcl_2d s1 ; base
 					   dcl t0.xy  ; base mapping
 	                  dcl t1.xy  ; light map space
                endShaderSource
-               
+
                if ($lightMapping)
                   shaderSource
                      dcl_2d s2 ; lightmap
@@ -350,19 +350,19 @@ define PS2WallRendering(wallBumpMaps)
 
                   endShaderSource
                endif
-               
+
                if (&wallBumpMaps)
                   shaderSource
                      dcl_2d s3 ; normalmap
                      dcl_2d s4 ; incidence
                   endShaderSource
                endif
-               
-               
+
+
 			   if ($wallHighlightOn)
                   shaderSource "dcl_2d s5 ; highlight texture"
                endif
-               
+
                if ($caustics)
                   shaderSource
                      dcl_2d s6 ; caustics texture
@@ -370,9 +370,9 @@ define PS2WallRendering(wallBumpMaps)
                      dcl v0 ; wall height, so caustics can fade off in a pool
                   endShaderSource
                endif
-               
-               
-               
+
+
+
                if ($wallMaskOK)
                   shaderSource
                      texld r11, t0, s0
@@ -380,13 +380,13 @@ define PS2WallRendering(wallBumpMaps)
                      texkill r10
                   endShaderSource
                endif
-               
+
                shaderSource
 					   texld r0, t1, s1  ; base map
                endShaderSource
-                  
+
                if ($lightMapping)
-                  
+
                   shaderSource
                      texld r1, t2, s2  ; light map
                      mul r2.rgb, r0, r1
@@ -394,92 +394,92 @@ define PS2WallRendering(wallBumpMaps)
                else
                   shaderSource "mul r2, r0, c0.y"
                endif
-               
+
                shaderSource
-               
+
 					   mul r2.rgb, r2, c0.w  ; result * 2
-   	
+
 				   endShaderSource
-   	
+
 				   if (&wallBumpMaps)
 					   shaderSource
 						   texld r3, t1, s3
 						   texld r4, t2, s4
-   						
+
 						   mad r5, r3, c0.w, -c0.z  ; 2x-1
 						   mad r6, r4, c0.w, -c0.z  ; 2x-1
-   											
+
 						   dp3_sat r2.a, r5, r6  ; incidence dot normal
 						   mul r2, r2, r2.a  ; roll this into the lightmap.
-   					
+
 					   endShaderSource
 				   endif
-   			
+
                if ($caustics)
                   shaderSource
-                     texld r8, t3, s6                                    
+                     texld r8, t3, s6
                      mad r2.rgb, v0, r8, r2
                   endShaderSource
                endif
-         		
+
                if ($wallHighlightOn)
 				      shaderSource
 						   texld r7, t0, s5
-   						                 
+
 						   mad r2.rgb, r2, r7.a, c1
-                     
+
 					   endShaderSource
 				   endif
-               
+
 				   shaderSource
 					   mov r2.a, c0.z
 					   mov oC0, r2
-   					
+
 				   endShaderSource
 			   end #shader program
-   										
+
             if ($wallMaskOK)
                sampler 0
                      textureAddressing clamp clamp
-                     texture ${wallMaskTextureName} 
+                     texture ${wallMaskTextureName}
                end
 			   endif
-            
-            
+
+
 			   sampler 1
-	               texture ${wallpaperTextureName} 
-	               if (viewerRenderType = $kRenderTypeThumbnail)			   
+	               texture ${wallpaperTextureName}
+	               if (viewerRenderType = $kRenderTypeThumbnail)
                      textureAddressing tile tile
                   else
                      textureAddressing clamp tile
                   endif
 			   end
-   			
-   			
+
+
 			   if ($lightMapping)
 				   sampler 2
 					   texture "wallLightMap_${page}"
-				   end	
-   								
+				   end
+
 				   if (&wallBumpMaps)
 					   sampler 3
 						   texture "${wallpaperNormalMapTextureName}"
 					   end
-   					
+
 					   sampler 4
 						   texture "wallIncidenceMap_${page}"
 					   end
 				   endif
-   				
+
 			   endif
-   			
+
 			   if ($wallHighlightOn)
 				   sampler 5
 					   texture "wall_selection_colors"
                   textureAddressing clamp clamp
 				   end
 			   endif
-   			
+
             if ($caustics)
                sampler 6
                   texture causticsTile
@@ -487,8 +487,8 @@ define PS2WallRendering(wallBumpMaps)
                end
             endif
 		   end #pass
-      endif      
-      	
+      endif
+
 	end #shader
 
 enddef
@@ -506,7 +506,7 @@ define FirstPassWallVertexShader(caustics)
 
 	shaderProgram -target vertexProgram -method assemble
 		bindConstants 0 -bindingID geomToClip -constantCount 4
-				
+
 		if ($wallMaskMirrorFlag)
 			bindConstants 4 -bindingID immediateData -data (-1,1,1,0)
 		else
@@ -521,14 +521,14 @@ define FirstPassWallVertexShader(caustics)
 				bindConstants 10 -bindingID allTextureLights -constantCount 1
 			endif
 		endif
-     
+
 
 		shaderSource
 			vs_1_1
-         
+
          ; matrix for caustics projection
-         def c11, 1, -2.5, 0, 0.3         
-         def c12,  1,  1, 1, 0         
+         def c11, 1, -2.5, 0, 0.3
+         def c12,  1,  1, 1, 0
          def c13,  0, 0, 0, 0 ; This won't be used
 
 			dcl_position v0
@@ -536,14 +536,14 @@ define FirstPassWallVertexShader(caustics)
 			dcl_texcoord0 v2  ; base, normal maps
 			dcl_texcoord1 v3  ; mask
 			dcl_texcoord2 v4  ; lightmaps, incidence maps
-			
+
 			m4x4 oPos, v0, c0
 			mad oT0.xy, v3, c4.xy, c4.zw  ; cutout
 			mov oT1.xy, v2  ; texcoords 0 = base texture, normal maps
 			mov oT2.xy, v4  ; texcoords 2 = lightmap/incidence map
 
 		endShaderSource
-      
+
       if ($wallHighlightOn)
          shaderSource "mov oT3.xy, v2"
       else
@@ -552,50 +552,50 @@ define FirstPassWallVertexShader(caustics)
                   m4x3 r0, v0, c5 ; object to world space.
                   mul r0.xyz, r0.xyz, c11.w  ; mul by 0.3
                   m3x3 oT3, r0, c11  ; project and emit.
-          
+
              endShaderSource
-             
-             if ($textureLights)             
+
+             if ($textureLights)
                shaderSource "mul oD0, v2.y, c10 ; scale by the 'night light"
              else
                shaderSource "mov oD0, v2.y"
              endif
-                  
-            
+
+
          endif
       endif
 
 	end #vertex program
-			
+
 enddef
 
 
 define PS1WallRendering(wallBumps)
-   
- 
-   
-   
+
+
+
+
    if ($wallMaskOK = false)
       # generally an error condition, so only do the basics
       create PS1MasklessWallRendering($lightMapping)
    else
-   
+
       if (&wallBumps)
          create PS1BumpMapWallRendering()
       else
-      
+
          create PS1BasicWallRendering( )
-         
+
       endif
    endif
-   
+
 
 enddef
 
 
 
 # bumpmaps for PS 1.1
-# first pass does:  
+# first pass does:
 # RGB =(Incidence dot Normal)
 # Alpha = Cutout
 
@@ -608,20 +608,20 @@ define BasePassWallVertexShader()
 
 	shaderProgram -target vertexProgram -method assemble
 		bindConstants 0 -bindingID geomToClip -constantCount 4
-				
+
 		if ($wallMaskMirrorFlag)
 			bindConstants 4 -bindingID immediateData -data (-1,1,1,0)
 		else
 			bindConstants 4 -bindingID immediateData -data (1,1,0,0)
 		endif
-				
+
 		shaderSource
 			vs_1_1
-								
+
 			dcl_position v0
 			dcl_texcoord0 v1  ; base map
 			dcl_texcoord2 v2  ; light map
-			
+
 			m4x4 oPos, v0, c0
 
 			mov oT0.xy, v1  ; texcoords 0 = base Map
@@ -630,7 +630,7 @@ define BasePassWallVertexShader()
 		endShaderSource
 
 	end #vertex program
-			
+
 enddef
 
 
@@ -642,33 +642,33 @@ define PS1BumpMapWallRendering()
 
 
 	shader -layer $wallLayer
-	
+
 		validateRenderShaderContext -vertexFormat position      0 required
 		validateRenderShaderContext -vertexFormat texcoord      0 required
 		validateRenderShaderContext -vertexFormat texcoord      1 required
 		validateRenderShaderContext -vertexFormat texcoord      2 required
 		validateRenderShaderContext -viewerRenderType viewerRenderType
-      
+
 
 		pass
 			alphaTest true 127
 			alphaTestFunction acceptIfGreater
 
 			create FirstPassWallVertexShader($caustics)
-	
+
 			shaderProgram -target pixelProgram -method assemble
 				shaderSource
 					ps_1_1
 					tex t0
 					tex t1
 					tex t2
-					
+
 					dp3_sat r0.rgb, t1_bx2, t2_bx2
 					mov r0.a, t0.a
-										
+
 				endShaderSource
 			end
-			
+
 			sampler 0
 	         textureAddressing clamp clamp
 	         texture $wallMaskTextureName ${wallMaskTextureParam}
@@ -677,21 +677,21 @@ define PS1BumpMapWallRendering()
 			sampler 1
 				texture "${wallpaperNormalMapTextureName}"
 			end
-					
+
 			sampler 2
 				texture "wallIncidenceMap_${page}"
 			end
-			
+
 		end
-		
-				
+
+
 		pass
-		
+
 			fillmode $stdMatFillMode
 			alphaBlend srcFactor(destColor) add dstFactor(zero)
          depthTest true -enableDepthWrite false
 	      depthTestFunction acceptIfEqual
-	        
+
 			create BasePassWallVertexShader()
 
 			shaderProgram -target pixelProgram -method assemble
@@ -699,28 +699,28 @@ define PS1BumpMapWallRendering()
 					ps_1_1
 					tex t0
 					tex t1
-					mul_x2 r0, t0, t1					
+					mul_x2 r0, t0, t1
             endShaderSource
-				
+
 			end
-										
+
 			sampler 0
 	            texture $wallpaperTextureName ${wallpaperTextureParam}
-	            if (viewerRenderType = $kRenderTypeThumbnail)			   
+	            if (viewerRenderType = $kRenderTypeThumbnail)
                   textureAddressing tile tile
                else
                   textureAddressing clamp tile
                endif
-			end	
-						
+			end
+
 			sampler 1
 				texture "wallLightMap_${page}"
-			end	
+			end
 
 		end #pass
-	
-		
-	
+
+
+
 	end #shader
 
 enddef
@@ -733,30 +733,30 @@ define PS1BasicWallRendering()
 # only handles Base * lightmap.
 
 	shader -layer $wallLayer
-	
+
 		validateRenderShaderContext -vertexFormat  position      0 required
 		validateRenderShaderContext -vertexFormat  normal      0 required
 		validateRenderShaderContext -vertexFormat  texcoord      0 required
 		validateRenderShaderContext -vertexFormat  texcoord      1 required
 		validateRenderShaderContext -vertexFormat  texcoord      2 required
 
-   
+
 		if ($caustics)
 			pass -modifiedEachFrameHint
 		else
 			pass
 		endif
-		
+
 			alphaTest true 127
 			alphaTestFunction acceptIfGreater
-		
+
 			fillmode $stdMatFillMode
-	        
+
 			create FirstPassWallVertexShader($caustics)
 
 			if ($lightMapping)
 				shaderProgram -target pixelProgram -method assemble
-            
+
             bindConstants 0 -bindingID immediateData -data ($wallHighlightIntensity)
 
                shaderSource
@@ -765,25 +765,25 @@ define PS1BasicWallRendering()
 						tex t1
 						tex t2
                endShaderSource
-               
+
                if ($caustics)
 						shaderSource "tex t3"
                endif
-               
+
                shaderSource
-                  
+
 						mul_x2 r0.rgb, t1, t2
 						+mov r0.a, t0.a
-											
+
 					endShaderSource
-                              
+
                if ($caustics)
                   shaderSource "mad r0.rgb, t3, v0, r0"
                endif
 
 				end
 			else
-         
+
 				shaderProgram -target pixelProgram -method assemble
 
                bindConstants 0 -bindingID immediateData -data ($wallHighlightIntensity)
@@ -793,16 +793,16 @@ define PS1BasicWallRendering()
 						tex t0  ; mask
 						tex t1  ; texture
                endShaderSource
-               
+
               # if ($caustics or $wallHighlightOn)
 						shaderSource "tex t3"
                #endif
-               
+
                shaderSource
 						mov_x2 r0.rgb, t1
 						+mov r0.a, t0.a
 					endShaderSource
-               
+
                if ($wallHighlightOn)
                   shaderSource
                      mad r0.rgb, t1, t3.a, c0
@@ -815,37 +815,37 @@ define PS1BasicWallRendering()
 
 				end
 			endif
-			
+
 			sampler 0
 	            textureAddressing clamp clamp
 	            texture $wallMaskTextureName ${wallMaskTextureParam}
 			end
-						
+
 			sampler 1
 	            texture $wallpaperTextureName ${wallpaperTextureParam}
-	            if (viewerRenderType = $kRenderTypeThumbnail)			   
+	            if (viewerRenderType = $kRenderTypeThumbnail)
                   textureAddressing tile tile
                else
                   textureAddressing clamp tile
                endif
-			end	
-					
-			if ($lightMapping)	
+			end
+
+			if ($lightMapping)
 				sampler 2
 					texture "wallLightMap_${page}"
-				end	
+				end
 			endif
-         
-         
+
+
          if ($wallHighlightOn)
-         
+
             sampler 3
                texture "wall_selection_colors"
                textureAddressing clamp clamp
             end
-            
+
          else
-			
+
             if ($caustics)
                sampler 3
                   texture causticsTile
@@ -856,7 +856,7 @@ define PS1BasicWallRendering()
 
 
 		end #pass
-		
+
 	end #shader
 
 
@@ -869,30 +869,30 @@ define PS1MasklessWallRendering(lightMapping)
 
 # only handles Base * lightmap.
 	shader -layer $wallLayer
-	
+
 		validateRenderShaderContext -vertexFormat  position      0 required
 		validateRenderShaderContext -vertexFormat  normal      0 required
 		validateRenderShaderContext -vertexFormat  texcoord      0 required
 		validateRenderShaderContext -vertexFormat  texcoord      1 required
 		validateRenderShaderContext -vertexFormat  texcoord      2 required
 
-   
+
 		if ($caustics)
 			pass -modifiedEachFrameHint
 		else
 			pass
 		endif
-		
+
 			alphaTest true 127
 			alphaTestFunction acceptIfGreater
-		
+
 			fillmode $stdMatFillMode
-	        
+
 			create FirstPassWallVertexShader($caustics)
 
 			if ($lightMapping)
 				shaderProgram -target pixelProgram -method assemble
-            
+
             bindConstants 0 -bindingID immediateData -data ($wallHighlightIntensity)
 
                shaderSource
@@ -901,25 +901,25 @@ define PS1MasklessWallRendering(lightMapping)
 						tex t1
 						tex t2
                endShaderSource
-               
+
                if ($caustics)
 						shaderSource "tex t3"
                endif
-               
+
                shaderSource
-                  
+
 						mul_x2 r0.rgb, t1, t2
 						+mov r0.a, t0.a
-											
+
 					endShaderSource
-                              
+
                if ($caustics)
                   shaderSource "mad r0.rgb, t3, v0, r0"
                endif
 
 				end
 			else
-         
+
 				shaderProgram -target pixelProgram -method assemble
 
                bindConstants 0 -bindingID immediateData -data ($wallHighlightIntensity)
@@ -929,16 +929,16 @@ define PS1MasklessWallRendering(lightMapping)
 						#tex t0  ; mask
 						tex t1  ; texture
                endShaderSource
-               
+
               # if ($caustics or $wallHighlightOn)
 						shaderSource "tex t3"
                #endif
-               
+
                shaderSource
 						mov_x2 r0.rgb, t1
 						+mov r0.a, t1.a
 					endShaderSource
-               
+
                if ($wallHighlightOn)
                   shaderSource
                      mad r0.rgb, t1, t3.a, c0
@@ -951,32 +951,32 @@ define PS1MasklessWallRendering(lightMapping)
 
 				end
 			endif
-			
+
 			sampler 1
 	            texture $wallpaperTextureName ${wallpaperTextureParam}
-	            if (viewerRenderType = $kRenderTypeThumbnail)			   
+	            if (viewerRenderType = $kRenderTypeThumbnail)
                   textureAddressing tile tile
                else
                   textureAddressing clamp tile
                endif
-			end	
-					
-			if ($lightMapping)	
+			end
+
+			if ($lightMapping)
 				sampler 2
 					texture "wallLightMap_${page}"
-				end	
+				end
 			endif
-         
-         
+
+
          if ($wallHighlightOn)
-         
+
             sampler 3
                texture "wall_selection_colors"
                textureAddressing clamp clamp
             end
-            
+
          else
-			
+
             if ($caustics)
                sampler 3
                   texture causticsTile
@@ -999,37 +999,37 @@ define PixelShaderWallTextureShader()
 		validateRenderShaderContext -vertexFormat normal 0 required
 		validateRenderShaderContext -vertexFormat texcoord 2 required
 
-		pass 
+		pass
 
 			depthTestFunction accept
-			
+
 			fillmode $stdMatFillMode
-			
+
 			shaderProgram -target vertexProgram -method assemble
 				bindConstants 0 -bindingID geomToClip -constantCount 4
-						
+
 				shaderSource
 					vs_1_1
-										
+
 					dcl_position v0
 					dcl_texcoord0 v1  ; base map
-					
+
 					m4x4 oPos, v0, c0
 
-					mov oT0.xy, v1  
-					mov oT1.xy, v1  
+					mov oT0.xy, v1
+					mov oT1.xy, v1
 				endShaderSource
 
 			end #vertex program
-					
-			
+
+
 			shaderProgram -target pixelProgram -method assemble
 				shaderSource
 					ps_1_1
 					def c0,1,1,1,1
 					tex t0
 				endShaderSource
-				
+
 				if ($lightMapping)
 					shaderSource
 						tex t1
@@ -1037,32 +1037,32 @@ define PixelShaderWallTextureShader()
 						mov r0.a, c0
 					endShaderSource
 				else
-			
+
 					shaderSource
-						
+
 						mov r0.rgb, t0
 						mov r0.a, c0
-						
+
 					endShaderSource
 				endif
-				
+
 			end
-			
+
 			sampler 0
 				texture $stdMatBaseTextureName ${stdMatBaseTextureParam}
 				textureAddressing tile tile
-			end	
-					
-					
+			end
+
+
 			if ($lightMapping)
 				sampler 1
 					texture "wallLightMap_${page}"
-				end	
+				end
 			endif
-			
+
 		end
 	end
-	
+
 enddef
 
 
@@ -1078,15 +1078,15 @@ define DebugPixelShaderWalls()
 		validateRenderShaderContext -vertexFormat texcoord 0 required
 		validateRenderShaderContext -vertexFormat texcoord 1 required
 		validateRenderShaderContext -vertexFormat texcoord 2 required
-		
+
 		pass
-		
+
 			fillmode $stdMatFillMode
          alphaTest true 127
          alphaTestFunction acceptIfGreater
-         
+
 			create FirstPassWallVertexShader($caustics)
-         
+
          #			mov oT1.xy, v2  ; texcoords 0 = base texture, normal maps
 			#        mov oT2.xy, v4  ; texcoords 2 = lightmap/incidence map
 
@@ -1096,15 +1096,15 @@ define DebugPixelShaderWalls()
 				tex t0
 				tex t1
 				tex t2
-            
+
             mov r0, t0
 				endShaderSource
-	         
-	         
+
+
 			if ($lightMapping and $debugShowWallLightmap)
 				shaderSource "mov_x2 r0, t2"
 			endif
-	         
+
 			if ($debugShowWallIncidence)
 				shaderSource "mov r0, t2"
 			endif
@@ -1112,18 +1112,18 @@ define DebugPixelShaderWalls()
 			if ($debugShowWallNormalMap)
 				shaderSource "mov r0, t1"
 			endif
-			
+
 			if ($debugWallLighting)
 				shaderSource "dp3 r0.rgb, t1_bx2, t2_bx2"
 			endif
-			
+
 		end
-      
+
       if ($lightMapping and $debugShowWallLightmap)
          sampler 2
 			texture "wallLightMap_${page}"
          end
-         
+
       endif
 
       if (($debugShowWallIncidence or $debugWallLighting) and $lightMapping)
@@ -1131,16 +1131,14 @@ define DebugPixelShaderWalls()
 			texture "wallIncidenceMap_${page}"
          end
       endif
-      
+
       if (($debugShowWallNormalMap or $debugWallLighting) and $wallBumps)
          sampler 1
             texture "${wallpaperNormalMapTextureName}"
          end
       endif
-      
+
    end
 end
 
 enddef
-
-

@@ -8,5 +8,5 @@ materialDefinition clothesChangeSwirl
    addParam stdMatBaseTextureName clotheschange-swirls
    addParam stdMatEmissiveCoef (1, 1, 1)
    addParam stdMatBaseTextureAddressingU clamp
-   addParam stdMatBaseTextureAddressingV clamp  
-end    
+   addParam stdMatBaseTextureAddressingV clamp
+end

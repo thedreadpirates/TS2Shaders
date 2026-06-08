@@ -38,9 +38,9 @@ setb csAddEdge true
 #attrdescription Whether to enable the edge intensity term.
 
 set csEdgeRampTexture "blackwhite"
-#attrdescription Lookup texture for edge intensity: how much the 
+#attrdescription Lookup texture for edge intensity: how much the
 #attrdescription surface faces the camera. The left of the texture
-#attrdescription faces the camera, the middle is edge-on, and the right 
+#attrdescription faces the camera, the middle is edge-on, and the right
 #attrdescription faces away. This can be used to provide an outline or fresnel effect.
 
 sete csEdgeFilter point (point bilinear)
@@ -60,7 +60,7 @@ setf csEdgeLightDamping 0 # min:-1000 max:1000
 
 
 setb csRouteColorFromAlpha true
-#attrdescription Whether to use vertex alpha rather than 'v' texture 
+#attrdescription Whether to use vertex alpha rather than 'v' texture
 #attrdescription coordinate to select a color ramp.
 
 
@@ -111,13 +111,13 @@ setv4 csCameraLightDir (1, 0, 0.5, 0)
 
 define CelShadedMaterial()
    material
-      create DetermineHardwareSupport()	         
+      create DetermineHardwareSupport()
 	   if ($useFixedFunctionPath or $useSWVertexShaderPath)
 		   shader -layer ($csMatLayer * 8)
 		      pass -fixedFunction
                colorScalar $csOutlineColor $csOutlineAlpha
                create LightingStates()
-               stage                  
+               stage
                   texture $csRampTexture
                   textureBlend multiply(texture diffuse) select(texture)
                end
@@ -125,17 +125,17 @@ define CelShadedMaterial()
 		   end
 	   else
 		   create CelShadedMaterialRender()
-	   endif		
+	   endif
 	end
 enddef
 
-define CelShadedMaterialRender()   
+define CelShadedMaterialRender()
    # Debugging
    #set csAddEdge false
    #set csAddSpecular true
    #set csRampTexture blackwhite
    #set csRouteColorFromAlpha false
-   #set csAddEnvironmentMap false 
+   #set csAddEnvironmentMap false
    #setb csAddOutline false
    #setf csOutlineWidth 0.1
    #setf csOutlineAlpha 1
@@ -153,31 +153,31 @@ define CelShadedMaterialRender()
          attribute info4       float4
       end
    endif
-   
-		            
+
+
    shader -layer ($csMatLayer * 8)
       if (not hasVertexFormat(color, 0))
          set csRouteColorFromAlpha false
       endif
-      
+
       vertexFormatPred position      0 true
       vertexFormatPred normal        0 true
       if ($stdMatBaseTextureEnabled)
          vertexFormatPred texcoord   0 true
       endif
       vertexFormatPred color         0 $csRouteColorFromAlpha
-   
+
       	create SetupSkinningStateAndPredicates()
 		create SetupMorphingStateAndPredicates()
 
-      if ($csAddOutline) 
-         pass               
-         
+      if ($csAddOutline)
+         pass
+
             if ($doSkinning or $doMorphing)
                create PreprocessVertexShader()
             endif
-            
-            
+
+
             # was create VS_NormalOffsetProgram($csOutlineWidth)
             shaderProgram -target vertexProgram -method assemble
 
@@ -186,43 +186,43 @@ define CelShadedMaterialRender()
                bindConstants 7  -bindingID immediateData       -data ($csOutlineWidth, 1, 0.005, 1)
                if ($csParticleMode)
                   bindConstants 8  -bindingID immediateData    -data @scale4
-                  bindConstants 9  -bindingID immediateData    -data @info4 
+                  bindConstants 9  -bindingID immediateData    -data @info4
                endif
-               
+
                shaderSource
                   vs_1_1
                   dcl_position0 v0
                   dcl_normal0   v1
-                  
+
                   # transform normal to camera space
                   mov  r3, c7       # so we can multiply below if in particle mode
                   mov  r0.w, r3.w
                   m3x3 r0,   v1, c0
                endShaderSource
-               
+
                if ($csParticleMode)
                   shaderSource
                      mul  r1,   c8,  v0
-                     m4x3 r2,   r1,  c0         # position in camera space.                     
+                     m4x3 r2,   r1,  c0         # position in camera space.
                      mul  r3.x, r3.x, c9.z      # aspect from info4
                   endShaderSource
                else
                   shaderSource   "m4x3 r2, v0,  c0"         # position in camera space.
                endif
-                  
+
                shaderSource
                   mov  r2.w, r3.w
                   mad  r2,   r0,  r3.x, r2      # add offset.
                   #mul  r2.y, r2.y, c7.y      # cheat away from the camera in camera space.
-         
+
                   m4x4 r3, r2, c3               # to clip space.
-                  mad  r3.z, r3.w, c7.z, r3.z   # cheat back depth in clip space: z' += eps, -> z += eps * w. 
+                  mad  r3.z, r3.w, c7.z, r3.z   # cheat back depth in clip space: z' += eps, -> z += eps * w.
                   mov oPos, r3
                endShaderSource
             end
-            
+
             create NonStandardLighting()
-            
+
             alphaBlend srcFactor(one) add dstFactor(zero)
             depthTest true -enableDepthWrite true
             depthTestFunction acceptIfLess
@@ -231,20 +231,20 @@ define CelShadedMaterialRender()
                alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
             endif
             fillmode $stdMatFillMode
-            
+
             colorScalar $csOutlineColor $csOutlineAlpha
-            stage                  
+            stage
                textureBlend select(colorScalar) select(colorScalar)
             end
          end
       endif
-      
+
       # MAIN CEL SHADER PASS
       pass
          if (not $csAddOutline)
             create PreprocessVertexShader()
          endif
-         
+
          seti ts 1
          if ($stdMatBaseTextureEnabled)
             seti texReg $ts
@@ -259,24 +259,24 @@ define CelShadedMaterialRender()
          endif
 
          shaderProgram -target vertexProgram -method assemble
-            
+
             bindConstants 0  -bindingID geomToClip          -constantCount 4
             bindConstants 4  -bindingID geomToCamera        -constantCount 3
             bindConstants 7  -bindingID immediateData       -data ($csEdgeOffset, $csShininess, 0.5, 1)
             bindConstants 8  -bindingID immediateData       -data ($csEdgeLightDamping, 0, 0, 0)
-            
+
             if ($csUseCameraLight)
                bindConstants 10 -data $csCameraLightDir
             else
                bindConstants 10 -bindingID camLocalToDirLight1 -constantCount 1
             endif
-            
+
             if ($csParticleMode)
                bindConstants 11 -bindingID immediateData    -data @colorAlpha4
                bindConstants 12 -bindingID immediateData    -data @scale4
             endif
-            
-            shaderSource 
+
+            shaderSource
                vs_1_1
                dcl_position0 v0
                dcl_normal0   v1
@@ -290,27 +290,27 @@ define CelShadedMaterialRender()
             if ($csRouteColorFromAlpha)
                shaderSource "dcl_color0 v4"
             endif
-               
+
             # r0 = N
             # r1 = H
             # r2 = E
             # r3 = scratch
             # r4 = local position
-            
+
             if ($csParticleMode)
                shaderSource "mul r4, v0, c12"
             else
                shaderSource "mov r4, v0"
             endif
-            
-            shaderSource                  
+
+            shaderSource
                # transform position
                m4x4 oPos, r4, c0
-               
+
                # transform normal to camera space
                mov r0.w, c7.w
                m3x3 r0, v1, c4
-               
+
                # N.L in camera space.
                dp3 r3.x, r0, c10
 
@@ -336,19 +336,19 @@ define CelShadedMaterialRender()
                   dp3 r1, r1,    r1
                   rsq r1, r1.w
                   mul r1, r1,    r1.w
-               
+
                # N.H in camera space.
                dp3 r3.y, r0, r1
 
                # lit: (N.L) (N.S) -> clamped diff and spec
                # exponent
-               mov r3.w, c7.y   
+               mov r3.w, c7.y
                lit r1, r3
-               
+
                # diffuse intensity
-               mov oT0.x, r1.y    
+               mov oT0.x, r1.y
             endShaderSource
-            
+
             if ($csRouteColorFromAlpha)
                shaderSource "mov oT0.y, v4.w"    # pass through color0 alpha
             else
@@ -362,7 +362,7 @@ define CelShadedMaterialRender()
                shaderSource "mov oT${texReg}, v2"
             endif
             if ($csAddEdge)
-               shaderSource "dp3 r3, r0, r2"                    # N . E    
+               shaderSource "dp3 r3, r0, r2"                    # N . E
                if ($csEdgeLightDamping != 0)
                   shaderSource "mad r3, r1.y, c8.x, r3"         # offset by scaled diffuse term
                endif
@@ -377,10 +377,10 @@ define CelShadedMaterialRender()
          end
 
          #######################################################
-         
+
          create NonStandardLighting()
-            
-         if ($csAddOutline) 
+
+         if ($csAddOutline)
             depthTestFunction acceptIfLessOrEqual
          endif
 
@@ -390,23 +390,23 @@ define CelShadedMaterialRender()
             else
                colorScalar -lightRadiance directional 0 ($stdMatDiffCoef * (0.25).xxx)
             endif
-            
+
          else
             if ($csUseCameraLight)
-               colorScalar $stdMatDiffCoef            
+               colorScalar $stdMatDiffCoef
             else
-               colorScalar -lightRadiance directional 0 $stdMatDiffCoef            
-            endif               
+               colorScalar -lightRadiance directional 0 $stdMatDiffCoef
+            endif
          endif
 
          if ($csParticleMode)
             alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
          endif
-         
+
          fillmode $stdMatFillMode
-            
+
          stage
-            texture $csRampTexture 
+            texture $csRampTexture
             textureMIPFilterHint disabled
             textureFilterHint $csShadeFilter $csColorFilter
             textureAddressing clamp clamp
@@ -421,7 +421,7 @@ define CelShadedMaterialRender()
                textureBlend multiplyScale4(texture outRegister) multiply(texture outRegister)
             end
          endif
-         if ($csParticleMode) 
+         if ($csParticleMode)
             stage
                textureBlend multiply(outRegister diffuse) multiply(outRegister diffuse)
             end
@@ -457,19 +457,19 @@ define CelShadedMaterialRender()
             # we must use a vertex program again, or we'll get inconsistent
             # depth results with the previous pass.
             shaderProgram
-               
+
                bindConstants 0  -bindingID geomToClip        -constantCount 4
                bindConstants 4  -bindingID geomToCamera      -constantCount 3
                bindConstants 7  -bindingID immediateData     -data (0, 0, 0, 1)
-               
-               shaderSource 
+
+               shaderSource
                   vs_1_1
                   dcl_position0 v0
                   dcl_normal0   v1
-                  
+
                   m4x4 oPos, v0, c0
                endShaderSource
-               
+
                if ($csEnvironmentMapCameraRelative)
                   shaderSource
                      # transform normal to camera space
@@ -483,17 +483,17 @@ define CelShadedMaterialRender()
                   shaderSource "mov oT0, v1"
                endif
             end
-            
+
             colorScalar $csEnvironmentMapTint $csEnvironmentMapStrength
-            
+
             fillmode $stdMatFillMode
-            
+
             stage
                texture $csEnvironmentMapTexture
                textureMIPFilterHint disabled
                textureFilterHint bilinear bilinear
                textureAddressing clamp clamp clamp
-               
+
                textureBlend multiply(texture colorScalar) multiply(texture colorScalar)
             end
          end

@@ -30,7 +30,7 @@ define TextureAlpha()
             alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
             depthTest true -enableDepthWrite false
             colorScalar $stdMatDiffCoef
-            fillmode $stdMatFillMode            
+            fillmode $stdMatFillMode
 
             stage
                texture $stdMatBaseTextureName ${stdMatBaseTextureParam}
@@ -426,7 +426,7 @@ define AnimatedTextureAlpha()
            alphaBlend srcFactor(srcAlpha) add dstFactor(one)
            depthTest true -enableDepthWrite false
            fillmode $stdMatFillMode
-           
+
            stage
               texture $stdMatBaseTextureName ${stdMatBaseTextureParam}
               textureTileAnimation $playSpeed -tiles ($tileCountU, $tileCountV) -targetType fixedFunction
@@ -494,4 +494,3 @@ define BaseTextureAlphaMaterial()  #referenced from Go2SCO and *.ma files
      create PhongTextureAlphaShaders()
   end
 enddef
-

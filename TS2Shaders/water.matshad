@@ -29,13 +29,13 @@ define WaterAnimatingTexturesShader()
 	material
 
 			create DetermineHardwareSupport()
-			
+
 			if ($useHWShader2Path)
             create PixelShaderWater()
          else
             create LowEndWater()
          endif
-            
+
 	end #material
 
 enddef
@@ -49,11 +49,11 @@ define PixelShaderWater()
 	shader -layer ($stdMatLayer+$waterLayer)
 
 		create SetupCommonHWShaderVariablesAndPredicates()
-				
+
 		pass
 			alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
-			depthTest true -enableDepthWrite false			
-					
+			depthTest true -enableDepthWrite false
+
 			create WaterVertexShader()
 			#<
 			shaderProgram -target pixelProgram -method assemble
@@ -61,13 +61,13 @@ define PixelShaderWater()
 					ps_1_1
 					tex t0
 					tex t1
-					
+
 					lrp r0, v0.a, t0, t1
-					mul_x2 r0.rgb, r0, v0			 ; X2 for lighting scale.				
+					mul_x2 r0.rgb, r0, v0			 ; X2 for lighting scale.
 				endShaderSource
 			end
          #>
-            
+
          shaderProgram -target pixelProgram -method assemble
 				shaderSource
 					ps_2_0
@@ -77,26 +77,26 @@ define PixelShaderWater()
                dcl t2.xyz ; diffuse lighting
                dcl_2d s0
                dcl v0
-               
+
                texld r0, t0, s0
                texld r1, t1, s0
-               
+
                lrp r2, v0.a, r0, r1
                mul r2.rgb, r2, t2
-               
+
                mov oC0, r2
-                              
+
 				endShaderSource
 			end
 			sampler 0
 				texture  $stdMatBaseTextureName
 				textureAddressing tile tile tile
 			end
-			
+
 		end #pass
-		
+
 	end #shader
-	
+
 enddef
 
 
@@ -104,7 +104,7 @@ define LowEndWater()
 
 
 	create SinglePassWater()  #attempt 3-stage approach
-	
+
 	create TwoPassWater() # if that fails, try this one.
 
 
@@ -118,23 +118,23 @@ define SinglePassWater()
 
 		create SetupSkinningStateAndPredicates()
 		create SetupMorphingStateAndPredicates()
-		
+
 		pass -fixedFunction
 			depthTest true -enableDepthWrite false
 
          if ($doMorphing or $doSkinning)
             create PreprocessVertexShader()
          endif
-      
+
 			if ($doSkinning)
 				ffIdentityModelTransform
 			endif
-         
+
 			# disable automatic normalization of normals for better performance when not rendering geometry with deformations
 			create LightingStatesParam(hasDeformations false)
 			ffMatCoef -diff $stdMatDiffCoef -amb $stdMatDiffCoef -spec (0,0,0) -specPow 0
 
-      
+
        		alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
 			colorScalar (0,0,0) -animAlpha triangular $waterSpeed 0.5 (0,1)
 			fillmode $stdMatFillMode
@@ -144,7 +144,7 @@ define SinglePassWater()
 				textureMatrixAnimation -targetType fixedFunction -ascale sawtooth $waterSpeed 0 (1,2)
 				textureBlend select(texture) select(texture)
 				textureAddressing tile tile tile
-			end 
+			end
 
 			stage
 				ffTextureCoordsSource 0
@@ -152,17 +152,17 @@ define SinglePassWater()
 				textureMatrixAnimation -targetType fixedFunction -ascale sawtooth $waterSpeed 0.5 (1,2)
 				textureBlend lerpColorScalarAlpha(outRegister texture) lerpColorScalarAlpha(outRegister texture)
 				textureAddressing tile tile tile
-			end 
+			end
 
 			stage
 				ffTextureCoordsSource 0
 				textureBlend multiply(outRegister diffuse) select(outRegister)
-			end 
-               
+			end
+
       end #pass
-      
+
 	end #shader
-     
+
 enddef
 
 
@@ -175,20 +175,20 @@ define TwoPassWater()
 
 		create SetupSkinningStateAndPredicates()
 		create SetupMorphingStateAndPredicates()
-		
+
 		pass -fixedFunction
 			depthTest true -enableDepthWrite false
-         
+
 
          if ($doMorphing or $doSkinning)
             create PreprocessVertexShader()
          endif
-      
+
 			if ($doSkinning)
 				ffIdentityModelTransform
 			endif
-         
-         
+
+
 			if (hasVertexFormat(blendindices, 0))
 				ffIdentityModelTransform
 			endif
@@ -196,7 +196,7 @@ define TwoPassWater()
 			# disable automatic normalization of normals for better performance when not rendering geometry with deformations
 			create LightingStatesParam(hasDeformations false)
 			ffMatCoef -diff $stdMatDiffCoef -amb $stdMatDiffCoef -spec (0,0,0) -specPow 0
-      
+
          alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
 			colorScalar (0,0,0) -animAlpha triangular $waterSpeed 0.5 (0,1)
 			fillmode $stdMatFillMode
@@ -206,13 +206,13 @@ define TwoPassWater()
 				textureMatrixAnimation -targetType fixedFunction -ascale sawtooth $waterSpeed 0 (1,2)
 				textureBlend multiply(texture diffuse) multiply(texture colorScalar)
 				textureAddressing tile tile tile
-			end 
+			end
 
 		end
-		
-		
+
+
 		pass -fixedFunction
-		
+
 			depthTest true -enableDepthWrite false
 
 			if ($doSkinning)
@@ -222,7 +222,7 @@ define TwoPassWater()
 			# disable automatic normalization of normals for better performance when not rendering geometry with deformations
 			create LightingStatesParam(hasDeformations false)
 			ffMatCoef -diff $stdMatDiffCoef -amb $stdMatDiffCoef -spec (0,0,0) -specPow 0
-      
+
        		alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
 			colorScalar (0,0,0) -animAlpha triangular $waterSpeed 0.5 (0,1)
 			fillmode $stdMatFillMode
@@ -232,14 +232,14 @@ define TwoPassWater()
 				textureMatrixAnimation -targetType fixedFunction -ascale sawtooth $waterSpeed 0.5 (2,1)
 				textureBlend multiply(texture diffuse) multiply(texture colorScalar:invert)
 				textureAddressing tile tile tile
-			end 
+			end
 
-			
+
 		end
-			
-               
+
+
       end #shader
-	
+
 
 enddef
 
@@ -252,84 +252,84 @@ define SoftwareVertexShaderWater()
 		create SetupCommonHWShaderVariablesAndPredicates()
 
 		pass
-		
+
 			depthTest true -enableDepthWrite false
 
 			alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
 			fillmode $stdMatFillMode
-			
+
 			create WaterSoftwareVertexShader(1) # param is the pass number.
-			
+
 			stage
 				texture $stdMatBaseTextureName
 				textureBlend multiplyScale2(texture diffuse) multiply(texture diffuse)
 				textureAddressing tile tile tile
-			end 
+			end
 		end
-		
-		
+
+
 		pass
-		
+
 			depthTest true -enableDepthWrite false
 
 			alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
 			fillmode $stdMatFillMode
-			
+
 			create WaterSoftwareVertexShader(2)
-			
+
 			stage
 				texture $stdMatBaseTextureName
     			textureBlend multiplyScale2(texture diffuse) multiply(texture diffuse:invert)
 
 				textureAddressing tile tile tile
-			end 
+			end
 		end
-		
-		
+
+
 	end
-	
-	
+
+
 enddef
 
 
 define WaterSoftwareVertexShader(pass)
 
-	
+
 	shaderProgram -target vertexProgram -method link
 		create BindsForSoftwareVSTransforms($doSkinning $doMorphing)
-	
+
 		setb lighting true
-					
+
 		if ($distantLightCount > 0)
 			create BindsForLighting($kFullLighting)
 		else
 			create BindsForLighting($kAmbientOnly)
 			setb lighting false
 		endif
-				
-				
+
+
 		create TransformFragments($doSkinning false true $doMorphing $numPosMorphs $numNormMorphs $lighting 2_x)
-		
+
 		if ($totalLights > 0)
 			create StandardLightFragmentsSWVS(false 2_x)
 		else
 			set stdMatEnvCubeMode none
 			shaderFragment AmbientLighting2_x
 		endif
-		
+
 		shaderFragment WaterMaterialStuffSWVS2_x
 
 	end
-	
+
 	if (&pass = 1)
-		textureMatrixAnimation -targetType vsConstants -targetRegister 11  -ascale sawtooth $waterSpeed 0 (1,2) 
+		textureMatrixAnimation -targetType vsConstants -targetRegister 11  -ascale sawtooth $waterSpeed 0 (1,2)
 	else
-		textureMatrixAnimation -targetType vsConstants -targetRegister 11  -ascale sawtooth $waterSpeed 0.5 (1,2) 
+		textureMatrixAnimation -targetType vsConstants -targetRegister 11  -ascale sawtooth $waterSpeed 0.5 (1,2)
 	endif
-	
+
 	# the alpha
-	textureMatrixAnimation -targetType vsConstants -targetRegister 250 -ascale triangular $waterSpeed 0.5 (1000, 1) 
-		
+	textureMatrixAnimation -targetType vsConstants -targetRegister 250 -ascale triangular $waterSpeed 0.5 (1000, 1)
+
 
 enddef
 
@@ -337,11 +337,11 @@ enddef
 
 define WaterVertexShader()
    shaderProgram -target vertexProgram -method link
-   
+
 		create BindsForHardwareVS2Transforms($doSkinning $doMorphing)
-	
+
 		setb lighting true
-					
+
 		if ($distantLightCount > 0 or $pointLightCount > 0 or $spotLightCount > 0)
 			create BindsForLighting($kFullLighting)
 		else
@@ -351,7 +351,7 @@ define WaterVertexShader()
 
 
       #trace "water points: $pointLightCount, water spots: $spotLightCount"
-      if ($lighting)         
+      if ($lighting)
          create TransformFragments($doSkinning false false $doMorphing $numPosMorphs $numNormMorphs true 2_0)
          create StandardLightFragmentsDX9(false false 2_0)
       else
@@ -359,21 +359,21 @@ define WaterVertexShader()
          set stdMatEnvCubeMode none
          shaderFragment AmbientLightingHDR2_0
       endif
-      
-		
+
+
 		shaderFragment WaterMaterialStuff2_0
 
 	end
-	
-	textureMatrixAnimation -targetType vsConstants -targetRegister 11  -ascale sawtooth $waterSpeed 0 (1,2) 
-	
+
+	textureMatrixAnimation -targetType vsConstants -targetRegister 11  -ascale sawtooth $waterSpeed 0 (1,2)
+
    # the alpha wave
-	textureMatrixAnimation -targetType vsConstants -targetRegister 250 -ascale triangular $waterSpeed 0.5 (1000, 1) 
+	textureMatrixAnimation -targetType vsConstants -targetRegister 250 -ascale triangular $waterSpeed 0.5 (1000, 1)
 
    # scale wave
-   textureMatrixAnimation -targetType vsConstants -targetRegister 253 -ascale sawtooth $waterSpeed 0.5 (1,2) 
-	
-		
+   textureMatrixAnimation -targetType vsConstants -targetRegister 253 -ascale sawtooth $waterSpeed 0.5 (1,2)
+
+
 
 
 

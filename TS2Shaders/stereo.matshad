@@ -8,7 +8,7 @@ materialDefinition soundWaves
    addParam stdMatLightingEnabled false
    addParam stdMatAlphaBlendMode additive
    addParam stdMatAlphaTestEnabled false
-   addParam stdMatAlphaMultiplier 0.05 
+   addParam stdMatAlphaMultiplier 0.05
    addParam stdMatBaseTextureAlphaReplicate false
    addParam stdMatDiffCoef (0, 1, 1)
    addParam stdMatBaseTextureEnabled true

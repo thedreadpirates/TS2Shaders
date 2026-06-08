@@ -18,7 +18,7 @@ seti  nhoodCanvasLayer -8
 
 setb isQuad false
 
-# Used for double-sided slices, which are assumed to be 
+# Used for double-sided slices, which are assumed to be
 # drawn in correct front/back order.
 define ImposterDualPackedSliceMaterial()
 # params: page
@@ -26,7 +26,7 @@ define ImposterDualPackedSliceMaterial()
       shader -layer (($stdMatLayer * 8))
          vertexFormatPred position      0 true
          numLightsPred $kShadeLight (numLightsOfType(${kShadeLight}))
-         
+
          pass -fixedFunction
 			   create LightingStatesNoStdLights()
 
@@ -34,23 +34,23 @@ define ImposterDualPackedSliceMaterial()
 			   alphaBlend srcFactor(one) add dstFactor(invSrcAlpha)
 
             alphaTest true 127
-            alphaTestFunction acceptIfGreater                        
-            
+            alphaTestFunction acceptIfGreater
+
             fillmode $stdMatFillMode
-            
+
             create ImposterColorScalarWithTextureLight(true)
-            
+
             stage
                texture "slices_${page}"
-                                             
+
                textureMIPFilterHint disabled
                textureFilterHint point point
 
                textureBlend multiply(texture colorScalar) multiply(texture colorScalar)
-            end    
+            end
          end
-         
-           if (tsHasSnow >= 1)   
+
+           if (tsHasSnow >= 1)
                pass -fixedFunction
 			         create LightingStatesNoStdLights()
 
@@ -59,34 +59,34 @@ define ImposterDualPackedSliceMaterial()
 
                   alphaTest true 0
                   alphaTestFunction acceptIfGreaterOrEqual
-                  
-                  #ffDepthOffset 1
-                  depthTest true -enableDepthWrite false            
-                  depthTestFunction acceptIfEqual      
 
-                  
+                  #ffDepthOffset 1
+                  depthTest true -enableDepthWrite false
+                  depthTestFunction acceptIfEqual
+
+
                   fillmode $stdMatFillMode
-                  
+
                   create ImposterColorScalarWithTextureLight(true)
-                     
+
                   stage
                      texture "snow-light-pass1"
                      textureAddressing tile tile
                      ffTextureCoordsSource fromPosition
-                     ffTextureMatrix -cameraToGlobal -scalev (23, 23) -invert               
+                     ffTextureMatrix -cameraToGlobal -scalev (23, 23) -invert
                      textureBlend multiply(texture colorScalar) multiply(texture colorScalar)
                   end
-                  
+
                   stage
                      texture "snow-light-pass2"
                      textureAddressing tile tile
                      ffTextureMatrix  -cameraToGlobal -scalev (17, 17) -invert
                      ffTextureCoordsSource fromPosition
-                     textureBlend multiplyAdd(texture colorScalar outRegister) multiplyAdd(texture colorScalar outRegister)                  
-                  end   
-                                    
-               end            
-            endif                                               
+                     textureBlend multiplyAdd(texture colorScalar outRegister) multiplyAdd(texture colorScalar outRegister)
+                  end
+
+               end
+            endif
       end
    end
 enddef
@@ -100,30 +100,30 @@ define ImposterTerrainMaterial()
    material
       shader -layer (($nhoodCanvasLayer + 5)* 8)
          vertexFormatPred position      0 true
-         numLightsPred $kShadeLight (numLightsOfType(${kShadeLight}))                  
-         
+         numLightsPred $kShadeLight (numLightsOfType(${kShadeLight}))
+
          setb isTypeQuad ($isQuad)
-         
+
          if ($includeLightMap)
             pass -fixedFunction
                create NonStandardLighting()
-            
+
                alphaBlend srcFactor(destColor) add dstFactor(invSrcAlpha)
                fillmode $stdMatFillMode
-               
+
                alphaTest true 0
-               alphaTestFunction acceptIfGreater    
-               depthTest true -enableDepthWrite false                           
-                                       
-               
+               alphaTestFunction acceptIfGreater
+               depthTest true -enableDepthWrite false
+
+
                if ($isTypeQuad)
                   #always accept it as we its alpha and we are writing over terrain
                   depthTest true -enableDepthWrite false
                   ffDepthOffset 100
                   depthTestFunction acceptIfLessOrEqual
                endif
-               
-                          
+
+
                colorScalar $lightMapTint 1
                stage
                   if ($isTypeQuad)
@@ -131,75 +131,75 @@ define ImposterTerrainMaterial()
                   else
                      texture "terrainLmap"
                   endif
-                  
+
                   textureFilterHint bilinear bilinear
                   textureAddressing tile tile
                   ffTextureCoordsSource $textureCoordSet
-   
+
                   textureBlend multiply(texture colorScalar) select(texture)
-               end  
-            end   
-            
-            
+               end
+            end
+
+
          endif
 
-    seti snowLevel (tsHasSnow)           
-    
+    seti snowLevel (tsHasSnow)
+
     # only draw terrain paint layer if no snow covering it up
-    
-    if ($snowLevel < 1)   
+
+    if ($snowLevel < 1)
         pass -fixedFunction
             create NonStandardLighting()
                alphaBlend srcFactor(one) add dstFactor(invSrcAlpha)
             fillmode $stdMatFillMode
-            
+
             alphaTest true 0
-            alphaTestFunction acceptIfGreater   
+            alphaTestFunction acceptIfGreater
             depthTest true -enableDepthWrite false
-            
+
             if ($isTypeQuad)
                #always accept it as its alpha and we are writing over terrain
                ffDepthOffset 100
                depthTest true -enableDepthWrite false
-               depthTestFunction acceptIfLessOrEqual               
+               depthTestFunction acceptIfLessOrEqual
             endif
-                        
+
             # use shape light only in neighborhood mode
-            # we don't want to make the terrain fade as it looks bad                        
+            # we don't want to make the terrain fade as it looks bad
             create ImposterColorScalarWithTextureLight(tsIsInNeighborhood)
-            
+
             stage
-               if ($isTypeQuad)                  
+               if ($isTypeQuad)
                   texture $terrainTexture
                else
                   texture "terrain"
                endif
-               
+
                textureFilterHint bilinear bilinear
                textureAddressing clamp clamp
-               
+
                textureBlend multiply(texture colorScalar) multiply(texture colorScalar)
-            end  
-            
-        end # pass                  
+            end
+
+        end # pass
     endif
-         
-         
+
+
          if ($includeHighlight)
             pass -fixedFunction
                create NonStandardLighting()
                alphaBlend srcFactor(srcAlpha) add dstFactor(one)
                fillmode $stdMatFillMode
-               
+
                alphaTest true 0
-               alphaTestFunction acceptIfGreater 
-               
+               alphaTestFunction acceptIfGreater
+
                colorScalar (0.2, 1, 0.2) 0.3
 
-               stage                  
+               stage
                   textureBlend select(colorScalar) select(colorScalar)
-               end  
-            end         
+               end
+            end
          endif
       end
    end
@@ -210,37 +210,37 @@ define ImposterWallMaterial()
       shader -layer ($stdMatLayer * 8)
          vertexFormatPred position      0 true
          numLightsPred $kShadeLight (numLightsOfType(${kShadeLight}))
-                  
+
          pass -fixedFunction
             create NonStandardLighting()
-                        
 
-            if (numLightsOfType(${kShapeColorLight}) > 0 and not tsIsInNeighborhood)               
+
+            if (numLightsOfType(${kShapeColorLight}) > 0 and not tsIsInNeighborhood)
                alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
                depthTest true -enableDepthWrite false
-            else               
+            else
                alphaBlend srcFactor(one) add dstFactor(invSrcAlpha)
                depthTest true -enableDepthWrite true
                depthTestFunction acceptIfLessOrEqual
             endif
-            
+
             alphaTest true 64
             alphaTestFunction acceptIfGreater
-			   
+
             fillmode $stdMatFillMode
             cullmode cullClockwise
-            
+
             create ImposterColorScalarWithTextureLight(true)
 
             stage
                texture "walls_${page}"
-                              
+
                textureMIPFilterHint disabled
-               textureFilterHint point point 
-               
+               textureFilterHint point point
+
                textureBlend multiply(texture colorScalar) multiply(texture colorScalar)
-            end              
-         end   
+            end
+         end
       end
    end
 enddef
@@ -253,83 +253,83 @@ define ImposterRoofMaterial()
 
          pass
             create NonStandardLighting()
-            
+
             shaderProgram -target vertexProgram -method assemble
                bindConstants 0 -bindingID geomToClip -constantCount 4
-                              
+
                setf invRoofTextureTiles (1 / 64)
-               
+
                shaderSource
                   vs_1_1
                   def c4, $invRoofTextureTiles, -$invRoofTextureTiles, 0, 1
                   dcl_position v0
-                     
+
                   m4x4 oPos, v0, c0
                   mad oT0.xy, v0, c4.xy, c4.zw
                endShaderSource
             end
-   
-			   
+
+
             fillmode $stdMatFillMode
             cullmode none
-            
+
             if (numLightsOfType(${kShapeColorLight}) > 0 and not tsIsInNeighborhood)
                alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
                depthTest true -enableDepthWrite false
             else
                alphaBlend srcFactor(one) add dstFactor(zero)
             endif
-            
+
             create ImposterColorScalarWithTextureLight(true)
-            
-            
+
+
             stage
                texture "roofs"
-               
-               textureFilterHint bilinear bilinear 
+
+               textureFilterHint bilinear bilinear
                textureAddressing clamp clamp
-               
+
                textureBlend multiply(texture colorScalar) select(colorScalar)
-            end                                                  
-         end   
-         
+            end
+         end
+
          if (tsHasSnow >= 1)
-            pass 
+            pass
                shaderProgram -target vertexProgram -method assemble
                   bindConstants 0 -bindingID geomToClip -constantCount 4
-                                 
+
                   setf invRoofTextureTiles (1/8)
-                  
+
                   shaderSource
                      vs_1_1
                      def c4, $invRoofTextureTiles, -$invRoofTextureTiles, 0, 1
                      dcl_position v0
-                        
+
                      m4x4 oPos, v0, c0
                      mad oT0.xy, v0, c4.xy, c4.zw
                   endShaderSource
                end
-               
+
                alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
-               
-               fillmode $stdMatFillMode      
+
+               fillmode $stdMatFillMode
                ffDepthOffset 1
-               depthTest true -enableDepthWrite false            
-               depthTestFunction acceptIfLessOrEqual      
-               
+               depthTest true -enableDepthWrite false
+               depthTestFunction acceptIfLessOrEqual
+
                create ImposterColorScalarWithTextureLight(true)
-                  
+
                stage
                   texture "snow-light-roof-pass1"
                   textureAddressing tile tile
                   textureFilterHint bilinear bilinear
                   textureBlend multiply(texture colorScalar) multiply(texture diffuse)
-               end                       
-               
+               end
+
                stage
                   textureBlend select(outRegister) multiply(outRegister colorScalar)
-               end                      
-            end        
+               end
+            end
          endif
       end
    end
@@ -337,21 +337,21 @@ enddef
 
 define ImposterColorScalarWithTextureLight(useShapeColor)
    # Allow shade colour, but only if we're not being highlighted.
-   if (&useShapeColor)   
+   if (&useShapeColor)
       colorScalar (1, 1, 1, 1) -applyShapeColor 0 -applyTextureLightColor 0 0
    else
       colorScalar (1, 1, 1, 1) -applyTextureLightColor 0 0
    endif
-   
+
    if (numLightsOfType(${kShadeLight}) != 0 and numLightsOfType(${kShapeColorLight}) = 0)
       tsUserLight shadeLight 0
-   endif            
+   endif
 enddef
 
 define ImposterColorScalar()
    # Allow shade colour, but only if we're not being highlighted.
-   colorScalar (1, 1, 1, 1) -applyShapeColor 0 
+   colorScalar (1, 1, 1, 1) -applyShapeColor 0
    if (numLightsOfType(${kShadeLight}) != 0 and numLightsOfType(${kShapeColorLight}) = 0)
       tsUserLight shadeLight 0
-   endif            
+   endif
 enddef

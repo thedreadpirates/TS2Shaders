@@ -1,13 +1,13 @@
 set paramSpecies 0
 
 define CreateSimPerPixelCompositingMaterialFixedFunction()
-   
+
    material
-   
-			
+
+
 		#trace "Dx7	sim	skin: $currentMaterialName"
-	
-		shader 
+
+		shader
 			validateRenderShaderContext	-vertexFormat position 0 required
 			validateRenderShaderContext	-vertexFormat normal 0 required
 			validateRenderShaderContext	-vertexFormat texcoord 0 required
@@ -21,32 +21,32 @@ define CreateSimPerPixelCompositingMaterialFixedFunction()
 
 			# use composited texture in	a final	pass with lighting and so forth.
 			create SimSkinFixedFunction()
-			
-		end	#shader	
-	  
+
+		end	#shader
+
    end #material
 enddef
 
 
 define DX7GhostPass()
 
-   
+
 	pass -fixedFunction
 		create PreprocessVertexShader()	 #skin if needed
 		ffIdentityModelTransform  #if skinning has happened, reset the FF xform
 	  alphaTest	true 128
-	  alphaTestFunction	acceptIfGreaterOrEqual	  
-	
+	  alphaTestFunction	acceptIfGreaterOrEqual
+
 	  #colorWriteEnable -red	false -green false -blue false -alpha false
 	  alphaBlend srcFactor(zero) add dstFactor(one)
-	  
+
 	  #	sample the composited or base texture and push it to alpha
 	  stage
 			texture	$stdMatBaseTextureName
 			ffTextureCoordsSource 0
 			textureBlend select(texture) select(texture)
          textureAddressing clamp clamp clamp
-		end	
+		end
 
    end
 
@@ -60,10 +60,10 @@ define SimStandardMaterialFixedFunction()
 
    setb	alphaBlendingFlag false
    setb	ghostPass false
-   
+
 
    material
-   
+
 		#trace "Dx7	sim	standard: $currentMaterialName"
 
 		if (numLightsOfType(${kShapeColorLight}) !=	0)
@@ -71,15 +71,15 @@ define SimStandardMaterialFixedFunction()
 			set	stdMatAlphaBlendMode blend
 			setb ghostPass true
 		endif
-		
+
 		if (strcmp("${stdMatAlphaBlendMode}","blend") =	0)
-			setb alphaBlendingFlag true	
+			setb alphaBlendingFlag true
 		endif
 
       seti	layerToAdd ($simHairFlag ? 3 : 17)
-					
+
 	   seti	 layerNumber ($stdMatLayer * 18 + (strcmp("${stdMatAlphaBlendMode}",	"none")	= 0	? 0	: $layerToAdd))
-	
+
 		shader -layer $layerNumber
 
          create SupportedRenderShaderContextFFPredicates()   # to prevent unnecessary re-creation of FF shaders
@@ -90,71 +90,71 @@ define SimStandardMaterialFixedFunction()
 
 			validateRenderShaderContext	-viewerRenderType viewerRenderType
 
-	
+
 			create SetupSkinningStateAndPredicates()
 			create SetupMorphingStateAndPredicates()
-			
+
 			if ($ghostPass)
 				create DX7GhostPass()
 			endif
-				  	 
 
-     		pass -fixedFunction            
+
+     		pass -fixedFunction
 				if ($ghostPass = false)
                if ($doSkinning or $doMorphing)
                   create PreprocessVertexShader()	#skin if needed
                endif
 				endif
-   			
+
 				if ($simHairFlag)
 					create SimHairAlphaState($stdMatAlphaBlendMode)
 				else
 					create StandardShaderFBAlphaState($stdMatAlphaBlendMode)
 				endif
-   			
-   			
+
+
 
             if ($doSkinning or $doMorphing)
 				   ffIdentityModelTransform  #if skinning has happened, reset the FF xform
 				endif
 
 				create LightingStatesParam(hasDeformations false)
-   			
+
 				# this line	should pull	the	lighting back into the 'bad	value' range, see sims.matshad for a history.
 				setv3 scale	($simMaterialLightingScale*0.5,$simMaterialLightingScale*0.5,$simMaterialLightingScale*0.5)
 				# original screw-up	(my	fault)
 				#setv3 scale (0.4,0.4,0.4)
-   		
-				setv3 evalDiffuse (($stdMatDiffCoef).xyz * $scale)								
-   			
-				ffMatCoef -applyShapeColor $stdMatShapeColorIndex -diff	 $evalDiffuse -diffAlpha 1 -spec (0,0,0) -specPow 0	-amb $evalDiffuse -emit	(0,0,0)   							   
-   							
-            if ($stdMatBaseTextureEnabled)                           
-               
+
+				setv3 evalDiffuse (($stdMatDiffCoef).xyz * $scale)
+
+				ffMatCoef -applyShapeColor $stdMatShapeColorIndex -diff	 $evalDiffuse -diffAlpha 1 -spec (0,0,0) -specPow 0	-amb $evalDiffuse -emit	(0,0,0)
+
+            if ($stdMatBaseTextureEnabled)
+
                stage
-                  texture	$stdMatBaseTextureName                  
-                  ffTextureCoordsSource 0                                         
-                  
+                  texture	$stdMatBaseTextureName
+                  ffTextureCoordsSource 0
+
                   if ((viewerRenderType = $kViewerRenderTypeFamilyThumbnail) and (strcmp("${paramSpecies}", "0") != 0))
                      textureBlend multiplyScale2(texture	diffuse) select(diffuse)
                   else
                      textureBlend multiplyScale2(texture	diffuse) multiply(texture diffuse)
-                  endif                                     
+                  endif
                   textureAddressing clamp clamp clamp
-               end                             
-                                                                     
+               end
+
             else
                colorScalar ($stdMatDiffCoef) 1
                stage
-                  textureBlend multiplyScale2(colorScalar diffuse) multiply(diffuse colorScalar)                  
+                  textureBlend multiplyScale2(colorScalar diffuse) multiply(diffuse colorScalar)
                end
-                  
+
             endif
-            
+
             #  no stage = diffuse only
-			
-		end			
-	            				
+
+		end
+
 			if (strcmp("${stdMatEnvCubeMode}", "reflection") = 0 and $alphaBlendingFlag	= false)
 				pass -fixedFunction
 					alphaBlend srcFactor(srcAlpha) add dstFactor(one)
@@ -171,18 +171,18 @@ define SimStandardMaterialFixedFunction()
 						textureAddressing clamp	clamp clamp
 						textureBlend multiply(colorScalar texture) select(colorScalar)
 						texture	$stdMatEnvCubeTextureName
-					end	
-				
+					end
+
 				end	#pass
-			endif						
-						
-					
-		end	#shader	
-	  
-     
-     
+			endif
+
+
+		end	#shader
+
+
+
    if ($appInDebugMode = false)
-     
+
       shader -layer $layerNumber
 
          create SupportedRenderShaderContextFFPredicates()   # to prevent unnecessary re-creation of FF shaders
@@ -196,7 +196,7 @@ define SimStandardMaterialFixedFunction()
 
 			create SetupSkinningStateAndPredicates()
 			create SetupMorphingStateAndPredicates()
-			
+
 			pass -fixedFunction
 
             if ($doSkinning or $doMorphing)
@@ -206,49 +206,49 @@ define SimStandardMaterialFixedFunction()
 				ffIdentityModelTransform  #if skinning has happened, reset the FF xform
 
 				create LightingStatesParam(hasDeformations false)
-				
+
 				# this line	should pull	the	lighting back into the 'bad	value' range, see sims.matshad for a history.
 				setv3 scale	($simMaterialLightingScale*0.5,$simMaterialLightingScale*0.5,$simMaterialLightingScale*0.5)
 				# original screw-up	(my	fault)
 				#setv3 scale (0.4,0.4,0.4)
-			
+
 				setv3 evalDiffuse (($stdMatDiffCoef).xyz * $scale)
-				
-				
+
+
 				ffMatCoef -applyShapeColor $stdMatShapeColorIndex -diff	 $evalDiffuse -diffAlpha 1 -spec (0,0,0) -specPow 0	-amb $evalDiffuse -emit	(0,0,0)
-				
+
             colorScalar (1,1,1) 1
             stage
                textureBlend multiplyScale2(diffuse colorScalar) select(colorScalar)
             end
-                
-            
-            
-            #  no stage = diffuse only
-				
-			end
-			
-			
 
-		end	#shader	
-	  
+
+
+            #  no stage = diffuse only
+
+			end
+
+
+
+		end	#shader
+
    endif # debug mode check
-     
-     
-     
-     
+
+
+
+
    end #material
 enddef
 
 
 define CreateSimStandardMaterialFixedFunction()
-   
+
 	if (viewerRenderType = $kRenderTypeShadow)
 		create SimShadowDX7()
 	else
 		create SimStandardMaterialFixedFunction()
 	endif
-	
+
 enddef
 
 
@@ -256,10 +256,10 @@ enddef
 define SimSkinCompositingSingleLayerPassFixedFunction(layer	n)
 
 	pass #-fixedFunction
-	
+
 		renderClipSpaceRect
-		
-		
+
+
 		# setting 'really small' textures to composite into	for	the	GF2	for	now.
 		renderTarget simSkinCompositedBaseTexture -fixed (256, 256)	-bppHint 32	-alphaBitsHint 8 -allocateDepthBuffer false
 
@@ -268,7 +268,7 @@ define SimSkinCompositingSingleLayerPassFixedFunction(layer	n)
 
 
 		# passthrough SWVS until I can get all identity	matrix mode	for	the	FF case.
-		
+
 		shaderProgram -target vertexProgram	-method	assemble
 			shaderSource
 				vs_1_1
@@ -278,28 +278,28 @@ define SimSkinCompositingSingleLayerPassFixedFunction(layer	n)
 				mov	oT0, v1
 			endShaderSource
 		end
-		
+
 		if (&layer > 0)
 			alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
 			depthTest false	-enableDepthWrite false
 			alphaTest true 1
 			alphaTestFunction acceptIfGreaterOrEqual
 		endif
-		
+
 		colorScalar	(1,1,1,	0)
-		
+
 		if (strcmp("${baseTexture&{layer}}","")	!= 0)
 			stage
 				texture	"${baseTexture&{layer}}"
 				#ffTextureCoordsSource 0
 				textureBlend select(texture) select(texture)
-			end	
+			end
 		else
 			stage
 				textureBlend select(colorScalar) select(colorScalar)
 			end
 		endif
-		
+
 	end	#pass
 
 enddef
@@ -310,35 +310,35 @@ define SimSkinFixedFunction()
 
 
 	pass -fixedFunction
-		
+
 		renderTarget viewerRenderTarget
-		
+
 		if (strcmp("${stdMatAlphaBlendMode}", "blend")=	0)
 			alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
 			alphaTest true 128
 			alphaTestFunction acceptIfGreaterOrEqual
 		endif
-		
-		if ($doSkinning)		
+
+		if ($doSkinning)
 			create PreprocessVertexShader()	 #skin if needed
 			ffIdentityModelTransform  #if skinning has happened, reset the FF xform
 		endif
-		
+
 		create LightingStatesParam(hasDeformations false)
 
 		setv3 finalShaderDiffuse (($stdMatDiffCoef).xyz)
 
 		ffMatCoef -applyShapeColor $stdMatShapeColorIndex -diff	($finalShaderDiffuse) -diffAlpha 1 -spec (0,0,0) -specPow 0	-amb (0.5,0.5,0.5) -emit (0,0,0)
-		
+
 		stage
 			texture	simSkinCompositedBaseTexture
 			#ffTextureCoordsSource 0
 			textureBlend multiplyScale2(texture	diffuse) multiply(texture diffuse)
          textureAddressing clamp clamp clamp
-		end	
-		
+		end
+
 	end	#pass
-	
+
 enddef
 
 
@@ -347,36 +347,36 @@ enddef
 define SimShadowDX7()
 
    material
-   
+
 		#trace "Dx7	sim	shadow:	$currentMaterialName"
-	
-		shader 
+
+		shader
 			vertexFormatPred position 0	true
 
 			viewerRenderTypePred $kRenderTypeShadow
 
 			create SetupSkinningStateAndPredicates()
 			create SetupMorphingStateAndPredicates()
-			
+
 			setb $doMorphing false
 			setb $stdMatReduceBoneWeights true
-			
+
 			pass -fixedFunction
 				create PreprocessVertexShader()	 #skin if needed
 
 				ffIdentityModelTransform  #if skinning has happened, reset the FF xform
 
 				ffMatCoef -diff	(1,1,1,1) -diffAlpha 1 -spec (0,0,0) -specPow 0	-amb (0,0,0,0)
-					
+
 				colorScalar	$stdMatShadowColor 1
-				
+
 				stage
 					textureBlend select(colorScalar) select(colorScalar)
-				end	
-								
+				end
+
 			end	#pass
 
-		end	#shader	
-	  
+		end	#shader
+
    end #material
 enddef
