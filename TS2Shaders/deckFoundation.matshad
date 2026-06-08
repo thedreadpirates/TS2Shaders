@@ -11,19 +11,19 @@ define DeckFoundationPreviewMaterial()
          vertexFormatPred blendindices  0 false
          vertexFormatPred targetindices 0 false
 
-         pass -fixedFunction         
-            colorScalar $baseColor         
+         pass -fixedFunction
+            colorScalar $baseColor
             create LightingStatesNoStdLights()
             depthTest true -enableDepthWrite true
 
-            alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)		
+            alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
 
             stage
                textureBlend select(colorScalar) select(colorScalar)
-            end 
+            end
          end
 
-         pass -fixedFunction        
+         pass -fixedFunction
             create LightingStatesNoStdLights()
             fillmode wireframe
             cullmode none
@@ -32,7 +32,7 @@ define DeckFoundationPreviewMaterial()
 
             stage
                textureBlend select(colorScalar) select(colorScalar)
-            end 
+            end
          end
 
       end

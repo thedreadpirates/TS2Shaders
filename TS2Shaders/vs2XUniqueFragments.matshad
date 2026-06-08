@@ -43,9 +43,9 @@ asm_fragment
 	vs_&{versionString}
 
 	mov r_temp11.w, c_helperConstant1.z
-	
+
 	m3x3 oT1.xyz, r_reflectionVector.xyz, c_cubemapMatrix
-	
+
 };
 
 vertexfragment TexgenTransformedCameraNormal&{versionString} =
@@ -55,7 +55,7 @@ asm_fragment
 	mov r_temp9.w, c_helperConstant1.z
 
 	m3x3 oT1.xyz, r_temp9, c_cubemapMatrix
-	
+
 };
 
 
@@ -65,7 +65,7 @@ asm_fragment
 	vs_&{versionString}
 
 	m3x3 oT1.xyz, v_NORMAL, c_cubemapMatrix
-	
+
 };
 
 
@@ -76,7 +76,7 @@ asm_fragment
 	vs_&{versionString}
 
    mov oT1.xyz, r_reflectionVector
-	
+
 };
 
 
@@ -84,7 +84,7 @@ vertexfragment TexgenReflectionVectorTex2&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	dp3 oT2.x, r_reflectionVector, c_cubemapMatrix[0]
 	dp3 oT2.y, r_reflectionVector, c_cubemapMatrix[1]
 	dp3 oT2.z, r_reflectionVector, c_cubemapMatrix[2]
@@ -105,10 +105,10 @@ vertexfragment TerrainStraddleTexgen&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	mul oT0.xy, c_textureMatrix[0], v_POSITION.zw
-	
-	
+
+
 };
 
 vertexfragment TerrainUnderwaterGradientTexGenUVZero&{versionString} =
@@ -156,7 +156,7 @@ asm_fragment
 
 	mul oT0.xy, c_textureMatrix[0].zwzw, v_TEXCOORD
 	mul oT1.xy, c_textureMatrix[0], v_TEXCOORD
-	
+
 };
 
 
@@ -167,7 +167,7 @@ asm_fragment
 	vs_&{versionString}
 
 	mad oT0.xy, c_textureMatrix[0].zz, v_POSITION.zz, c_textureMatrix[0].ww
-	
+
 };
 
 
@@ -176,8 +176,8 @@ asm_fragment
 {
 	vs_&{versionString}
 
-	mul oT1.xy, c_textureMatrix[0].zw, v_POSITION.xy	
-	
+	mul oT1.xy, c_textureMatrix[0].zw, v_POSITION.xy
+
 };
 
 
@@ -187,7 +187,7 @@ asm_fragment
 	vs_&{versionString}
 
 	mul oT0.xy, c_textureMatrix[0].xy, v_TEXCOORD
-	
+
 };
 
 vertexfragment TextureScaleUVOne&{versionString} =
@@ -196,7 +196,7 @@ asm_fragment
 	vs_&{versionString}
 
 	mul oT1.xy, c_textureMatrix[0].xy, v_TEXCOORD
-	
+
 };
 
 
@@ -215,7 +215,7 @@ asm_fragment
 
 	dp4 oT0.x, v_TEXCOORD, c_textureMatrix[0]
 	dp4 oT0.y, v_TEXCOORD, c_textureMatrix[1]
-	
+
 };
 
 
@@ -225,7 +225,7 @@ asm_fragment
 	vs_&{versionString}
 
 	mov oT0.xy, v_TEXCOORD
-	
+
 	// move tangent space matrix into the PS
 	mov oT1.xyz, r_tangent
 	mov oT2.xyz, r_binormal
@@ -253,7 +253,7 @@ asm_fragment
 	vs_&{versionString}
 
 	mov oT0.xy, v_TEXCOORD
-	
+
 };
 
 
@@ -266,7 +266,7 @@ asm_fragment
 	vs_&{versionString}
 
 	mov oT1.xy, v_TEXCOORD
-	
+
 };
 
 vertexfragment Copy2DTexcoordsToTexTwo&{versionString} =
@@ -275,7 +275,7 @@ asm_fragment
 	vs_&{versionString}
 
 	mov oT2.xy, v_TEXCOORD
-	
+
 };
 
 
@@ -295,7 +295,7 @@ asm_fragment
 
 
 
-vertexfragment CelShadingParticlePreScale&{versionString} = 
+vertexfragment CelShadingParticlePreScale&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
@@ -307,64 +307,64 @@ asm_fragment
 
 
 
-vertexfragment CelShadingOutlinePosition&{versionString} = 
+vertexfragment CelShadingOutlinePosition&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
 
    // multiply normal by a scalar, this is the offset factor
-   
+
    mad r_position.xyz, c_textureMatrix[0].x, r_temp9, r_position   // texmat 0 has outline amount in it.
    mov r_position.w, c_basics.z
-   
-   
+
+
 	m4x4 r_clipSpace, r_position, c_cameraToClipSpaceMatrix
-   
+
    mov oPos.xyw, r_clipSpace
-   
+
    // push Z back into the screen a bit.  =  Z' = W * offset + Z
-   
+
    mad oPos.z, r_clipSpace.w, c_textureMatrix[0].z, r_clipSpace.z // texmat0.z = 0.0005
-      
+
 };
 
 
 
 
 
-vertexfragment CelShadingOutlinePositionParticle&{versionString} = 
+vertexfragment CelShadingOutlinePositionParticle&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
 
    // multiply normal by a scalar, this is the offset factor
-   
+
    mad r_position.xyz, c_textureMatrix[2].z, r_temp9, r_position
    mov r_position.w, c_basics.z
 
 	m4x4 r_clipSpace, r_position, c_cameraToClipSpaceMatrix
-   
+
    mov oPos.xyw, r_clipSpace
-   
+
    // push Z back into the screen a bit.  =  Z' = W * offset + Z
-   
+
    mad oPos.z, r_clipSpace.w, c_textureMatrix[0].z, r_clipSpace.z
-      
+
 };
 
 
-vertexfragment CelShadingDiffuse&{versionString} = 
+vertexfragment CelShadingDiffuse&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
 
 	// complete writing position.
 	m4x4 oPos, r_position, c_cameraToClipSpaceMatrix
-	
+
     dp3 oT0.xz, c_lightDirections[0], r_temp9
   // instead of clamping, the texture addressing can take care of that.
      // and it actually results in proper 'signed lighting' by interpolating negative texcoords.
-     
+
 };
 
 
@@ -372,7 +372,7 @@ asm_fragment
 // U = N.L
 // V = "Color".  Multiple ramps can be selected across the object for example
 
-vertexfragment CelShadingVertexAlphaSelectsColor&{versionString} = 
+vertexfragment CelShadingVertexAlphaSelectsColor&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
@@ -381,7 +381,7 @@ asm_fragment
 
 };
 
-vertexfragment CelShadingTexCoord1VSelectsColor&{versionString} = 
+vertexfragment CelShadingTexCoord1VSelectsColor&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
@@ -391,7 +391,7 @@ asm_fragment
 };
 
 
-vertexfragment CelShadingTexCoord0VSelectsColor&{versionString} = 
+vertexfragment CelShadingTexCoord0VSelectsColor&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
@@ -402,17 +402,17 @@ asm_fragment
 
 
 
-vertexfragment CelShadingDiffuseColor&{versionString} = 
+vertexfragment CelShadingDiffuseColor&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
-   
+
    mov oD0, c_diffuseMaterialColor
-   
+
 };
 
 
-vertexfragment CelShadingSpecular&{versionString} = 
+vertexfragment CelShadingSpecular&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
@@ -422,38 +422,38 @@ asm_fragment
    dp3 r_view.w, r_position, r_position
    rsq r_view.w, r_view.w
    mul r_view.xyz, -r_position, r_view.w
-   
+
 
    // compute H = (L + V) / 2
-   
+
    add r_half, c_lightDirections, r_view
-   mul r_half, r_half, c_basics.y   
-   
+   mul r_half, r_half, c_basics.y
+
    // normalize H
    dp3 r_half.w, r_half, r_half
    rsq r_half.w, r_half.w
    mul r_half.xyz, r_half, r_half.w
-         
+
    // compute N.H
-   
+
    dp3 r_hdotn.x, r_half, r_temp9
    max r_hdotn.x, r_hdotn, c_basics.x  // clamp to zero.
-      
+
    // The oddball thing about this celshader is that the specular 'shinyness' is not in the V coordinate.
    // instead, the specular ramp is linear, so the power raising has to be done per vertex.
-   
-   // raise intensity. 
+
+   // raise intensity.
 
    logp r_hdotn.w, r_hdotn.x
    mul r_hdotn.w, r_hdotn.w, c_textureMatrix[0].y // shinyness factor in Y
    expp r_hdotn.z, r_hdotn.w
-   
+
    mov oT1.xyz, r_hdotn.z
-      
+
 };
 
 
-vertexfragment CelShadingNoPowSpecular&{versionString} = 
+vertexfragment CelShadingNoPowSpecular&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
@@ -461,20 +461,20 @@ asm_fragment
    dp3 r_view.w, r_position, r_position
    rsq r_view.w, r_view.w
    mul r_view.xyz, -r_position, r_view.w
-   
+
    // compute H = (L + V) / 2
-   
+
    add r_half, c_lightDirections, r_view
-   mul r_half, r_half, c_basics.y   
-   
+   mul r_half, r_half, c_basics.y
+
    // normalize H
    dp3 r_half.w, r_half, r_half
    rsq r_half.w, r_half.w
    mul r_half.xyz, r_half, r_half.w
-   
-      
+
+
    // compute N.H
-   
+
    dp3 r_hdotn.x, r_half, r_temp9
    max oT1.xyz, r_hdotn.x, c_basics.x  // clamp to zero.
 
@@ -486,7 +486,7 @@ asm_fragment
 
 
 
-vertexfragment NoTextureMagic&{versionString} = 
+vertexfragment NoTextureMagic&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
@@ -497,15 +497,15 @@ asm_fragment
 vertexfragment ObjectSnowShaderTest&{versionString} =
 asm_fragment
 {
-   vs_&{versionString}   
-   
+   vs_&{versionString}
+
    mov r_temp0, v_NORMAL
    mov oT0.x, r_temp0.zzz
    mov r_temp0, v_POSITION
    mul r_temp1.xy, r_temp0.xy, c_helperConstant2.yy
    mul oT1.xy, r_temp1.xy, c_basics.ww
    mov oT2.xyz, r_temp9.xyz
-   dp3 r_temp0, r_temp9, c_lightDirections[0]   
+   dp3 r_temp0, r_temp9, c_lightDirections[0]
    dp3 r_temp1, r_temp9, c_lightDirections[2]
    mul r_temp2, r_temp0, c_lightColors[0]
    mov r_temp0, c_ambientLightColor
@@ -514,14 +514,14 @@ asm_fragment
 };
 
 
-vertexfragment EyeShifterTexGen&{versionString} = 
+vertexfragment EyeShifterTexGen&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	// for all verts with the second texcoord.U set, apply a shift given in the eyeShift constant reg.
 	// the texture matrix will be overloaded for this.
-	
+
 
 // tex1.y  is the shift scaling amount
 //  this has a left and right eye encoded as so:
@@ -538,20 +538,20 @@ asm_fragment
    // keep U the same, but negate V
    mov r_eyeShift.x, c_textureMatrix.x
    mov r_eyeShift.y, -c_textureMatrix.y
-         
+
    // V2 = Eye Scale amount, and left/right indicator.
-  
+
    add r_vertexScaleAmount.x, v_TEXCOORD1.y, -c_basics.z  // subtract one to get -1 to 1 range
-    
+
    // negative values are the right eye.
    slt r_eyeBoolean.y ,r_vertexScaleAmount.xx, c_basics.x  // X = right eye boolean
    add r_eyeBoolean.x, c_basics.z, -r_eyeBoolean.y  // 1.0-right = the left  eye
-   
+
    // ABS
    max r_vertexScaleAbs.z, -r_vertexScaleAmount.x, r_vertexScaleAmount.x
-   
+
    // animation channels L/R * scale for this vertex
-   
+
    mul r_stretcher.zw, c_textureMatrix.zwzw, r_vertexScaleAbs.z
    mul r_stretcher.zw, r_eyeBoolean.xyxy, r_stretcher.zwzw  // each channel * the eye channel selector
 
@@ -560,37 +560,37 @@ asm_fragment
 
    // Finally: apply Is eye or  not boolean.
    mul r_eyeShift.xy, r_eyeShift.xy, v_TEXCOORD1.xx
-   
+
    // final op is just going to be a shift in UV space.
-  
+
   add oT0.xy, r_eyeShift, v_TEXCOORD0
-  
-   
-   
+
+
+
 };
 
-vertexfragment TextureMatrix2DTransformTex0&{versionString} = 
+vertexfragment TextureMatrix2DTransformTex0&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	// swizzle will take the input vector of XY, 0, 1 and make it X,Y,1,0
 	// since the 3rd column of the matrix seems to be translation.
-	
+
 	dp4 oT0.x, v_TEXCOORD0.xywz, c_textureMatrix
 	dp4 oT0.y, v_TEXCOORD0.xywz, c_textureMatrix[1]
 };
 
-vertexfragment  Copy2DTexcoordsToTex1&{versionString} = 
+vertexfragment  Copy2DTexcoordsToTex1&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
 
 	mov oT1.xy, v_TEXCOORD0
-	
+
 };
 
-vertexfragment  TexGenCameraSpacePosition&{versionString} = 
+vertexfragment  TexGenCameraSpacePosition&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
@@ -599,7 +599,7 @@ asm_fragment
 };
 
 
-vertexfragment TransformViewVectorToLocalSpace&{versionString} = 
+vertexfragment TransformViewVectorToLocalSpace&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
@@ -613,17 +613,17 @@ asm_fragment
 	dp3 oT7.x, r_viewVector, r_tangent
 	dp3 oT7.y, r_viewVector, r_binormal
 	dp3 oT7.z, r_viewVector, r_temp9
-		
-			
+
+
 };
 
 
-vertexfragment WaterMaterialStuff&{versionString} = 
+vertexfragment WaterMaterialStuff&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
 
-	
+
 	mov oD0.xyzw, c_lerpWaterWave.x
 
 	dp4 oT0.x, v_TEXCOORD0.xywz, c_textureMatrix[0]
@@ -632,32 +632,32 @@ asm_fragment
 	dp4 oT1.x, v_TEXCOORD0.xywz, c_waterScaleWave2[0]
 	dp4 oT1.y, v_TEXCOORD0.xywz, c_waterScaleWave2[1]
 
-		
+
 };
 
 
 
-vertexfragment WaterMaterialStuffSWVS&{versionString} = 
+vertexfragment WaterMaterialStuffSWVS&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
 
-	
+
 	mov oD0.w, c_lerpWaterWave.x
 
 	dp4 oT0.x, v_TEXCOORD0.xywz, c_textureMatrix[0]
 	dp4 oT0.y, v_TEXCOORD0.xywz, c_textureMatrix[1]
-		
+
 };
 
 
-vertexfragment VertexAlphaSupport&{versionString} = 
+vertexfragment VertexAlphaSupport&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	mov oD0, v_COLOR
-	
+
 };
 
 
@@ -673,7 +673,7 @@ define VS3UniqueTexgenFragments()
 shaderSource
 
 
-vertexfragment NoTextureMagic3_0 = 
+vertexfragment NoTextureMagic3_0 =
 asm_fragment
 {
 	vs_3_0
@@ -682,14 +682,14 @@ asm_fragment
 };
 
 
-vertexfragment EyeShifterTexGen3_0 = 
+vertexfragment EyeShifterTexGen3_0 =
 asm_fragment
 {
 	vs_3_0
-	
+
 	// for all verts with the second texcoord.U set, apply a shift given in the eyeShift constant reg.
 	// the texture matrix will be overloaded for this.
-	
+
 
 // tex1.y  is the shift scaling amount
 //  this has a left and right eye encoded as so:
@@ -706,20 +706,20 @@ asm_fragment
    // keep U the same, but negate V
    mov r_eyeShift.x, c_textureMatrix.x
    mov r_eyeShift.y, -c_textureMatrix.y
-         
+
    // V2 = Eye Scale amount, and left/right indicator.
-  
+
    add r_vertexScaleAmount.x, v_TEXCOORD1.y, -c_basics.z  // subtract one to get -1 to 1 range
-    
+
    // negative values are the right eye.
    slt r_eyeBoolean.y ,r_vertexScaleAmount.xx, c_basics.x  // X = right eye boolean
    add r_eyeBoolean.x, c_basics.z, -r_eyeBoolean.y  // 1.0-right = the left  eye
-   
+
    // ABS
    max r_vertexScaleAbs.z, -r_vertexScaleAmount.x, r_vertexScaleAmount.x
-   
+
    // animation channels L/R * scale for this vertex
-   
+
    mul r_stretcher.zw, c_textureMatrix.zwzw, r_vertexScaleAbs.z
    mul r_stretcher.zw, r_eyeBoolean.xyxy, r_stretcher.zwzw  // each channel * the eye channel selector
 
@@ -728,10 +728,10 @@ asm_fragment
 
    // Finally: apply Is eye or  not boolean.
    mul r_eyeShift.xy, r_eyeShift.xy, v_TEXCOORD1.xx
-   
+
    add o_TEXCOORD0.xy, r_eyeShift, v_TEXCOORD0
-    
-   
+
+
 };
 
 
@@ -743,7 +743,7 @@ enddef
 
 
 
-shaderProgram -target fragments -method addFragment 
+shaderProgram -target fragments -method addFragment
 
 shaderSource
 
@@ -761,7 +761,7 @@ float4 emissiveColor : register(c17);  // a few materials actually use this crap
 // 8 of each.
 float4 lightDirections[8] : register (c18); // w = light range 18, 19, 20, 21, 22, 23, 24, 25
 float4 lightColors[8] : register(c26); //  .w = cone angle constant , 18..21, 22..25
-float4 lightPositions[8] : register (c34);     // .w = falloff rate, 
+float4 lightPositions[8] : register (c34);     // .w = falloff rate,
 float4 lightAttenuation[2] : register (c42); // 42, 43
 float4 lightRanges[2] : register(c44);
 float4 spotConeHelper1 : register(c46);
@@ -785,7 +785,7 @@ static const float4 basics : register(c52) = float4(0,0.5,1,2);
 // Morphs first, then the unpacked pose transforms follow.
 
 float4 lerpWaterWave : register(c250); // no pose matricies up here for the water, I hope...
-float4x2 waterScaleWave2 : register(c253); 
+float4x2 waterScaleWave2 : register(c253);
 
 float4x3 cubemapMatrix : register(c253); // 253, 254, 255
 
@@ -807,9 +807,9 @@ endShaderSource
 	create VSSharedFragments(2_0)
 	create VSSharedFragments(2_x)
 	create VSSharedFragments(1_1)
-	
+
 	create VS3UniqueTexgenFragments()
-	
+
 end #the 'global' shader program for fragments
 
 
@@ -820,11 +820,11 @@ define DetermineHardwareSupport()
    setb useHWShader1Path false
    setb useSWVertexShaderPath false
    setb useFixedFunctionPath true
-     
-    
+
+
 	setb ubyte4Supported true # assume SWVP/DX9 cards is true.
-	
-   
+
+
 	seti psVersion (queryIntegerGraphicsDeviceCap(maxPixelProgramVersionMajor))
 	seti vsVersion (queryIntegerGraphicsDeviceCap(maxVertexProgramVersionMajorHW))
 
@@ -836,40 +836,40 @@ define DetermineHardwareSupport()
 #>
 
    setb cubeMapSupport (queryBooleanGraphicsDeviceCap(hasCubeMapSupport))
-   
+
    if ($psVersion > 2 and (not $kUsePS30))
       seti psVersion 2
-   endif     
-   
+   endif
+
 	if ($kUseShaderPrograms)
 
-		# if no	fixed function HW, or it's been	forced off,	use	the	SW vertex shader path.	 
-		
-			if ($psVersion >= 2 and not $kForceNoDX9)	
+		# if no	fixed function HW, or it's been	forced off,	use	the	SW vertex shader path.
+
+			if ($psVersion >= 2 and not $kForceNoDX9)
 				setb	useHWShader2Path true
 				setb	useHWShader1Path false
 				setb	useSWVertexShaderPath false
 				setb	useFixedFunctionPath false
-				
-			elseif ($psVersion >= 1 and not $kForceNoDX8)	
+
+			elseif ($psVersion >= 1 and not $kForceNoDX8)
 			# set to the real HW support from the HW caps.
 				setb ubyte4Supported (queryBooleanGraphicsDeviceCap(hasUByte4VertexType))
 				setb useHWShader1Path false
 				setb useHWShader1Path true
 				setb useSWVertexShaderPath false
 				setb useFixedFunctionPath false
-		
+
 			elseif ((not	$ffgpHW and $psVersion = 0) or $kForceNoDX7)
 				setb useSWVertexShaderPath	true
 				setb useHWShader1Path false
 				setb useHWShader2Path false
 				setb useFixedFunctionPath false
-            
+
 			endif
-			  
-		
-		
-		
+
+
+
+
 #  These lines are unlikely to fix errors nowadays, please contact Timothy Wilson (tewilson@maxis.com) before messin' with 'em.
 
 	#setb bumpMapping false
@@ -882,7 +882,7 @@ define DetermineHardwareSupport()
 
 	setb useHWShader1Path true
 #>
-  
+
 		if ( $useHWShader2Path )
 			if	( numPoseTransforms	> 60)
 				seti npt numPoseTransforms
@@ -910,11 +910,11 @@ define DetermineHardwareSupport()
 
 
 	endif  #	use	shader programs
-   
 
 
-	
-   
+
+
+
 
 
 #<
@@ -935,17 +935,17 @@ define DetermineHardwareSupport()
 #>
 
 
-	
-	
+
+
 enddef
 
 
 
 define DetermineLightingMode()
-	
+
 	setf diffuseColorAccum 0.0
 	setf specularColorAccum 0.0
-	
+
 	if ($stdMatLightingEnabled and $hasNormals)
 		#trace "   Lighting Desired, and normals exist"
 		validateRenderShaderContext -vertexFormat normal 0 required
@@ -954,17 +954,17 @@ define DetermineLightingMode()
 		#trace "   Lighting Disabled, no normals"
 	endif
 
-	seti lightingMode $kNoLighting     
+	seti lightingMode $kNoLighting
 
 	if ($stdMatLightingEnabled)
-		
+
 		setv3 evalShaderDiffuse (($stdMatDiffCoef).xyz)
 		setv3 evalShaderSpecular (($stdMatSpecCoef).xyz)
 
 		setf diffuseColorAccum  ($evalShaderDiffuse.x + $evalShaderDiffuse.y + $evalShaderDiffuse.z)
 		setf specularColorAccum ($evalShaderSpecular.x + $evalShaderSpecular.y + $evalShaderSpecular.z)
-					
-		if ($hasNormals) 
+
+		if ($hasNormals)
 			if ($diffuseColorAccum = 0 and $specularColorAccum = 0)
 				#trace "Lighting is on, but diffuse and specular are BLACK, disabling lighting"
 				seti lightingMode $kNoLighting
@@ -974,20 +974,20 @@ define DetermineLightingMode()
 		else
 			seti lightingMode $kAmbientOnly
 		endif
-			
+
 		if ($totalLights = 0)
 			#trace "Lighting is on, but no lights were found, switching to ambient only"
 			seti lightingMode $kAmbientOnly
 		endif
-		
+
 	endif
-	
+
    if (strcmp("${stdMatAlphaBlendMode}","additive") = 0)
       seti lightingMode $kNoLighting
    endif
-         
+
 	#trace "Final lighting mode: $lightingMode"
-	
+
 enddef
 
 
@@ -1007,10 +1007,10 @@ define SetupCommonHWShaderVariablesAndPredicates()
 	trace "spot light Count: $spotLightCount"
 #>
 
-	
+
 	seti totalLights ($distantLightCount + $pointLightCount + $spotLightCount)
 	seti perPixelLightCount 0
-	
+
 	setb  hasTexcoords (hasVertexFormat(texcoord,0))
 	setb  hasNormals (hasVertexFormat(normal,0))
 	setb  hasTangents (hasVertexFormat(tangent,0))
@@ -1025,17 +1025,17 @@ define SetupCommonHWShaderVariablesAndPredicates()
 		validateRenderShaderContext -numLights spot $spotLightCount
 	endif
 	#>
-	
+
 	create SetupSkinningStateAndPredicates()
 	create SetupMorphingStateAndPredicates()
 
    setb updateEachFrameFlag false
-   
+
    # if not equal to 'none', then it must be set to *something*, so it's animating, and needs updating each frame
    if (strcmp("${stdMatTextureCoordAnimMode}", "none"))
       setb updateEachFrameFlag true
    endif
-   
+
 
 enddef
 
@@ -1047,11 +1047,11 @@ define 	VertexShaderTextureMatrixAnimation()
 
 	if (strcmp("${stdMatTextureCoordAnimMode}", "transform") = 0)
 		#trace "Texture matrix animation enabled $currentMaterialName"
-		
+
 		if ($stdMatTextureCoordTfAnimScaleStartEnd.x = 0.0)
 			setv2 stdMatTextureCoordTfAnimScaleStartEnd (0.001, $stdMatTextureCoordTfAnimScaleStartEnd.y)
 		endif
-			
+
 		textureMatrixAnimation -targetType vsConstants -targetRegister 11 -aorigin $stdMatTextureCoordTfAnimOrigin -arot $stdMatTextureCoordTfAnimRotWaveform $stdMatTextureCoordTfAnimRotSpeed 0 $stdMatTextureCoordTfAnimRotStartEnd -ascale $stdMatTextureCoordTfAnimScaleWaveform $stdMatTextureCoordTfAnimScaleSpeed 0 $stdMatTextureCoordTfAnimScaleStartEnd -atrans $stdMatTextureCoordTfAnimTransWaveform $stdMatTextureCoordTfAnimTransSpeed 0 $stdMatTextureCoordTfAnimTransStart $stdMatTextureCoordTfAnimTransEnd
 	endif
 
@@ -1064,8 +1064,8 @@ define 	VertexShaderTextureMatrixAnimation()
 	  #trace("video texture mode\n")
 	  sendNotifyString $shaderNotifyString
 	endif
-	
-	
+
+
 enddef
 
 
@@ -1074,7 +1074,7 @@ enddef
 define TestForEyeMotion()
 
    setb eyeMotion false
-   
+
    # sniff test 'single layer face fix'
    if (varExists(simSkinFlag) = false)
       setb simSkinFlag false
@@ -1096,4 +1096,3 @@ define TestForEyeMotion()
     endif
 
 enddef
-

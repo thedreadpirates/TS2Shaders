@@ -2,14 +2,14 @@
 # Birds, fish, and so forth will go in here
 
 define BirdWingFlapVertexShaderMaterial()
-   material   
-      create DetermineHardwareSupport()	         
+   material
+      create DetermineHardwareSupport()
 	   if ($useFixedFunctionPath or $useSWVertexShaderPath)
-		   shader 
+		   shader
 		   end
 	   else
 		   create BirdWingFlapVertexShaderMaterialRender()
-	   endif		
+	   endif
 	end
 enddef
 
@@ -23,50 +23,50 @@ define BirdWingFlapVertexShaderMaterialRender()
 		shader
 			pass
 				shaderProgram -target vertexProgram -method compile -version 1_1
-				
+
 					bindConstants 0 -bindingID geomToClip -constantCount 4 -constantType float
-					bindConstants 4 -bindingID immediateData -data @colorAlpha4 -constantType float 
-					bindConstants 6 -bindingID immediateData -data @scale4 -constantType float 
+					bindConstants 4 -bindingID immediateData -data @colorAlpha4 -constantType float
+					bindConstants 6 -bindingID immediateData -data @scale4 -constantType float
 					bindConstants 7 -bindingID frameInfo -constantType float -constantCount 1
-										
+
 					shaderSource
-					
+
 						float4x4 objectToClipSpaceMatrix : register(c0);
 						float4 flapData : register (c4);
 						float4 flapSpeed : register (c6);
 
 						float4 frameInfo : register (c7);
-						
+
 						struct InputVertex
 						{
 							float3 position: POSITION0;
 							float2 textureUV: TEXCOORD0;
 							float2 wingWeight : TEXCOORD1;
 						};
-		
+
 						struct OutputVertex
 						{
 							float4 clipPosition : POSITION;
 							float4 diffuseColor: COLOR0;
 							float2 textureUV: TEXCOORD0;
-						}; 
+						};
 
 						OutputVertex VertexMain( InputVertex inputVertex)
 						{
 							OutputVertex outputVertex;
-							
+
 							float4 newVertexPos;
-							
+
 							newVertexPos.xyz = inputVertex.position;
 							newVertexPos.w = 1.0;
 							float verticalDelta;
-							
+
 							verticalDelta = sin( frameInfo.z * flapSpeed.x  + flapData.w * 6.28);
 							verticalDelta *= flapData.y;
-							
+
 							//newVertexPos.z += verticalDelta * inputVertex.wingWeight.x;  // the flap motion
 							newVertexPos.z += verticalDelta * abs(inputVertex.position.x);
-																								
+
 							outputVertex.clipPosition = mul( newVertexPos, objectToClipSpaceMatrix );
 							outputVertex.diffuseColor = 0;
 							outputVertex.textureUV = inputVertex.textureUV;
@@ -75,26 +75,26 @@ define BirdWingFlapVertexShaderMaterialRender()
 
 					endShaderSource
 				end
-				
+
 				stage
 					textureBlend select(texture) select(diffuse)
 					texture $birdTexture
 				end
 			end # end pass
-			
+
 		end #end shader
 
 enddef
 
 define FishSwimVertexShaderMaterial()
-   material   
-      create DetermineHardwareSupport()	         
+   material
+      create DetermineHardwareSupport()
 	   if ($useFixedFunctionPath or $useSWVertexShaderPath)
-		   shader 
+		   shader
 		   end
 	   else
 		   create FishSwimVertexShaderMaterialRender()
-	   endif		
+	   endif
 	end
 enddef
 
@@ -103,19 +103,19 @@ define FishSwimVertexShaderMaterialRender()
 		shader
 			pass
 				shaderProgram -target vertexProgram -method compile -version 1_1
-				
+
 					bindConstants 0 -bindingID geomToClip -constantCount 4 -constantType float
-					bindConstants 4 -bindingID immediateData -data ($timeScale, $timeOffset, 0,0) -constantType float 
+					bindConstants 4 -bindingID immediateData -data ($timeScale, $timeOffset, 0,0) -constantType float
 					bindConstants 7 -bindingID frameInfo -constantType float -constantCount 1
 
 
 					shaderSource
-					
+
 						float4x4 objectToClipSpaceMatrix : register(c0);
 						float4 fishTimeInfo: register (c4);
 						float4 frameTime : register (c7);
-											
-						
+
+
 						struct OutputVertex
 						{
 							float4 position : POSITION;
@@ -125,54 +125,54 @@ define FishSwimVertexShaderMaterialRender()
 
 
 						OutputVertex VertexMain(
-							float3 position  : POSITION, 
+							float3 position  : POSITION,
 							float2 tex : TEXCOORD0)
 						{
 							OutputVertex outputVertex;
 
 							float3 warpedPosition = position;
-							
+
 							float scaledTime = (frameTime.w *fishTimeInfo.x + fishTimeInfo.y) * 10;// * fishSpeed.z; // wagging speed
-							
+
 							float distanceFromTail = 1.0 - tex.y;
 							float distanceFromHead = 1.0 - distanceFromTail;
-							
+
 							float yDelta = sin(scaledTime + distanceFromTail * 2.5) * (distanceFromHead +0.1);
-								
+
 							warpedPosition.y += yDelta * 0.02;//tail wag amount;
-									
+
 							outputVertex.position = mul( float4(warpedPosition, 1),objectToClipSpaceMatrix);  // position (view space)
-						  
+
 							outputVertex.diffuse =  1.0 - tex.x;
 							outputVertex.texcoord = tex;
 
 							return outputVertex;
 						}
-						
+
 					endShaderSource
 				end # shader Program
-			
-            alphaTest true 0 
-            alphaTestFunction acceptIfGreater 
+
+            alphaTest true 0
+            alphaTestFunction acceptIfGreater
 				stage
 					texture $fishTexture
 					textureBlend multiply(diffuse texture) select(texture)
 				end #stage
-				
+
 			end #pass
-		end # shader	
-	
+		end # shader
+
 enddef
 
 define pondFishSwimVertexShaderMaterial()
-   material   
-      create DetermineHardwareSupport()	         
+   material
+      create DetermineHardwareSupport()
 	   if ($useFixedFunctionPath or $useSWVertexShaderPath)
-		   shader 
+		   shader
 		   end
 	   else
 		   create pondFishSwimVertexShaderMaterialRender()
-	   endif		
+	   endif
 	end
 enddef
 
@@ -181,19 +181,19 @@ define pondFishSwimVertexShaderMaterialRender()
 		shader
 			pass
 				shaderProgram -target vertexProgram -method compile -version 1_1
-				
+
 					bindConstants 0 -bindingID geomToClip -constantCount 4 -constantType float
-					bindConstants 4 -bindingID immediateData -data ($timeScale, $timeOffset, 0,0) -constantType float 
+					bindConstants 4 -bindingID immediateData -data ($timeScale, $timeOffset, 0,0) -constantType float
 					bindConstants 7 -bindingID frameInfo -constantType float -constantCount 1
 
 
 					shaderSource
-					
+
 						float4x4 objectToClipSpaceMatrix : register(c0);
 						float4 fishTimeInfo: register (c4);
 						float4 frameTime : register (c7);
-											
-						
+
+
 						struct OutputVertex
 						{
 							float4 position : POSITION;
@@ -203,43 +203,43 @@ define pondFishSwimVertexShaderMaterialRender()
 
 
 						OutputVertex VertexMain(
-							float3 position  : POSITION, 
+							float3 position  : POSITION,
 							float2 tex : TEXCOORD0)
 						{
 							OutputVertex outputVertex;
 
 							float3 warpedPosition = position;
-							
+
 							float scaledTime = (frameTime.w *fishTimeInfo.x + fishTimeInfo.y) * 10;// * fishSpeed.z; // wagging speed
-							
+
 							float distanceFromTail = .75 - tex.x;
 							float distanceFromHead = 1.0 - distanceFromTail;
-							
+
 							float yDelta = sin(scaledTime + distanceFromTail * 5) * (distanceFromHead +0.1);
-								
+
 							warpedPosition.y += yDelta * 0.05;//tail wag amount;
-									
+
 							outputVertex.position = mul( float4(warpedPosition, 1),objectToClipSpaceMatrix);  // position (view space)
-						  
+
 							outputVertex.diffuse =  1.0 - tex.x;
 							outputVertex.texcoord = tex;
 
 							return outputVertex;
 						}
-						
+
 					endShaderSource
 				end # shader Program
-			
-            alphaTest true 0 
-            alphaTestFunction acceptIfGreater 
+
+            alphaTest true 0
+            alphaTestFunction acceptIfGreater
 				stage
 					texture $pondFishTexture
 					textureBlend multiply(diffuse texture) select(texture)
 				end #stage
-				
+
 			end #pass
-		end # shader	
-	
+		end # shader
+
  	#~ attributes
             #~ attribute colorAlpha4 float4
             #~ attribute scale4      float4
@@ -250,51 +250,51 @@ define pondFishSwimVertexShaderMaterialRender()
 			#~ validateRenderShaderContext -vertexFormat texcoord 1 required
 			#~ pass
 				#~ shaderProgram -target vertexProgram -method compile -version 1_1
-				
+
 					#~ bindConstants 0 -bindingID geomToClip -constantCount 4 -constantType float
-					#~ bindConstants 4 -bindingID immediateData -data @colorAlpha4 -constantType float 
-					#~ bindConstants 6 -bindingID immediateData -data @scale4 -constantType float 
+					#~ bindConstants 4 -bindingID immediateData -data @colorAlpha4 -constantType float
+					#~ bindConstants 6 -bindingID immediateData -data @scale4 -constantType float
 					#~ bindConstants 7 -bindingID frameInfo -constantType float -constantCount 1
-										
+
 					#~ shaderSource
-					
+
 						#~ float4x4 objectToClipSpaceMatrix : register(c0);
 						#~ float4 flapData : register (c4);
 						#~ float4 flapSpeed : register (c6);
 
 						#~ float4 frameInfo : register (c7);
-						
+
 						#~ struct InputVertex
 						#~ {
 							#~ float3 position: POSITION0;
 							#~ float2 textureUV: TEXCOORD0;
 							#~ float2 wingWeight : TEXCOORD1;
 						#~ };
-		
+
 						#~ struct OutputVertex
 						#~ {
 							#~ float4 clipPosition : POSITION;
 							#~ float4 diffuseColor: COLOR0;
 							#~ float2 textureUV: TEXCOORD0;
-						#~ }; 
+						#~ };
 
 						#~ OutputVertex VertexMain( InputVertex inputVertex)
 						#~ {
 							#~ OutputVertex outputVertex;
-							
+
 							#~ float4 newVertexPos;
-							
+
 							#~ newVertexPos.xyz = inputVertex.position;
 							#~ newVertexPos.w = 1.0;
 							#~ float verticalDelta;
-							
+
 							#~ float distanceFromTail = 1.0 - inputVertex.textureUV.x;
 							#~ float distanceFromHead = 1.0 - distanceFromTail;
 							#~ verticalDelta = sin(frameInfo.w * 7+ distanceFromTail * 5) * (distanceFromHead +0.1);
-							
+
 							#~ newVertexPos.y += verticalDelta * inputVertex.textureUV.x * .1;  // the flap motion
-							
-																								
+
+
 							#~ outputVertex.clipPosition = mul( newVertexPos, objectToClipSpaceMatrix );
 							#~ outputVertex.diffuseColor = 0;
 							#~ outputVertex.textureUV = inputVertex.textureUV;
@@ -305,54 +305,54 @@ define pondFishSwimVertexShaderMaterialRender()
 
 					#~ endShaderSource
 				#~ end
-				
+
 				#~ stage
 					#~ textureBlend select(texture) select(diffuse)
 					#~ texture $pondFishTexture
 				#~ end
 			#~ end # end pass
-			
+
 		#~ end #end shader
-	
+
 enddef
 
 define BannerVertexShaderMaterial()
-   material   
-      create DetermineHardwareSupport()	         
+   material
+      create DetermineHardwareSupport()
 	   if ($useFixedFunctionPath or $useSWVertexShaderPath)
-		   shader 
+		   shader
 		   end
 	   else
 		   create BannerVertexShaderMaterialRender()
-	   endif		
+	   endif
 	end
 enddef
 
 
 define BannerVertexShaderMaterialRender()
-	
-	
+
+
 		shader
 			pass
 
 				shaderProgram -target vertexProgram -method compile -version 1_1
-				
+
 					setf diffuseVal 0.7
 					if (not tsIsDay)
-					   setf diffuseVal 0.3				
+					   setf diffuseVal 0.3
 					endif
-				
+
 					bindConstants 0 -bindingID geomToClip -constantCount 4 -constantType float
-					bindConstants 4 -bindingID immediateData -data ($timeScale, $timeOffset, $diffuseVal,0) -constantType float 
+					bindConstants 4 -bindingID immediateData -data ($timeScale, $timeOffset, $diffuseVal,0) -constantType float
 					bindConstants 7 -bindingID frameInfo -constantType float -constantCount 1
 
 					shaderSource
-					
+
 						float4x4 objectToClipSpaceMatrix : register(c0);
 						float4 bannerTimeInfo: register (c4);
 						float4 frameTime : register (c7);
-											
-						
+
+
 						struct OutputVertex
 						{
 							float4 position : POSITION;
@@ -362,57 +362,57 @@ define BannerVertexShaderMaterialRender()
 
 
 						OutputVertex VertexMain(
-							float3 position  : POSITION, 
+							float3 position  : POSITION,
 							float2 tex : TEXCOORD0,
 							float2 flap : TEXCOORD1)
-						{							
-							
+						{
+
 							OutputVertex outputVertex;
 
 							float3 warpedPosition = position;
-							
+
 							float scaledTime = (frameTime.w *bannerTimeInfo.x + bannerTimeInfo.y) * 10;// * bannerSpeed.z; // wagging speed
-							
+
 							float distanceFromTail = 1.0 - tex.x;
 							float distanceFromHead = 1.0 - distanceFromTail;
-							
+
 							float yDelta = sin((-scaledTime) + distanceFromTail * 100);
-								
+
 							warpedPosition.x += (yDelta * tex.x * .85); //tail wag amount;
-									
+
 							outputVertex.position = mul( float4(warpedPosition, 1),objectToClipSpaceMatrix);  // position (view space)
-						  
+
 							outputVertex.diffuse =  bannerTimeInfo.z;
 							outputVertex.texcoord = tex;
 
 							return outputVertex;
-							
+
 						}
-						
+
 					endShaderSource
 				end # shader Program
-			
-            alphaTest true 0 
-            alphaTestFunction acceptIfGreater 
+
+            alphaTest true 0
+            alphaTestFunction acceptIfGreater
 				stage
 					texture $bannerTexture
 					textureBlend multiply(diffuse texture) select(texture)
 				end #stage
-				
+
 			end #pass
 		end # shader
-	
+
 enddef
 
 define koiFishSwimVertexShaderMaterial()
-   material   
-      create DetermineHardwareSupport()	         
+   material
+      create DetermineHardwareSupport()
 	   if ($useFixedFunctionPath or $useSWVertexShaderPath)
-		   shader 
+		   shader
 		   end
 	   else
 		   create koiFishSwimVertexShaderMaterialRender()
-	   endif		
+	   endif
 	end
 enddef
 
@@ -421,19 +421,19 @@ define koiFishSwimVertexShaderMaterialRender()
 		shader
 			pass
 				shaderProgram -target vertexProgram -method compile -version 1_1
-				
+
 					bindConstants 0 -bindingID geomToClip -constantCount 4 -constantType float
-					bindConstants 4 -bindingID immediateData -data ($timeScale, $timeOffset, 0,0) -constantType float 
+					bindConstants 4 -bindingID immediateData -data ($timeScale, $timeOffset, 0,0) -constantType float
 					bindConstants 7 -bindingID frameInfo -constantType float -constantCount 1
 
 
 					shaderSource
-					
+
 						float4x4 objectToClipSpaceMatrix : register(c0);
 						float4 fishTimeInfo: register (c4);
 						float4 frameTime : register (c7);
-											
-						
+
+
 						struct OutputVertex
 						{
 							float4 position : POSITION;
@@ -443,43 +443,43 @@ define koiFishSwimVertexShaderMaterialRender()
 
 
 						OutputVertex VertexMain(
-							float3 position  : POSITION, 
+							float3 position  : POSITION,
 							float2 tex : TEXCOORD0)
 						{
 							OutputVertex outputVertex;
 
 							float3 warpedPosition = position;
-							
+
 							float scaledTime = (frameTime.w *fishTimeInfo.x + fishTimeInfo.y) * 10;// * fishSpeed.z; // wagging speed
-							
+
 							float distanceFromTail = .75 - tex.x;
 							float distanceFromHead = 1.0 - distanceFromTail;
-							
+
 							float yDelta = sin(scaledTime + distanceFromTail * 5) * (distanceFromHead +0.1);
-								
+
 							warpedPosition.y += yDelta * 0.0125;//tail wag amount;
-									
+
 							outputVertex.position = mul( float4(warpedPosition, 1),objectToClipSpaceMatrix);  // position (view space)
-						  
+
 							outputVertex.diffuse =  1.0 - tex.x;
 							outputVertex.texcoord = tex;
 
 							return outputVertex;
 						}
-						
+
 					endShaderSource
 				end # shader Program
-			
-            alphaTest true 0 
-            alphaTestFunction acceptIfGreater 
+
+            alphaTest true 0
+            alphaTestFunction acceptIfGreater
 				stage
 					texture $koiFishTexture
 					textureBlend multiply(diffuse texture) select(texture)
 				end #stage
-				
+
 			end #pass
-		end # shader	
-	
+		end # shader
+
 enddef
 
 
@@ -492,7 +492,7 @@ materialDefinition seagullNeighborhood_material
    setDefinition BirdWingFlapVertexShaderMaterial
    addParam birdTexture "EP2_seagullTex"
 end
- 
+
 
 materialDefinition crowNeighborhood_material
    setDefinition BirdWingFlapVertexShaderMaterial
@@ -517,7 +517,7 @@ materialDefinition fishParticle2_material
    addParam fishTexture "aquarium-fish_part2"
    addParam timeOffset 2
     addParam timeScale 1.1
-   
+
 end
 
 
@@ -526,7 +526,7 @@ materialDefinition fishParticle3_material
    addParam fishTexture "aquarium-fish_part3"
     addParam timeOffset 3
     addParam timeScale 0.872
-    
+
 end
 
 
@@ -535,7 +535,7 @@ materialDefinition fishParticle4_material
    addParam fishTexture "aquarium-fish_part4"
     addParam timeOffset 4
     addParam timeScale 0.9
- 
+
 end
 
 
@@ -561,7 +561,7 @@ materialDefinition fishParticle7_material
    addParam timeScale 1.05
 end
 
- 
+
 
 materialDefinition fishParticle8_material
    setDefinition FishSwimVertexShaderMaterial
@@ -569,7 +569,7 @@ materialDefinition fishParticle8_material
    addParam timeOffset 6
    addParam timeScale .65
 end
- 
+
 
 materialDefinition fishParticle9_material
    setDefinition FishSwimVertexShaderMaterial
@@ -594,7 +594,7 @@ materialDefinition fishParticle11_material
    addParam timeScale 1.4
 end
 
- 
+
 
 materialDefinition fishParticle12_material
    setDefinition FishSwimVertexShaderMaterial
@@ -603,7 +603,7 @@ materialDefinition fishParticle12_material
    addParam timeScale 1.315
 end
 
- 
+
 materialDefinition fishParticle13_material
    setDefinition FishSwimVertexShaderMaterial
    addParam fishTexture "aquarium-fish_part13"

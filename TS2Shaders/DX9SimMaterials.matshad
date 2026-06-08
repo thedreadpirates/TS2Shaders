@@ -9,20 +9,20 @@ define SimMaterialTransformSetupDX9(eyeShifterEnable)
 
    create BindsForHardwareVS2Transforms($doSkinning $doMorphing)
 	set lightingMode $kFullLighting
-		
+
 	if ($totalLights = 0)
 		set lightingMode $kAmbientOnly
 		setb transformNormals false
 	endif
-	
+
    # apply the sim lighting fudge factor due to my screwup in dx7 material. see sims.matshad for a history
 
    setv3 stdMatDiffCoef (($stdMatDiffCoef.xyz) * $simMaterialLightingScale.xxx)
-    
+
    if ($lightingMode = $kFullLighting and $vs2LoopsFunctional)
       create SupportedRenderShaderContextFFPredicates()
    endif
-          
+
 	create BindsForLighting($lightingMode)
 
 
@@ -33,19 +33,19 @@ define SimMaterialTransformSetupDX9(eyeShifterEnable)
 	endif
 
 	# skinning can be turned off for some sim cases, like CAS, so I have to honor this setting.
-		
+
 	create TransformFragments($doSkinning false false $doMorphing $numPosMorphs $numNormMorphs $transformNormals 2_0)
-	
+
 	# hasTangents is a good substitute for a bumpmapping flag on the sim materials, since it always tends to be on.
 	# create a tangent space matrix to transform our light vectors.
-	
+
 	setb localBumpmappingFlag false
 
 	if ($hasTangents and $bumpMapping and $lightingMode = $kFullLighting)
 		setb localBumpmappingFlag true
 	endif
 
-	if ($localBumpmappingFlag)	
+	if ($localBumpmappingFlag)
 
 		if ($doSkinning)
 			shaderFragment TransformTangentSpaceWithCompositeMatrix2_0
@@ -60,14 +60,14 @@ define SimMaterialTransformSetupDX9(eyeShifterEnable)
 
 	if ($totalLights > 0)
 
-      if ($vs2LoopsFunctional)      
+      if ($vs2LoopsFunctional)
          #trace "$vs2LoopsFunctional <- loops active"
 
   			create AddLoopingLightFragments($localBumpmappingFlag false 2_0)
   		else
 			create StandardLightFragmentsDX9(false $localBumpmappingFlag 2_0)
 		endif
-		
+
 	else
 		set stdMatEnvCubeMode none
 		shaderFragment AmbientLightingHDR2_0
@@ -77,41 +77,41 @@ define SimMaterialTransformSetupDX9(eyeShifterEnable)
 
 
 
-# For edge lighting	
-#	if ($localBumpmappingFlag)	
+# For edge lighting
+#	if ($localBumpmappingFlag)
 #		shaderFragment TransformViewVectorToLocalSpace2_0
 #	endif
-	
-	
+
+
 	if (&eyeShifterEnable)
 		shaderFragment EyeShifterTexGen2_0
-	else 
-	
+	else
+
 		if (strcmp("${stdMatEnvCubeMode}", "none") = 0)
 			if ($hasTexcoords)
 				shaderFragment NoTextureMagic2_0
 			endif
-			
+
 		else
 			if ($hasTexcoords)
 				shaderFragment NoTextureMagic2_0
 			endif
-		
-      
-			if ($transformNormals)		
+
+
+			if ($transformNormals)
          		#trace "$currentMaterialName :  xform normals $transformNormals , env cube mode: $stdMatEnvCubeMode"
 
 				shaderFragment CreateReflectionVector2_0
 				shaderFragment TexgenReflectionVector2_0
 			endif
-			
-		endif
-		
-	endif
-   
 
-	
-		
+		endif
+
+	endif
+
+
+
+
 enddef
 
 
@@ -120,14 +120,14 @@ enddef
 
 define DX9SimSkinCompositingMaterial()
 
-   if (viewerRenderType = $kRenderTypeShadow)    
+   if (viewerRenderType = $kRenderTypeShadow)
 		create SimShadowDX9()
 	elseif (viewerRenderType = $kRenderTypeShadowMap)
 	   create SimShadowMapDX9()
 	else
 		create SimSkinPerPixelCompositingRendering()
 	endif
-	
+
 enddef
 
 
@@ -136,21 +136,21 @@ enddef
 define GhostPrepZPass(singleTextureFlag textureName)
 
 	pass
-      
+
 		depthTest true -enableDepthWrite true
-		
-		#colorWriteEnable -red false -green false -blue false -alpha false		
+
+		#colorWriteEnable -red false -green false -blue false -alpha false
 		alphaBlend srcFactor(zero) add dstFactor(one)
-					
+
 		shaderProgram -target vertexProgram -method link
 			create BindsForHardwareVS2Transforms(true $doMorphing)
  			create TransformFragments($doSkinning false false $doMorphing $numPosMorphs $numNormMorphs false 2_0)
          shaderFragment NoTextureMagic2_0
 		end
-								
-		
-						
-      if (&singleTextureFlag)         
+
+
+
+      if (&singleTextureFlag)
          alphaTest true 128
          alphaTestFunction acceptIfGreaterOrEqual
 
@@ -174,9 +174,9 @@ define GhostPrepZPass(singleTextureFlag textureName)
             endShaderSource
          end
       endif
-      
+
 	end #end pass
-	
+
 enddef
 
 
@@ -187,29 +187,29 @@ enddef
 define CreateSimStandardMaterialDX9()
 
 	setf cubeCoefCheck 0.0
-	
+
 	material
 
 		setb alphaBlendingOn false
 
-	   if (viewerRenderType = $kRenderTypeShadow)	    
+	   if (viewerRenderType = $kRenderTypeShadow)
 			create SimShadowDX9()
 		elseif (viewerRenderType = $kRenderTypeShadowMap)
 	      create SimShadowMapDX9()
-		else	      
-         create SimsShaderPreCreate()    
+		else
+         create SimsShaderPreCreate()
 
 			if (strcmp("${stdMatAlphaBlendMode}", "none"))
 				setb alphaBlendingOn true
 			endif
-			
-			if (numLightsOfType(${kShapeColorLight}) > 0)			   
+
+			if (numLightsOfType(${kShapeColorLight}) > 0)
   				setb alphaBlendingOn true
   			endif
-			
+
 		   seti  layerToAdd ($simHairFlag ? 3 : 17)
-		   		
-			seti  layerNumber ($stdMatLayer	* 18	+ ($alphaBlendingOn ? $layerToAdd : 0))						
+
+			seti  layerNumber ($stdMatLayer	* 18	+ ($alphaBlendingOn ? $layerToAdd : 0))
 
 			#trace "Dx9 sim standard: $currentMaterialName, layer : $layerNumber alphaBlend: $alphaBlendingOn"
 
@@ -220,16 +220,16 @@ define CreateSimStandardMaterialDX9()
 				create SimMaterialSetup()
 
 
-				
+
 				if (numLightsOfType(${kShapeColorLight}) > 0)
 					seti shapeColorLightCount (numLightsOfType(${kShapeColorLight}))
 					##trace "Sim standard, shape color count: $shapeColorLightCount"
 					seti stdMatShapeColorIndex 0
 				endif
-					
+
 				if ($stdMatShapeColorIndex = 0)
 					set stdMatAlphaBlendMode blend
-               
+
 					#trace "Sim standard $currentMaterialName with shapeColor active"
 					if (strstr("$currentMaterialName", "lobot") = 0)
 					   create GhostPrepZPass(true $stdMatBaseTextureName)
@@ -239,51 +239,51 @@ define CreateSimStandardMaterialDX9()
 				#trace "SimStandardDX9, tangents: $hasTangents"
 
 				setb localNormalMappingFlag false
-				seti perPixelLightCount 0 
-					
+				seti perPixelLightCount 0
+
 				if ($stdMatNormalMapTextureEnabled)
 					if ($hasTangents)
 						setb localNormalMappingFlag true
 					endif
 				endif
-					
+
 				pass
-								
-					fillmode $stdMatFillMode					
-					
+
+					fillmode $stdMatFillMode
+
 					#fillmode wireframe
 					setf cubeCoefCheck ($stdMatEnvCubeCoef.x + $stdMatEnvCubeCoef.y + $stdMatEnvCubeCoef.z)
-               
+
                # force cubemapping off if the coefficient makes no sense.
 					if ($cubeCoefCheck < 0.003)
 						set stdMatEnvCubeMode none
 					endif
-                              
-					create NonStandardLighting()
-					
 
-					if ($simHairFlag)               
+					create NonStandardLighting()
+
+
+					if ($simHairFlag)
 					   create SimHairAlphaState($stdMatAlphaBlendMode)
 					else
 					   create StandardShaderFBAlphaState($stdMatAlphaBlendMode)
 					endif
-          
-          
+
+
 		       		#trace "SimStandard(sub):   Eye gizmo: $eyeGizmoEnable  $currentMaterialName"
 
 					shaderProgram -target vertexProgram -method link
 						create SimMaterialTransformSetupDX9($eyeMotion)
 					end
-													
+
 					shaderProgram -target pixelProgram -method assemble
-					
+
 						if ($vs2LoopsFunctional)
 							bindConstants 12 -bindingID perPixelLightColors -constantType float -constantCount 3
 						else
 							bindConstants 12 -bindingID allStandardLightColors -constantType float -constantCount 3
 						endif
-						
-	
+
+
 						if ($stdMatShapeColorIndex = 0)
 							bindConstants 4 -bindingID shapeColorIndex0  -constantType float
 						else
@@ -294,37 +294,37 @@ define CreateSimStandardMaterialDX9()
 							setv3 cubeCoef (($stdMatEnvCubeCoef).xyz)
 							bindConstants 7 -bindingID immediateData -data ($cubeCoef, $stdMatUntexturedDiffAlpha) -constantType float
 						endif
-                  
-                  
+
+
                      bindConstants 8 -bindingID immediateData -data(0,0,0,$simMaterialLightingScale)
-                  
+
 						if ($contentViewer = false)
 							if ($vs2LoopsFunctional)
 								# in the loop system, 3 lights always exist, but some or all might be black.
-								create SimStandardPixelShaderDX9($localNormalMappingFlag 3 false) 
+								create SimStandardPixelShaderDX9($localNormalMappingFlag 3 false)
 							else
 								create SimStandardPixelShaderDX9($localNormalMappingFlag $perPixelLightCount false)
 							endif
 						else
 							create SimStandardManniquinComposite($localNormalMappingFlag 3) #$perPixelLightCount)
 						endif
-						
-                  
-                  
-                  
+
+
+
+
 					end
-													
+
 					create SimStandardSamplersPS2($localNormalMappingFlag)
-											
+
 				end #end the pass
 
 
 			end # end shader
-			
+
 		endif #shadow or not
 
 	end #end the material
-	
+
 enddef
 
 
@@ -335,47 +335,47 @@ define SimStandardPixelShaderDX9(normalMapFlag pixelLightCount specularMask)
 	bindConstants 15 -bindingID immediateData -data ($finalShaderDiffuse, $stdMatAlphaMultiplier) -constantType float
 
    setb cubemap false
-   
+
    if (strcmp("${stdMatEnvCubeMode}", "reflection") = 0)
       setb cubemap true
    endif
 
 	shaderSource
 		ps_2_0
-	
+
 		def c0,0,0.5,1,2
 		def c3, 0,0,1,0
 		def c5, 6, 0,0,0
 		def c16, -0.5771,0.5771,-0.5771,0
    endShaderSource
-   
-   
+
+
    if ($stdMatBaseTextureEnabled)
       shaderSource "dcl t0.xy  ; the main set of texcoords"
    endif
-      
+
    if ($cubemap)
       shaderSource "dcl t1.xyz ; reflection map vector"
    endif
-   
+
    shaderSource
 		dcl t2.xyz  ; HDR diffuse
    endShaderSource
-   
+
    if (&pixelLightCount > 0)
    	shaderSource "dcl t4.xyz"
    endif
-   
+
    if (&pixelLightCount > 1)
    	shaderSource "dcl t5.xyz"
-   endif   
-   
+   endif
+
    if (&pixelLightCount > 2)
    	shaderSource "dcl t6.xyz"
    endif
-		
+
    shaderSource "dcl_2d s0  ; base texture 0"
-      
+
    if (&normalMapFlag)
       shaderSource "dcl_2d s1  ; normal map"
    endif
@@ -383,16 +383,16 @@ define SimStandardPixelShaderDX9(normalMapFlag pixelLightCount specularMask)
    if ($cubemap)
 		shaderSource "dcl_cube s2		; reflection map, if used.	"
    endif
-   
+
 	if ($stdMatBaseTextureEnabled)
 		shaderSource "texld r10, t0, s0  ; load diffuse color directly"
 	else
 		shaderSource "mov r10, c15 ; preload with base color"
 	endif
-	
+
 	if (&pixelLightCount)
 		#trace "$currentMaterialName normal mapping in simstandard material: count of pixel lights: &pixelLightCount"
-		
+
 		if (&normalMapFlag)
 			#trace "Normal map texture enabled"
 			shaderSource
@@ -403,40 +403,40 @@ define SimStandardPixelShaderDX9(normalMapFlag pixelLightCount specularMask)
 		else
 			shaderSource "mov r11, c3"
 		endif
-		
+
 		if (&pixelLightCount = 1)
 			create SimSkinOneLightBumpDiffuse()
 		endif
-		
+
 		if (&pixelLightCount = 2)
 			create SimSkinTwoLightsBumpDiffuse()
 		endif
-		
+
 		if (&pixelLightCount = 3)
 			create SimSkinThreeLightsBumpDiffuse()
 		endif
-	
+
 	else
 		shaderSource
 			mov  r9.xyz, t2    ; no bump map, copy diffuse
 		endShaderSource
 	endif
-	
-		shaderSource	
+
+		shaderSource
 			mul r8.rgb, r10, r9  ; multiply by diffuse
 			mov r8.a, r10.a
 		endShaderSource
-		
+
 		if (&pixelLightCount > 0 and $edgeLighting)
 			create EdgeLighting(&pixelLightCount)
 		endif
-		
-		
+
+
 		if (strcmp("${stdMatEnvCubeMode}", "reflection") = 0)
 			shaderSource
 				texld r1, t1, s2
 				mad r8.rgb,  r1, c7, r8  ; scale by the cube coeff color, and add to final color.
-      
+
 			endShaderSource
 		endif
 
@@ -444,9 +444,9 @@ define SimStandardPixelShaderDX9(normalMapFlag pixelLightCount specularMask)
 			mul r8, c4, r8 ; multiply in shapeColor
 			mov oC0, r8
 		endShaderSource
-		
-	
-	
+
+
+
 enddef
 
 
@@ -458,9 +458,9 @@ enddef
 define SimSkinThreeLightsBumpDiffuse()
 
 	#trace "3 bump lights"
-	
+
 	shaderSource
-			
+
 		dp3_sat r0.x, r11, t4 ; N.L for light 1
 		dp3_sat r0.y, r11, t5 ; N . L  #2
 		dp3_sat r0.z, r11, t6  ; N . L  #3
@@ -470,9 +470,9 @@ define SimSkinThreeLightsBumpDiffuse()
 		mul r4.rgb, r0.x, c12  //apply light 1 color
 		mad r4.rgb, r0.y, c13, r4  ; light 2 color
 		mad r4.rgb, r0.z, c14, r4  ; light 3 color
-			
+
 		add r9.rgb, t2, r4 ; add vertex and pixel lighting.
-									
+
 	endShaderSource
 
 enddef
@@ -485,12 +485,12 @@ define SimSkinTwoLightsBumpDiffuse()
 
 		dp3_sat r0.x, r11, t4 ; N.L for light 1
 		dp3_sat r0.y, r11, t5 ; N . L  light 2
-		
+
       mul r0.xy, r0, c8.w ; apply the 'simMaterialLightingScale'
 
 		mul r4.rgb, r0.x, c12  //apply light 1 color
 		mad r4.rgb, r0.y, c13, r4  ; light 2 color
-			
+
 		add r9.rgb, t2, r4  ; accumulate into diffuse color
 	endShaderSource
 
@@ -502,12 +502,12 @@ define SimSkinOneLightBumpDiffuse()
 	#trace "1 bump lights"
 
 	shaderSource
-		
+
 		dp3_sat r0.x, r11, t4 ; N.L for light 1
 
       mul r0.x, r0, c8.w ; apply the 'simMaterialLightingScale'
 		mad r9.rgb, r0.x, c12, t2  //apply light 1 color add vertex diffuse
-         
+
 	endShaderSource
 
 enddef
@@ -527,11 +527,11 @@ define SimStandardSamplersPS2(bumpMapping)
             textureAddressing clamp clamp clamp
          end
       endif
-      
+
    endif
-   
-	
-	if (&bumpMapping)	
+
+
+	if (&bumpMapping)
       if (strcmp("${stdMatNormalMapTextureName}", "") != 0)
          sampler 1
             texture $stdMatNormalMapTextureName
@@ -539,10 +539,10 @@ define SimStandardSamplersPS2(bumpMapping)
          end
       endif
    endif
-   
+
 
 	if (strcmp("${stdMatEnvCubeMode}", "reflection") = 0)   # reflection mode
-	
+
 		if (strcmp("${stdMatEnvCubeTextureName}", "") != 0)  # non-null name.
 
 			sampler 2
@@ -550,62 +550,62 @@ define SimStandardSamplersPS2(bumpMapping)
             textureAddressing clamp clamp clamp
          end
 		endif
-		
+
 	endif
-	
 
 
-	
-	
 
-	
+
+
+
+
 enddef
 
 
 define SimShadowMapDX9()
 	shader
-	
+
 		viewerRenderTypePred $kRenderTypeShadowMap
 
 		create SimMaterialSetup()
 
-		pass	      
+		pass
 			shaderProgram -method link -target vertexProgram
 				create BindsForHardwareVS2Transforms(true $doMorphing)
 				create TransformFragments($doSkinning true false $doMorphing $numPosMorphs $numNormMorphs false 2_0)
 			end
-			
+
 			create ShadowMapPS()
 		end
-	
+
 	end
 enddef
 
 
 define SimShadowDX9()
 	shader
-	
+
 		viewerRenderTypePred $kRenderTypeShadow
 
 		create SimMaterialSetup()
 
-		pass	      
+		pass
 			shaderProgram -method link -target vertexProgram
 				create BindsForHardwareVS2Transforms(true $doMorphing)
 				create TransformFragments($doSkinning true false $doMorphing $numPosMorphs $numNormMorphs false 2_0)
 			end
-			
+
 			shaderProgram -method assemble -target pixelProgram
 				bindConstants 0 -bindingID immediateData -data ($stdMatShadowColor) -constantType float
 				shaderSource
 					ps_1_1
-					
+
 					mov r0, c0
 				endShaderSource
 			end
-		
+
 		end
-	
+
 	end
 enddef
 
@@ -616,63 +616,55 @@ define EdgeLighting(perPixelLightCount)
 		; r8 = input/output base color
 		; r9 = total light
 		; r10 = composited base color
-			
+
 		dp3_sat r1,  r11, t7  ; N . V   ; View dependant
 		add r1, c0.z, -r1  ; 1 - Q
-				
+
 		pow r4, r1.x, c5.x
 	endShaderSource
-			
+
 	if (&perPixelLightCount = 3)
 		shaderSource
 			dp3_sat r2.x, t4, r11 ; N.L    ; Light/Surface dependant
 			dp3_sat r2.y, t5, r11 ; N.L    ; Light/Surface dependant
 			dp3_sat r2.z, t6, r11 ; N.L    ; Light/Surface dependant
-							
+
 			mul r3, r2.x, c10   ; light 0 color
 			mad r3, r2.y, c11, r3 ; light 1 color
 			mad r3, r2.z, c12, r3 ; light 2 color
 		endShaderSource
 	endif
-	
+
 	if (&perPixelLightCount = 2)
 		shaderSource
 
 			dp3_sat r2.x, t4, r11 ; N.L    ; Light/Surface dependant
 			dp3_sat r2.y, t5, r11 ; N.L    ; Light/Surface dependant
-						
+
 			mul r3, r2.x, c10   ; light 0 color
 			mad r3, r2.y, c11, r3 ; light 1 color
 		endShaderSource
 
 	endif
-	
+
 	if (&perPixelLightCount = 1)
 		shaderSource
 
 			dp3_sat r2.x, t4, r11 ; N.L    ; Light/Surface dependant
-						
+
 			mul r3, r2.x, c10   ; light 0 color
 		endShaderSource
-		
+
 	endif
-		
-	shaderSource					
+
+	shaderSource
 		mul_sat r4, r4, r3
-												
+
 		add r5, r10, r10 ; double base color is the max.
-				
+
 		mad r8.rgb, r4, r5, r8  ; add in edge.
-				
-	endShaderSource		
-		
+
+	endShaderSource
+
 
 enddef
-
-
-
-
-
-
-
-

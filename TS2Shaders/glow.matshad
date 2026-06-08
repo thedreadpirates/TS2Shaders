@@ -19,7 +19,7 @@ define CubeAlphaFalloff()
          vertexFormatPred targetindices 0 false
 
 		create DetermineHardwareSupport()
-		
+
 		if ($useFixedFunctionPath or $useSWVertexShaderPath)
 			pass -fixedFunction
 				create LightingStatesNoStdLightsParam(true false)
@@ -36,20 +36,20 @@ define CubeAlphaFalloff()
 					textureTransformType vector3
 					textureAddressing clamp clamp clamp
 					textureBlend select(texture:alphaReplicate) multiply(texture colorScalar)
-				end 
+				end
 
 				stage
-					texture $stdMatBaseTextureName ${stdMatBaseTextureParam}   
+					texture $stdMatBaseTextureName ${stdMatBaseTextureParam}
 					ffTextureCoordsSource 0
 					textureBlend select(colorScalar) multiply(outRegister texture)
-				end 
+				end
 			end
 		else
-		
+
 			# VS/PS equivelant
 			pass
 				create NonStandardLighting()
-				
+
 				alphaBlend srcFactor(srcAlpha) add dstFactor(one)
 				depthTest true -enableDepthWrite false
 				fillmode $stdMatFillMode
@@ -62,53 +62,53 @@ define CubeAlphaFalloff()
 						dcl_position v0
 						dcl_normal v1
 						dcl_texcoord v2
-						
+
 						m4x4 oPos, v0, c0   ; send to clip space
-						
+
 						mov oT1.xy, v2  ; copy tex coords straight out
-						 
+
 						m3x3 oT0.xyz, v1, c4  ; transform normal to camera space.
-						
+
 					endShaderSource
 				end
-				
+
 				shaderProgram -target pixelProgram -method assemble
-				
+
 					setv3 evalDiffuse ($stdMatDiffCoeff)
 					bindConstants 0 -bindingID immediateData -data ($evalDiffuse, $stdMatAlphaMultiplier)
-					
+
 					shaderSource
 						ps_1_1
 						tex t0 ; a cube map
 						tex t1 ; a 2D texture
-						
+
 						mov r0.rgb, c0  ; output color from the diffuse
 						+ mul r0.a, t0.a, c0.a  ; alpha = tex0.a * tex1.a * alphaMultiplier
 						mul r0.a, r0.a, t1.a
-						
+
 					endShaderSource
-				
+
 				end
-				
-				
+
+
 				sampler 0
 					texture $stdMatEnvCubeTextureName -alphaFalloffCubeMap 64 (0, 1, 0) (-30, 255) 5
 					textureMIPFilterHint disabled
 					textureAddressing clamp clamp clamp
 				end
 				sampler 1
-					texture $stdMatBaseTextureName ${stdMatBaseTextureParam}   
+					texture $stdMatBaseTextureName ${stdMatBaseTextureParam}
 				end
-				
+
 			end
-		
+
 		endif
       end # shader
-      
+
       #fallback, do nothing
       shader
       end
-      
+
    end
 enddef
 
@@ -151,7 +151,7 @@ materialDefinition memoryIcon_glowSphere
    addParam stdMatDiffCoeff (1, 1, .8)
    addParam stdMatAlphaBlendMode additive
    addParam stdMatAlphaMultiplier 1
-   
+
    addParam stdMatEnvCubeTextureName lightingStreetlight_glow_alphaFalloff5
    addParam stdMatBaseTextureName reflection3DGlow-envcube6
 end

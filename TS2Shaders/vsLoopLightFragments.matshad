@@ -50,23 +50,23 @@ asm_fragment
 			dp3 oT4.y, c_lightDirections[aL],	r_binormal // n	dot	L
 			dp3 oT4.z, c_lightDirections[aL],	r_temp9	// n dot L
 		endloop
-	      
-		loop	aL,	i_distantLoopPerVertexRegister	
+
+		loop	aL,	i_distantLoopPerVertexRegister
 			dp3 r_ndotl.x, c_lightDirections[aL], r_temp9 //	n dot L
 			max r_ndotl.x, r_ndotl, c_basics.x
 			mad r_diffuse_r2.rgb, r_ndotl.x,	c_lightColors[aL], r_diffuse_r2
 		endloop
-		
+
 
    		loop	aL,	i_pointLoopPerPixelRegister	// not really a	loop, only ever	counts to 1.
    			sub r_lightVector.xyz, c_lightPositions[aL],	r_temp8			// light vector	generation
 			dp3 r_range.x, r_lightVector, r_lightVector		 //	compute	squared	length of light	vector
 			rsq r_lightVector.w,	r_range.x		   // for normalization.
-			mul r_lightVector.xyz, r_lightVector, r_lightVector.w	  
+			mul r_lightVector.xyz, r_lightVector, r_lightVector.w
 			mul r_attenuation.w,	c_extraLightData[aL].z,	r_range.x	 //	C *	(D*D)
 			sge r_rangeCutoff.y,	c_extraLightData[aL].w,	r_range.x  // if (maxRangeSquared >	D*D)
 			add r_attenuation.w,	r_attenuation.w, c_basics.z	 //	1 +	(C * (D*D))
-			rcp r_attenuation.w,	r_attenuation.w	  
+			rcp r_attenuation.w,	r_attenuation.w
 			mul r_attenuation.w,	r_attenuation.w, r_rangeCutoff.y //	roll in	range cutoff into attenuation factor.
 			mul r_lightVector.xyz, r_lightVector,	r_attenuation.w	// apply attenuation to	outbound light vector.
 			dp3 oT5.x, r_lightVector,	r_tangent  // camera tangent
@@ -74,13 +74,13 @@ asm_fragment
 			dp3 oT5.z, r_lightVector,	r_temp9	  // camera	normal
 			//mov oT5.xyz, c_extraLightData[aL].z
 		endloop
-	   	
-		loop	aL,	i_pointLoopPerVertexRegister	
+
+		loop	aL,	i_pointLoopPerVertexRegister
 			sub r_lightVector.xyz, c_lightPositions[aL],	r_temp8			// light vector	generation
 			dp3 r_range.x, r_lightVector, r_lightVector		 //	compute	squared	length of light	vector
 			rsq r_lightVector.w,	r_range.x		   // for normalization.
 			// normalize light vectors.
-			mul r_lightVector.xyz, r_lightVector, r_lightVector.w	  
+			mul r_lightVector.xyz, r_lightVector, r_lightVector.w
 			//	Att	= 1.0 /	(1 + C * (D*D))
 			mul r_attenuation.w,	c_extraLightData[aL].z,	r_range.x	 //	C *	(D*D)
 			// range	cutoffs, compare squared distances
@@ -97,45 +97,45 @@ asm_fragment
 			mad r_diffuse_r2.rgb, r_ndotl.x,	c_lightColors[aL], r_diffuse_r2
 
 		endloop
-	   	
+
 		loop	aL,	i_spotLoopPerPixelRegister	// not really a	loop, only ever	counts to 1.
 			sub r_lightVector.xyz, c_lightPositions[aL],	r_temp8			// light vector	generation
 			dp3 r_range.x, r_lightVector, r_lightVector		 //	compute	squared	length of light	vector
 			rsq r_lightVector.w,	r_range.x		   // for normalization.
-			mul r_lightVector.xyz, r_lightVector, r_lightVector.w	  
+			mul r_lightVector.xyz, r_lightVector, r_lightVector.w
 			mul r_attenuation.w,	c_extraLightData[aL].z,	r_range.x	 //	C *	(D*D)
 			sge r_rangeCutoff.y,	c_extraLightData[aL].w,	r_range.x  // if (maxRangeSquared >	D*D)
 			add r_attenuation.w,	r_attenuation.w, c_basics.z	 //	1 +	(C * (D*D))
 			rcp r_attenuation.w,	r_attenuation.w	  // the 'one over'	part of	the	attenuation.
 			mul r_attenuation.w,	r_attenuation.w, r_rangeCutoff.y
-			
+
 			dp3	r_lvDotld.z, r_lightVector,	c_lightDirections[aL]  // Light	Vector DOT Spot	Direction
-	  		sub r_spotCone.w, r_lvDotld.z, c_extraLightData[aL].x   
-			mul r_spotCone.w, r_spotCone.w, c_extraLightData[aL].y  
+	  		sub r_spotCone.w, r_lvDotld.z, c_extraLightData[aL].x
+			mul r_spotCone.w, r_spotCone.w, c_extraLightData[aL].y
 			min r_spotCone.w, r_spotCone.w, c_basics.z  // clamp	to < 1.0
 			max r_spotCone.w, r_spotCone.w, c_basics.x // assure	> 0
 			mul r_attenuation.w,	r_attenuation.w, r_spotCone.w // roll into attenuation.
 			mul r_lightVector.xyz, r_lightVector,	r_attenuation.w	// apply attenuation to	outbound light vector.
-			
+
 			dp3 oT6.x, r_lightVector,	r_tangent  // camera tangent
 			dp3 oT6.y, r_lightVector,	r_binormal	// camera binormal
 			dp3 oT6.z, r_lightVector,	r_temp9	  // camera	normal
 
 		endloop
-	   	
-		loop	aL,	i_spotLoopPerVertexRegister	
+
+		loop	aL,	i_spotLoopPerVertexRegister
 			sub r_lightVector.xyz, c_lightPositions[aL],	r_temp8			// light vector	generation
 			dp3 r_range.x, r_lightVector, r_lightVector		 //	compute	squared	length of light	vector
 			rsq r_lightVector.w,	r_range.x		   // for normalization.
-			mul r_lightVector.xyz, r_lightVector, r_lightVector.w	  
+			mul r_lightVector.xyz, r_lightVector, r_lightVector.w
 			mul r_attenuation.w,	c_extraLightData[aL].z,	r_range.x	 //	C *	(D*D)
 			sge r_rangeCutoff.y,	c_extraLightData[aL].w,	r_range.x  // if (maxRangeSquared >	D*D)
 			add r_attenuation.w,	r_attenuation.w, c_basics.z	 //	1 +	(C * (D*D))
 			rcp r_attenuation.w,	r_attenuation.w	  // the 'one over'	part of	the	attenuation.
 			mul r_attenuation.w,	r_attenuation.w, r_rangeCutoff.y
 			dp3	r_lvDotld.z, r_lightVector,	c_lightDirections[aL]  // Light	Vector DOT Spot	Direction
-	  		sub r_spotCone.w, r_lvDotld.z, c_extraLightData[aL].x   
-			mul r_spotCone.w, r_spotCone.w, c_extraLightData[aL].y  
+	  		sub r_spotCone.w, r_lvDotld.z, c_extraLightData[aL].x
+			mul r_spotCone.w, r_spotCone.w, c_extraLightData[aL].y
 			min r_spotCone.w, r_spotCone.w, c_basics.z  // clamp	to < 1.0
 			max r_spotCone.w, r_spotCone.w, c_basics.x // assure	> 0
 			mul r_attenuation.w,	r_attenuation.w, r_spotCone.w // roll into attenuation.
@@ -145,7 +145,7 @@ asm_fragment
 			mad r_diffuse_r2.rgb, r_ndotl.x,	c_lightColors[aL], r_diffuse_r2
 
 		endloop
-		
+
 };
 
 
@@ -154,21 +154,21 @@ asm_fragment
 {
 	vs_&{versionString}
 
-	      
-		loop	aL,	i_distantLoopPerVertexRegister	
+
+		loop	aL,	i_distantLoopPerVertexRegister
 			dp3 r_ndotl.x, c_lightDirections[aL], r_temp9 //	n dot L
 			max r_ndotl.x, r_ndotl, c_basics.x
 			mad r_diffuse_r2.rgb, r_ndotl.x,	c_lightColors[aL], r_diffuse_r2
 		endloop
-		
-	   	
-		loop	aL,	i_pointLoopPerVertexRegister	
+
+
+		loop	aL,	i_pointLoopPerVertexRegister
 			sub r_lightVector.xyz, c_lightPositions[aL],	r_temp8			// light vector	generation
 			dp3 r_range.x, r_lightVector, r_lightVector		 //	compute	squared	length of light	vector
 			rsq r_lightVector.w,	r_range.x		   // for normalization.
 				// normalize light vectors.
-			mul r_lightVector.xyz, r_lightVector, r_lightVector.w	  
-				
+			mul r_lightVector.xyz, r_lightVector, r_lightVector.w
+
 			//	Att	= 1.0 /	(1 + C * (D*D))
 			mul r_attenuation.w,	c_extraLightData[aL].z,	r_range.x	 //	C *	(D*D)
 			// range	cutoffs, compare squared distances
@@ -188,14 +188,14 @@ asm_fragment
 			mad r_diffuse_r2.rgb, r_ndotl.x,	c_lightColors[aL], r_diffuse_r2
 
 		endloop
-	   		   	
-		loop	aL,	i_spotLoopPerVertexRegister	
+
+		loop	aL,	i_spotLoopPerVertexRegister
 			sub r_lightVector.xyz, c_lightPositions[aL],	r_temp8			// light vector	generation
 			dp3 r_range.x, r_lightVector, r_lightVector		 //	compute	squared	length of light	vector
 			rsq r_lightVector.w,	r_range.x		   // for normalization.
 			// normalize light vectors.
-			mul r_lightVector.xyz, r_lightVector, r_lightVector.w	  
-				
+			mul r_lightVector.xyz, r_lightVector, r_lightVector.w
+
 			//	Att	= 1.0 /	(1 + C * (D*D))
 			mul r_attenuation.w,	c_extraLightData[aL].z,	r_range.x	 //	C *	(D*D)
 			// range	cutoffs, compare squared distances
@@ -210,8 +210,8 @@ asm_fragment
 			// roll in range	cutoffs, merging attenuation.
 			mul r_attenuation.w,	r_attenuation.w, r_rangeCutoff.y
 			dp3	r_lvDotld.z, r_lightVector,	c_lightDirections[aL]  // Light	Vector DOT Spot	Direction
-	  		sub r_spotCone.w, r_lvDotld.z, c_extraLightData[aL].x   
-			mul r_spotCone.w, r_spotCone.w, c_extraLightData[aL].y  
+	  		sub r_spotCone.w, r_lvDotld.z, c_extraLightData[aL].x
+			mul r_spotCone.w, r_spotCone.w, c_extraLightData[aL].y
 			min r_spotCone.w, r_spotCone.w, c_basics.z  // clamp	to < 1.0
 			max r_spotCone.w, r_spotCone.w, c_basics.x // assure	> 0
 			mul r_attenuation.w,	r_attenuation.w, r_spotCone.w // roll into attenuation.
@@ -221,7 +221,7 @@ asm_fragment
 			mad r_diffuse_r2.rgb, r_ndotl.x,	c_lightColors[aL], r_diffuse_r2
 
 		endloop
-		
+
 };
 
 endShaderSource
@@ -237,7 +237,7 @@ define AddLoopingLightFragments(perPixelLightingFlag doSpecular shaderVersion)
 	setv3 finalShaderEmissive (($stdMatEmissiveCoef).xyz)
 
 	setf adjustedSpecular ($stdMatSpecPower	*0.2)
-	
+
 	bindConstants 14	-bindingID immediateData -data ($finalShaderDiffuse, $stdMatAlphaMultiplier) -constantType float
 	# specular material	color
 	bindConstants 15	-bindingID immediateData -data ($finalShaderSpecular, $adjustedSpecular) -constantType float
@@ -248,13 +248,13 @@ define AddLoopingLightFragments(perPixelLightingFlag doSpecular shaderVersion)
 
 
 	bindConstants 18	-bindingID allStandardLightData2 -constantCount	32 -constantType float
-  
+
 	# the array of extra	data like, cone1, cone2, falloff, range
-	 
+
 	bindConstants 236	-bindingID allStandardLightExtraData -constantCount	8 -constantType float
-   
+
 	#trace "$currentMaterialName	Uberfrags, ppc:	&perPixelLightingFlag"
-   
+
 
 
 	if (&perPixelLightingFlag)
@@ -272,15 +272,15 @@ define AddLoopingLightFragments(perPixelLightingFlag doSpecular shaderVersion)
 		else
 			shaderFragment	TransformTangentSpaceNoSkinning&{shaderVersion}
 		endif
-	  
+
 		if (&doSpecular)
 			shaderFragment	CreateReflectionVector&{shaderVersion}
 		endif
 
 		shaderFragment ClearAccumulatorsAndVectors&{shaderVersion}
-	  
+
 		shaderFragment DiffuseLoopsWithPerPixel&{shaderVersion}
-		
+
 		if (&doSpecular)
 			shaderFragment	CompleteVertexDiffuseAddAmbientHDR&{shaderVersion}
 			shaderFragment	CompleteSpecularHDR&{shaderVersion}
@@ -290,27 +290,24 @@ define AddLoopingLightFragments(perPixelLightingFlag doSpecular shaderVersion)
 
 
    else
-	  
+
 		bindConstants	0 -bindingID allStandardLightLoopDataPerVertex -constantCount 6	-constantType integer
 
 		if (&doSpecular)
 			shaderFragment	CreateReflectionVector&{shaderVersion}
 		endif
-		  
+
 		shaderFragment ClearAccumulatorsAndVectors&{shaderVersion}
-	  		  
+
 		shaderFragment DiffuseLoopsPerVertexOnly&{shaderVersion}
-				
+
 		if (&doSpecular)
 			shaderFragment	CompleteVertexDiffuseAddAmbientHDR&{shaderVersion}
 			shaderFragment	CompleteSpecularHDR&{shaderVersion}
 		else
 			shaderFragment	CompleteVertexDiffuseAddAmbientHDR&{shaderVersion}
 		endif
-  
+
 	endif
-   
+
 enddef
-
-
-

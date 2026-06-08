@@ -1,13 +1,13 @@
 # The following definitions were copied from the steam sphere to make a uieffect shader.
-# This is a test shader to help in evolving the UI headline FX.  
+# This is a test shader to help in evolving the UI headline FX.
 # C Stratton 4/27/03
 #
 
 
 #
-# This shader differs from the effects shader in that it ignores zbuffer.    
+# This shader differs from the effects shader in that it ignores zbuffer.
 # and may be extended further to accomodate UI specific needs
-# 
+#
 # beginshader uiHeadlineBillboardTest
 define uiHeadlineBillboardTest()
       material
@@ -26,7 +26,7 @@ define BillboardPass (BillboardTexture speed origin)
    pass -fixedFunction
       # using depthTest (below) to ignore z-depth
       depthTest false -enableDepthWrite false
-      alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)      
+      alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
       stage
          texture &BillboardTexture
          # Following two lines correct for UV flip in particle billboards
@@ -34,7 +34,7 @@ define BillboardPass (BillboardTexture speed origin)
          textureTransformType vector2
          textureBlend add(texture) multiply(texture diffuse)
          #
-      end      
+      end
    end
 enddef
 
@@ -101,7 +101,7 @@ end
 materialDefinition uieffectsHeadlines_FriendshipDoubleMinus
    setDefinition uiHeadlineBillboardTest
    addParam stdMatLightingEnabled false
-   addParam stdMatAlphaBlendMode blend 
+   addParam stdMatAlphaBlendMode blend
    addParam stdMatBaseTextureEnabled true
    addParam stdMatBaseTextureName uieffects-headlines-billboardtextures-friendshipdoubleminus
 end
@@ -128,7 +128,7 @@ define BillboardAniPass (BillboardTexture speed origin)
    pass -fixedFunction
       # using depthTest (below) to ignore z-depth
       depthTest false -enableDepthWrite false
-      alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)      
+      alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
       stage
          texture &BillboardTexture
          #
@@ -144,16 +144,14 @@ define BillboardAniPass (BillboardTexture speed origin)
          #
          textureBlend add(texture) multiply(texture diffuse)
          #
-      end      
+      end
    end
 enddef
 
 materialDefinition uieffectsHeadlinesAni_ThoughtBalloonTest
    setDefinition uiHeadlineBillboardAnimationTest
    addParam stdMatLightingEnabled false
-   addParam stdMatAlphaBlendMode blend 
+   addParam stdMatAlphaBlendMode blend
    addParam stdMatBaseTextureEnabled true
    addParam stdMatBaseTextureName uieffects-headlines-anistriptextures-thoughtballoon18_test
 end
-
-

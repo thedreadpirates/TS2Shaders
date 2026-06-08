@@ -4,13 +4,13 @@ define SimMaterialTransformSetupDX8(eyeShifterEnable ambientFlag bumpMapThisPass
 
 
 		#trace "SimMaterialTransformSetupDX8 for $currentMaterialName"
-	
+
 		setb cubeMapEnabled	false
 		setb transformNormals false
-		
+
 		create BindsForHardwareVS1Transforms(true $doMorphing)
 
-		
+
 		if (&eyeShifterEnable)
 		   bindConstants 11	-bindingID immediateData -data @eyeDirection -constantType float
 		bindConstants 11 -bindingID	immediateData -data	@l_eyeStretch -constantType	float -startChannel	Z
@@ -26,23 +26,23 @@ define SimMaterialTransformSetupDX8(eyeShifterEnable ambientFlag bumpMapThisPass
 
 	  #	apply the sim lighting fudge factor	due	to my screwup in dx7 material. see sims.matshad	for	a history
 	  setv3	stdMatDiffCoef (($stdMatDiffCoef.xyz) *	$simMaterialLightingScale.xxx)
-	  
+
 		create BindsForLighting($lightingMode)
-				
-			
+
+
 		create TransformFragments($doSkinning false	false $doMorphing $numPosMorphs	$numNormMorphs $transformNormals 1_1)
-	
+
 		if (&ambientFlag and strcmp("${stdMatEnvCubeMode}","reflection") = 0)
 			if ($transformNormals)
 				setb cubeMapEnabled	true
 			endif
 		endif
-				
+
 		if ($cubeMapEnabled)
 			shaderFragment CreateReflectionVector1_1
 			shaderFragment TexgenReflectionVectorTex21_1
 		endif
-		
+
 		if (&bumpMapThisPass)
 			# create a tangent space matrix	to transform our light vectors.
 			if ($doSkinning)
@@ -51,7 +51,7 @@ define SimMaterialTransformSetupDX8(eyeShifterEnable ambientFlag bumpMapThisPass
 				shaderFragment TransformTangentSpaceNoSkinning1_1
 			endif
 		endif
-		
+
 		if (&passLightCount)
 			create DX8DiffusePassLightFragments(&ambientFlag &bumpMapThisPass &lightOffset &passLightCount &passDistantLightCount &passPointCount &passSpotLightCount 1_1)
 		else
@@ -66,38 +66,38 @@ define SimMaterialTransformSetupDX8(eyeShifterEnable ambientFlag bumpMapThisPass
 		else
 			shaderFragment Copy2DTexcoords1_1
 		endif
-		
-	
+
+
 enddef
 
 
 
 
 
-		
+
 define DX8GhostPass()
 
    pass
-				
+
 		fillmode $stdMatFillMode
 		create NonStandardLighting()
 
 
 	  #colorWriteEnable -red	false -green false -blue false -alpha false
 	  alphaBlend srcFactor(zero) add dstFactor(one)
-	  
+
 	  alphaTest	true 128
 	  alphaTestFunction	acceptIfGreaterOrEqual
-			   
+
 		shaderProgram -target vertexProgram	-method	link
 			# sim standard material	never has eyes,	so false to	that modifier.
 			# otherwise	pass through all other flags.
-			
+
 			create BindsForHardwareVS1Transforms($doSkinning $doMorphing)
 			create TransformFragments($doSkinning false	false $doMorphing $numPosMorphs	$numNormMorphs false 1_1)
 		 shaderFragment	Copy2DTexcoords1_1
 		end
-									
+
 		shaderProgram -target pixelProgram -method assemble
 		 shaderSource
 			ps_1_1
@@ -105,13 +105,13 @@ define DX8GhostPass()
 			mov	r0,t0.a
 		 endShaderSource
 	  end
-	  
-	  sampler 0	
+
+	  sampler 0
 		 texture $stdMatBaseTextureName
 	  end
-	  
+
    end
-   
+
 enddef
 
 
@@ -119,7 +119,7 @@ define CreateSimStandardMaterialDX8()
 
 	setb alphaBlendingOn  false
 	seti  layerNumber 0
-	
+
 	#trace "---------------------------"
 	#trace "Starting material: $currentMaterialName"
 	#trace "SimStandard: nmap: $stdMatNormalMapTextureName"
@@ -130,24 +130,24 @@ define CreateSimStandardMaterialDX8()
 		if (viewerRenderType = $kRenderTypeShadow)
 			create SimShadowDX8()
 		else
-         create SimsShaderPreCreate()    
-		
+         create SimsShaderPreCreate()
+
 			if (strcmp("${stdMatAlphaBlendMode}", "none"))
 				setb alphaBlendingOn true
 			endif
-			
+
 			if (numLightsOfType(${kShapeColorLight}) > 0)
 				setb alphaBlendingOn true
 			endif
-		
+
 		  seti	layerToAdd ($simHairFlag ? 3 : 17)
-				
-			seti  layerNumber ($stdMatLayer	* 18	+ ($alphaBlendingOn	? $layerToAdd :	0))						
+
+			seti  layerNumber ($stdMatLayer	* 18	+ ($alphaBlendingOn	? $layerToAdd :	0))
 
 			setb localBumpMapFlag false
-	
+
    		setf cubeCoefCheck ($stdMatEnvCubeCoef.x + $stdMatEnvCubeCoef.y + $stdMatEnvCubeCoef.z)
-               
+
          # force cubemapping off if the coefficient makes no sense.
          if ($cubeCoefCheck < 0.003)
             set stdMatEnvCubeMode none
@@ -156,32 +156,32 @@ define CreateSimStandardMaterialDX8()
 			shader -layer $layerNumber
 
 				create SimMaterialSetup()
-				
+
 				#trace "dx8	simstandard: Bumpmapping: $bumpMapping	tangents: $hasTangents"
 
 				# do some sort of per-pixel	lighting if	bumpmapping	flag is	on,	if there are tangents, and only	if the object is opaque.
 			# shapecolor then effectively shuts	*off* bumpmapping.
-			
+
 				if ($bumpMapping and $hasTangents and $alphaBlendingOn = false)
 					setb localBumpMapFlag true
 				else
 					# if no	tangents, then turn	off	the	texture	loads too
 					#trace "No tangents, disabling normal maps"
 					setb stdMatNormalMapTextureEnabled false
-				endif	
+				endif
 
 			if ($alphaBlendingOn)
 			   create DX8GhostPass()
 			endif
-			
+
 				create RenderSimStandardDiffuseDX8($localBumpMapFlag)
-				
+
 			end	# end shader
-			
+
 		endif
-		
+
 	end	#end the material
-	
+
 enddef
 
 
@@ -192,29 +192,29 @@ enddef
 
 define SimShadowDX8()
 	shader
-	
+
 		viewerRenderTypePred $kRenderTypeShadow
 
 		create SimMaterialSetup()
 
 		pass
-	
+
 			shaderProgram -method link -target vertexProgram
 				create BindsForHardwareVS1Transforms($doSkinning $doMorphing)
 				create TransformFragments($doSkinning true false $doMorphing $numPosMorphs $numNormMorphs false	1_1)
 			end
-			
+
 			shaderProgram -method assemble -target pixelProgram
 				bindConstants 0	-bindingID immediateData -data ($stdMatShadowColor)	-constantType float
 				shaderSource
 					ps_1_1
-					
+
 					mov	r0,	c0
 				endShaderSource
 			end
-		
+
 		end
-	
+
 	end
 enddef
 
@@ -223,45 +223,45 @@ enddef
 define RenderSimStandardDiffuseDX8(bumpMapFlag)
 
 	seti slotsLeft 0
-	
-	seti totalLights ($distantLightCount + $pointLightCount	+$spotLightCount)
-			
-	seti pointSpotCount	($pointLightCount +	$spotLightCount)
-	
 
-				
+	seti totalLights ($distantLightCount + $pointLightCount	+$spotLightCount)
+
+	seti pointSpotCount	($pointLightCount +	$spotLightCount)
+
+
+
 	# special case this	one, no	danger of blowing out instruction count
 	if ($totalLights = 5 and $distantLightCount	= 5)
 		create SimStandardDiffusePass(false	true false 0 5 5 0 0)
 		seti totalLights 0
 	else
-	
-				
+
+
 		if ($totalLights < 4)
 			if ($totalLights > 0)
 				create SimStandardDiffusePass(false	true &bumpMapFlag 0	$totalLights $distantLightCount	$pointLightCount $spotLightCount)
 				seti totalLights 0
 			else
-				# don't	add	to last, do	ambient, no	bumpmapping, light offset 0, no	lights of any kind... 
+				# don't	add	to last, do	ambient, no	bumpmapping, light offset 0, no	lights of any kind...
 				#trace "Ambient	only case for sims"
 				create SimStandardDiffusePass(false	true false 0 0 0 0 0)
 			endif
-			
+
 		else
 			seti slotsLeft 4
 			seti pass1DistantLights	0
 			seti pass1PointLights 0
 			seti pass1SpotLights 0
-			seti pass1PointSpotLights 0	
-						
+			seti pass1PointSpotLights 0
+
 			if ($distantLightCount < 4)
 				seti pass1DistantLights	$distantLightCount
 			else
 				seti pass1DistantLights	4
 			endif
-					
+
 			seti slotsLeft (4 -	$pass1DistantLights)
-						
+
 			if ($pointLightCount > $slotsLeft)	# more point lights	than slots left.
 				seti pass1PointLights $slotsLeft   # pass 1	points then	are	the	rest of	the	slots.
 				seti slotsLeft 0  #	no more	slots left.
@@ -269,7 +269,7 @@ define RenderSimStandardDiffuseDX8(bumpMapFlag)
 				seti slotsLeft ($slotsLeft - $pointLightCount)	# there	was	room, compute new slots	left
 				seti pass1PointLights $pointLightCount	# consumes all point lights	in the first pass.
 			endif
-						
+
 
 			if ($spotLightCount	> $slotsLeft)  # more spot lights than slots left.
 				seti pass1SpotLights $slotsLeft	  #	pass 1 points then are the rest	of the slots.
@@ -278,7 +278,7 @@ define RenderSimStandardDiffuseDX8(bumpMapFlag)
 				seti slotsLeft ($slotsLeft - $spotLightCount)  # there was room, compute new slots left
 				seti pass1SpotLights $spotLightCount  #	consumes all point lights in the first pass.
 			endif
-				
+
 			# don't	add	to back	buffer,	apply ambient, start at	light 0, do	4 lights.
 			create SimStandardDiffusePass(false	true &bumpMapFlag 0	4 $pass1DistantLights $pass1PointLights	$pass1SpotLights)
 
@@ -287,15 +287,15 @@ define RenderSimStandardDiffuseDX8(bumpMapFlag)
 			seti pass2SpotLights ($spotLightCount -	$pass1SpotLights)
 
 			seti totalLights ($pass2DistantLights +	 $pass2PointLights + $pass2SpotLights)
-			
+
 			if ($totalLights)
 				# add to back buffer, add ambient to final lighting, no	bumpmaps on	the	2nd	pass start at light	4...
 				create SimStandardDiffusePass(true false false 4 $totalLights $pass2DistantLights $pass2PointLights	$pass2SpotLights)
 			endif
-			
+
 		endif
 	endif
-	
+
 enddef
 
 
@@ -305,43 +305,43 @@ enddef
 
 define SimStandardDiffusePass(addToLastPass	ambientFlag	bumpThisPass lightOffset passLightCount	passDistantLightCount passPointCount passSpotLightCount)
 
-	
+
    #trace "Pass	light counts: D: &passDistantLightCount	 P:	&passPointCount	  S: &passSpotLightCount"
-   
+
 	pass
-				
+
 		fillmode $stdMatFillMode
 		create NonStandardLighting()
 
-		if (&addToLastPass = false)				
-		   if ($simHairFlag)			   
+		if (&addToLastPass = false)
+		   if ($simHairFlag)
 			   create SimHairAlphaState($stdMatAlphaBlendMode)
 			else
 				create StandardShaderFBAlphaState($stdMatAlphaBlendMode)
-			endif			
+			endif
 		else
-			
+
 			if ($simHairFlag)
 				alphaBlend srcFactor(srcAlpha) add dstFactor(one)
 			else
 				alphaBlend srcFactor(one) add dstFactor(one)
 			endif
-			
+
 			depthTest true -enableDepthWrite false
 			depthTestFunction acceptIfEqual
 		endif
-		
+
 		shaderProgram -target vertexProgram	-method	link
 			# sim standard material	never has eyes,	so false to	that modifier.
 			# otherwise	pass through all other flags.
-			
+
 			create SimMaterialTransformSetupDX8($eyeGizmoEnable	&ambientFlag &bumpThisPass &lightOffset	&passLightCount	&passDistantLightCount &passPointCount &passSpotLightCount)
 		end
-									
+
 		shaderProgram -target pixelProgram -method assemble
 
 
-		
+
 			if (&bumpThisPass)
 				if ($stdMatNormalMapTextureEnabled)
 					#trace "current	normal map:	$stdMatNormalMapTextureName"
@@ -354,30 +354,30 @@ define SimStandardDiffusePass(addToLastPass	ambientFlag	bumpThisPass lightOffset
 				#trace "No Bumpmaping"
 				create SimStandardPixelShaderPS1($cubeMapEnabled)
 			endif
-			
+
 		end
-		
+
       if ($stdMatBaseTextureEnabled)
          sampler	0
             texture	$stdMatBaseTextureName
          end
       endif
-		
+
 		if (&bumpThisPass and $stdMatNormalMapTextureEnabled)
 			sampler	1
 				texture	$stdMatNormalMapTextureName
 			end
 		endif
-		
+
 		if ($cubeMapEnabled)
 			sampler	2
 				texture	$stdMatEnvCubeTextureName
 				textureAddressing clamp	clamp clamp
 			end
 		endif
-		
+
 	end	#end the pass
-					
+
 enddef
 
 
@@ -406,18 +406,18 @@ define SimStandardPixelShaderPS1(cubeMapEnabled)
 	endif
 
    bindConstants 3 -bindingID immediateData -data ($finalShaderDiffuse, 1)
-   
+
 	if(&cubeMapEnabled)
-				
+
 		setv3 cubeCoef (($stdMatEnvCubeCoef).xyz)
-		bindConstants 1	-bindingID immediateData -data ($cubeCoef, 1) 
-				
+		bindConstants 1	-bindingID immediateData -data ($cubeCoef, 1)
+
 		shaderSource
 			ps_1_1
 			def	c2,1,1,1,1
 
       endShaderSource
-      
+
       if ($stdMatBaseTextureEnabled)
          shaderSource
             tex	t0
@@ -432,38 +432,38 @@ define SimStandardPixelShaderPS1(cubeMapEnabled)
          endShaderSource
 
       endif
-		
+
 		if ($simSkinFlag or $stdMatBaseTextureEnabled = false)
 			shaderSource "+mov r0.a, c2.a"
 		else
 			shaderSource "+mov r0.a, t0.a"
 		endif
-		
-		shaderSource		
+
+		shaderSource
 			mad	r0.rgb,	t2,	c1,	r0	; add cubemap on top.
-			
+
 			mul	r0,	r0,	c0 ; apply shape color and emit.
-		
+
 		endShaderSource
-		
+
 	else
-			
+
 		shaderSource
 			ps_1_1
 			def	c2,1,1,1,1
-      
+
       endShaderSource
-      
+
       if ($stdMatBaseTextureEnabled)
          shaderSource
             tex	t0
-               
+
             mul_x2 r0.rgb, t0, v0
          endShaderSource
       else
           shaderSource "mul_x2 r0.rgb, c3, v0"
       endif
-		
+
 
 		if ($simSkinFlag or $stdMatBaseTextureEnabled = false)
 			shaderSource "+mov r0.a, c2.a"
@@ -476,12 +476,12 @@ define SimStandardPixelShaderPS1(cubeMapEnabled)
                mul	r0,	r0,	c0 ; apply shape color and emit.
          endShaderSource
       endif
-      
-		
+
+
 	endif
-	
-	
-	
+
+
+
 enddef
 
 
@@ -492,66 +492,66 @@ enddef
 define SimStandardPerPixelLightPS1(pixelLightCount pixelLightMask cubeMapEnabled)
 
 
-   
+
    bindConstants 0 -bindingID immediateData -data ($finalShaderDiffuse, 1)
-   
+
 	bindConstants 1	-bindingID allStandardLightColorsHalf -constantCount 4
 
 	setv3 cubeCoef (($stdMatEnvCubeCoef).xyz)
-	bindConstants 6	-bindingID immediateData -data ($cubeCoef, 1) 
+	bindConstants 6	-bindingID immediateData -data ($cubeCoef, 1)
 	bindConstants 7	-bindingID immediateData -data (0,0,0,$simMaterialLightingScale)
-   
+
    if (&pixelLightMask = 1)	 # X
 	  set lightColor1 "c1"
 	  set lightColor2 "c1"
    endif
-   
+
    if (&pixelLightMask = 3)	 # XY
 	  set lightColor1 "c1"
 	  set lightColor2 "c2"
    endif
-   
+
    if (&pixelLightMask = 5)	 #XZ
 	  set lightColor1 "c1"
 	  set lightColor2 "c3"
    endif
-   
+
    if (&pixelLightMask = 9)	 #XW
 	  set lightColor1 "c1"
 	  set lightColor2 "c4"
    endif
-   
-	if (&pixelLightCount = 2)	
+
+	if (&pixelLightCount = 2)
 
 		shaderSource
 			ps_1_1
 			def	c5,0,0,1,0
       endShaderSource
-      
+
       if ($stdMatBaseTextureEnabled)
 			shaderSource "tex	t0"
       endif
-      
-		
-		
+
+
+
 		if (&cubeMapEnabled)
 			shaderSource "tex t2"
 		endif
 
-	
+
 		shaderSource
 			texcoord t3
-			
+
 			dp3_sat	r1,	c5,	v1_bx2
 			dp3_sat	r1.rgb,	c5,	t3_bx2
 			mul	r0.rgb,	r1.a,$lightColor1
 			mad	r0.rgb,	r1,	$lightColor2, r0
-		 
+
          mul r0.rgb, r0, c7.a ;	apply the simMaterialLightingScale
-		 
+
 			add	r0.rgb,	r0,	v0	 ; add ambient
       endShaderSource
-       
+
       if ($stdMatBaseTextureEnabled)
 			shaderSource "mul_x2 r0.rgb, r0, t0"
 		else
@@ -565,31 +565,31 @@ define SimStandardPerPixelLightPS1(pixelLightCount pixelLightMask cubeMapEnabled
 		else
 			shaderSource "	+mov r0.a, t0.a"
 		endif
-		
+
 			if (&cubeMapEnabled)
 				shaderSource "mad r0.rgb, t2, c4,r0"
 			endif
-		
+
 	endif
-	
-	
+
+
 	if (&pixelLightCount = 1)
-	
+
 		shaderSource
 			ps_1_1
 			def	c5,0,0,1,0
       endShaderSource
-      
+
       if ($stdMatBaseTextureEnabled)
 			shaderSource "tex	t0"
-      endif	
-      
+      endif
+
 		if (&cubeMapEnabled)
 			shaderSource "tex t2"
 		endif
 
 		shaderSource
-		
+
 			dp3_sat	r1,	c5,	v1_bx2
 			mul	r0.rgb,	r1,	$lightColor1
          mul r0.rgb, r0, c7.a ;	apply the simMaterialLightingScale
@@ -609,14 +609,14 @@ define SimStandardPerPixelLightPS1(pixelLightCount pixelLightMask cubeMapEnabled
 		else
 			shaderSource "	+mov r0.a, t0.a"
 		endif
-		
+
 		if (&cubeMapEnabled)
 			shaderSource "mad r0.rgb, t2, c4, r0"
 		endif
 
 	endif
-		
-	
+
+
 
 enddef
 
@@ -627,33 +627,33 @@ enddef
 
 
 define SimStandardBumpPixelShaderPS1(pixelLightCount pixelLightMask)
-	
+
 
    bindConstants 1 -bindingID allStandardLightColorsHalf -constantCount	4
 	bindConstants 7	-bindingID immediateData -data (0,0,0,$simMaterialLightingScale)
-   
+
 	#trace "SimStandard	BumpSHader:	PLC: &pixelLightCount  SS: $simSkinFlag"
    if (&pixelLightMask = 1)	 # X
 	  set lightColor1 "c1"
 	  set lightColor2 "c1"
    endif
-   
+
    if (&pixelLightMask = 3)	 # XY
 	  set lightColor1 "c1"
 	  set lightColor2 "c2"
    endif
-   
+
    if (&pixelLightMask = 5)	 #XZ
 	  set lightColor1 "c1"
 	  set lightColor2 "c3"
    endif
-   
+
    if (&pixelLightMask = 9)	 #XW
 	  set lightColor1 "c1"
 	  set lightColor2 "c4"
    endif
-	
-	if (&pixelLightCount = 2)	
+
+	if (&pixelLightCount = 2)
 
 		if ($simSkinFlag)
 			shaderSource
@@ -662,7 +662,7 @@ define SimStandardBumpPixelShaderPS1(pixelLightCount pixelLightMask)
 				tex	t0
 				tex	t1
 				texcoord t3
-				
+
 				dp3_sat	r1,	t1_bx2,	v1_bx2
 				dp3_sat	r1.rgb,	t1_bx2,	t3_bx2
 				mul	r0.rgb,	r1.a, $lightColor1
@@ -670,13 +670,13 @@ define SimStandardBumpPixelShaderPS1(pixelLightCount pixelLightMask)
 			mul	r0.rgb,	r0,	c7.a ; apply the simMaterialLightingScale
 
 				add	r0.rgb,	r0,	v0	 ; add ambient
-			
+
 				mul_x2 r0.rgb, r0, t0
 				+mov r0.a, c5.a	 ; force alpha to 1.0 for compositing into thumbnails.
-				
-					
+
+
 			endShaderSource
-			
+
 		else
 			shaderSource
 				ps_1_1
@@ -684,7 +684,7 @@ define SimStandardBumpPixelShaderPS1(pixelLightCount pixelLightMask)
 				tex	t1
 				texcoord t2
 				texcoord t3
-				
+
 				dp3_sat	r1,	t1_bx2,	v1_bx2
 				dp3_sat	r1.rgb,	t1_bx2,	t3_bx2
 				mul	r0.rgb,	r1.a, $lightColor1
@@ -693,29 +693,29 @@ define SimStandardBumpPixelShaderPS1(pixelLightCount pixelLightMask)
 			mul	r0.rgb,	r0,	c7.a ; apply the simMaterialLightingScale
 
 				add	r0.rgb,	r0,	v0	 ; add ambient
-			
+
 				mul_x2 r0.rgb, r0, t0
 				+mov r0.a, t0.a
-				
-				
+
+
 			endShaderSource
-			
+
 		endif
-		
-			
+
+
 	endif
-	
+
 	if (&pixelLightCount = 1)
 
 		if ($simSkinFlag)
-		
+
 			shaderSource
 				ps_1_1
 				def	c5,1,1,1,1
 				tex	t0
 				tex	t1
 				texcoord t2
-				
+
 				dp3_sat	r1,	t1_bx2,	v1_bx2
 				mul	r0.rgb,	r1,	$lightColor1
 			mul	r0.rgb,	r0,	c7.a ; apply the simMaterialLightingScale
@@ -725,17 +725,17 @@ define SimStandardBumpPixelShaderPS1(pixelLightCount pixelLightMask)
 				+mov r0.a, c5.a	 ; force 'opaque' alpha.
 
 
-			
+
 			endShaderSource
-			
+
 		else
-		
+
 			shaderSource
 				ps_1_1
 				tex	t0
 				tex	t1
 				texcoord t2
-				
+
 				dp3_sat	r1,	t1_bx2,	v1_bx2
 				mul	r0.rgb,	r1,	$lightColor1
 			mul	r0.rgb,	r0,	c7.a ; apply the simMaterialLightingScale
@@ -744,15 +744,15 @@ define SimStandardBumpPixelShaderPS1(pixelLightCount pixelLightMask)
 				mul_x2 r0.rgb, r0, t0
 				+mov r0.a, t0.a
 
-			
+
 			endShaderSource
-			
+
 		endif
-		
-	
+
+
 	endif
-		
-	
+
+
 enddef
 
 
@@ -776,17 +776,17 @@ enddef
 
 
 define CreateSimSkinPerPixelCompositingMaterialPS1()
-	
+
 	material
-	
-# original 
+
+# original
 # 0	= eyes
 # 1	= lips
 # 2	= brows
 # 3	= skin
 
 # num to composite = 4
-	
+
 	seti totalLights  0
 	seti slotsLeft 0
 	seti pointSpotCount	0
@@ -797,32 +797,32 @@ define CreateSimSkinPerPixelCompositingMaterialPS1()
 	seti pass1DistantLights	0
 	seti pass1PointLights 0
 	seti pass1SpotLights 0
-	seti pass1PointSpotLights 0	
+	seti pass1PointSpotLights 0
 
 	seti pass2DistantLights	0
 	seti pass2PointLights 0
 	seti pass2SpotLights 0
-	seti pass2PointSpotLights 0	
+	seti pass2PointSpotLights 0
 	seti bumpTextureCount 0
-	
+
 	if (viewerRenderType = $kRenderTypeShadow)
 		create SimShadowDX8()
 	else
-		
+
 		if (strcmp("${stdMatAlphaBlendMode}", "none"))
 			setb alphaBlendingOn true
 		endif
-		
+
 		if (numLightsOfType(${kShapeColorLight}) > 0)
 			setb alphaBlendingOn true
 		endif
-		
+
 		seti  layerNumber ($stdMatLayer	* 18	+ ($alphaBlendingOn	? 17	: 0))
 
-		shader -layer $layerNumber	
-			
+		shader -layer $layerNumber
+
 			create SimMaterialSetup()
-			
+
 			if ($numTexturesToComposite	< 5) # ie, 4 or	less, composite	in one go
 				create SimSkinCompositingPassDX8($numTexturesToComposite false baseTexture simSkinCompositedBaseTexture)
 			else  #	more than 4, do	4 at a time, then alpha	blend the next batch in.
@@ -830,15 +830,15 @@ define CreateSimSkinPerPixelCompositingMaterialPS1()
 				seti layersLeft	($numTexturesToComposite-4)
 				create SimSkinCompositingPassDX8($layersLeft true baseTexture simSkinCompositedBaseTexture)
 			endif
-			
+
 
 			seti totalLights ($distantLightCount + $pointLightCount	+$spotLightCount)
-			
-			
+
+
 			setb localBumpMapFlag false
-			
+
 			create BumpTextureCount()
-		
+
 			if ($bumpTextureCount)
 				if ($numTexturesToComposite	 = 2)
 					if (strcmp("${bumpTexture1}", "") != 0)
@@ -846,44 +846,44 @@ define CreateSimSkinPerPixelCompositingMaterialPS1()
 						setb localBumpMapFlag true
 					endif
 				 endif
-				
+
 			else
-			
+
 				if ($bumpMapping and $hasTangents) # permission	to use per-pixel lighting (no bumpmap texture required)
 					setb localBumpMapFlag true
 				endif
-		
-			endif
-			
-			
 
-			
+			endif
+
+
+
+
 			# special case this	one, no	danger of blowing out instruction count
 			if ($totalLights = 5 and $distantLightCount	= 5)
 				##trace	"5 light special case, DX8"
 				create SimSkinPass(false true false	0 5	5 0	0)
 				seti totalLights 0
 			endif
-						
-				
+
+
 			if ($totalLights <	5)
-				
+
 				if ($totalLights > 0)
 					create SimSkinPass(false true $localBumpMapFlag	0 $totalLights $distantLightCount $pointLightCount $spotLightCount)
 					seti totalLights 0
 				endif
-				
+
 			else
-					
-					
+
+
 					if ($distantLightCount < 4)
 						seti pass1DistantLights	$distantLightCount
 					else
 						seti pass1DistantLights	4
 					endif
-				
+
 					seti slotsLeft (4 -	$pass1DistantLights)
-					
+
 					if ($pointLightCount > $slotsLeft)	# more point lights	than slots left.
 						seti pass1PointLights $slotsLeft   # pass 1	points then	are	the	rest of	the	slots.
 						seti slotsLeft 0  #	no more	slots left.
@@ -891,7 +891,7 @@ define CreateSimSkinPerPixelCompositingMaterialPS1()
 						seti slotsLeft ($slotsLeft - $pointLightCount)	# there	was	room, compute new slots	left
 						seti pass1PointLights $pointLightCount	# consumes all point lights	in the first pass.
 					endif
-					
+
 
 					if ($spotLightCount	> $slotsLeft)  # more spot lights than slots left.
 						seti pass1SpotLights $slotsLeft	  #	pass 1 points then are the rest	of the slots.
@@ -900,7 +900,7 @@ define CreateSimSkinPerPixelCompositingMaterialPS1()
 						seti slotsLeft ($slotsLeft - $spotLightCount)  # there was room, compute new slots left
 						seti pass1SpotLights $spotLightCount  #	consumes all point lights in the first pass.
 					endif
-			
+
 					# don't	add	to back	buffer,	apply ambient, bumpmaps	if called for, start at	light 0,  do 4 lights.
 					create SimSkinPass(false true $localBumpMapFlag	0 4	$pass1DistantLights	$pass1PointLights $pass1SpotLights)
 
@@ -909,29 +909,29 @@ define CreateSimSkinPerPixelCompositingMaterialPS1()
 					seti pass2SpotLights ($spotLightCount -	$pass1SpotLights)
 
 					seti totalLights ($pass2DistantLights +	 $pass2PointLights + $pass2SpotLights)
-				
+
 					if ($totalLights)
 						# add to back buffer, add ambient to final lighting, sno bumpmaps tart at light	4...
 						create SimSkinPass(true	false false	4 $totalLights $pass2DistantLights $pass2PointLights $pass2SpotLights)
 					endif
-					
-				
+
+
 			endif
-						
-						
+
+
 		end	#shader
-		
+
 	endif
-	
+
 	end	#end material
-		
+
 enddef
 
 
 
 define SimSkinPass(addToLastPass ambientFlag bumpMapThisPass lightOffset passLightCount	passDistantLightCount passPointCount passSpotLightCount)
 
-	
+
 	#trace "SimSkinPass	$currentMaterialName, add: &addToLastPass, Bump	&bumpMapThisPass lights	this time: &passLightCount D:&passDistantLightCount	P: &passPointCount S: &passSpotLightCount"
 
 	pass
@@ -940,7 +940,7 @@ define SimSkinPass(addToLastPass ambientFlag bumpMapThisPass lightOffset passLig
 
 
 		# always return	to the 'true' RT, since	the	previous passes	(probably) were	compositing	textures.
-		
+
 		# if we	are	doing a	second batch of	lights or other	stuff, set up for alpha	blending to	the	back buffer
 		if (&addToLastPass)
 			alphaBlend srcFactor(one) add dstFactor(one)
@@ -948,30 +948,30 @@ define SimSkinPass(addToLastPass ambientFlag bumpMapThisPass lightOffset passLig
 			depthTestFunction acceptIfEqual
 		else
 			renderTarget viewerRenderTarget
-			
+
 			if (strcmp("${stdMatAlphaBlendMode}", "blend") = 0)
 				alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
 				depthTest true -enableDepthWrite false
 			endif
-			
+
 		endif
-		
+
 		if ($eyeGizmoEnable)
 			if (hasVertexFormat(texcoord,1)	= false)
 				#trace "Eye	Movement desired, but no 2nd texcoord channel exists!!"
 				setb eyeGizmoEnable	false
 			endif
 		endif
-		
-		
+
+
 		shaderProgram -target vertexProgram	-method	link
 			if ($eyeGizmoEnable)
 				#trace "$currentMaterialName constants bound for eyemotion"
 				bindConstants 7	-bindingID immediateData -data @eyeAnimation -constantType float
 			endif
-			
+
 			create SimMaterialTransformSetupDX8($eyeGizmoEnable	&ambientFlag &bumpMapThisPass &lightOffset &passLightCount &passDistantLightCount &passPointCount &passSpotLightCount)
-		end		
+		end
 
 		if (&bumpMapThisPass)
 			if ($bumpTextureCount)
@@ -979,23 +979,23 @@ define SimSkinPass(addToLastPass ambientFlag bumpMapThisPass lightOffset passLig
 			else
 				create SimSkinPerPixelLightingPS1(2)
 			endif
-			
+
 		else
 			create SimSkinPixelShaderPS1()
 		endif
-		
-	
-		# use the RTT we just filled in	with the composited	layers.				
+
+
+		# use the RTT we just filled in	with the composited	layers.
 		sampler	0
 			texture	"simSkinCompositedBaseTexture"
 		end
-		
+
 		if ($bumpTextureCount)
 			sampler	1
 				texture	"simSkinCompositedBumpTexture"
 			end
 		endif
-		
+
 
 	end	# pass
 
@@ -1008,71 +1008,71 @@ enddef
 
 
 define SimSkinCompositingPassDX8(layerCount	secondSet sourceTextureName	destTextureName)
-	
-	
+
+
 	pass
-	
+
 		renderClipSpaceRect
-		
+
 		renderTarget &{destTextureName}	-fixed (512, 512) -bppHint 32 -alphaBitsHint 8 -allocateDepthBuffer	false
-		
+
 		depthTest false	-enableDepthWrite false
 		depthTestFunction accept
 
 		if (&secondSet)
 			alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
 		endif
-		
+
 		shaderProgram -target vertexProgram	-method	assemble
-		
+
 			shaderSource
 				vs_1_1
 				dcl_position v0
 				dcl_texcoord v1
 
 				mov	oPos, v0  ;	clip space quad, no	transforms needed.
-				
+
 				mov	oT0.xy,	v1
 				mov	oT1.xy,	v1
 				mov	oT2.xy,	v1
 				mov	oT3.xy,	v1
-				
+
 			endShaderSource
-		
-		end		
+
+		end
 
 		# always check 'baseTexture0', if that fails, NO names are set
-		
+
 		if (strcmp("${baseTexture0}", "") != 0)
-					
+
 			shaderProgram -target pixelProgram -method assemble
 
-				shaderSource 
+				shaderSource
 					ps_1_1
 					def	c0,	1,1,1,1
 					tex	t0
-									
+
 				endShaderSource
-				
+
 				if (&layerCount	> 1)
 					shaderSource "tex t1"  # usually 2 layers, but we might	be on layer	5, with	all	previous layers	composited.
 				endif
-				
+
 				if (&layerCount	> 2)
 					shaderSource "tex t2"
 				endif
-				
+
 				if (&layerCount	> 3)
 					shaderSource "tex t3"
 				endif
-				
+
 				if (&layerCount	= 1)
 					# problem... any more than 4 layers, and dest alpha	will be	fubar
 					shaderSource "mov r0, t0"  # let post blender do the blending, or maybe	there is only one layer.
 				else
 					shaderSource "lrp r0.rgb, t1.a,	t1,	t0"
 					shaderSource "+add r0.a, t1.a, t0.a"	  #	adding alphas means	to occlude more	of the background.
-					
+
 					if (&layerCount	> 2)
 						shaderSource "lrp r0.rgb, t2.a,	t2,	r0"
 						shaderSource "+add r0.a, r0.a, t2.a"
@@ -1082,14 +1082,14 @@ define SimSkinCompositingPassDX8(layerCount	secondSet sourceTextureName	destText
 						shaderSource "lrp r0.rgb, t3.a,	t3,	r0"
 						shaderSource "+add r0.a, r0.a, t2.a"
 					endif
-					
+
 				endif
-				
-		
-	
+
+
+
 			end	# shader pixel program
-				
-			
+
+
 			if (strcmp("&{sourceTextureName}", "baseTexture")= 0)
 				if (&secondSet)
 					create CompositingSamplersLastFourBase(	&layerCount)
@@ -1097,31 +1097,31 @@ define SimSkinCompositingPassDX8(layerCount	secondSet sourceTextureName	destText
 					create CompositingSamplersFirstFourBase(&layerCount)
 				endif
 			endif
-			
+
 			# have bumpmap case	here
 			# bump can only	do 2 layers	at a time, since I have	to load	the	original base texture to get the alpha for blending	the	bump.
 			#(probably never more than 2 layers	though...)
-			
+
 			if (strcmp("&{sourceTextureName}", "bumpTexture")= 0)
 				create CompositingSamplersBump(&layerCount )
 			endif
-			
-			
-					
-		
+
+
+
+
 		else # if baseTex 0	is invalid...
 			shaderProgram -target pixelProgram -method assemble
 
-				shaderSource 
+				shaderSource
 					ps_1_1
 					def	c0,	1,1,1,1
 					mov	r0,	c0
 				endShaderSource
-				
+
 			end
-			
+
 		endif
-		
+
 	end	# pass
 
 enddef
@@ -1134,59 +1134,59 @@ enddef
 
 
 define SimSkinBumpCompositingPassDX8(destTextureName)
-	
-	
+
+
 	pass
-	
+
 		renderClipSpaceRect
-		
+
 		renderTarget &{destTextureName}	-fixed (512, 512) -bppHint 32 -alphaBitsHint 8 -allocateDepthBuffer	false
-		
+
 		depthTest false	-enableDepthWrite false
 		depthTestFunction accept
 
 		shaderProgram -target vertexProgram	-method	assemble
-		
+
 			shaderSource
 				vs_1_1
 				dcl_position v0
 				dcl_texcoord v1
 
 				mov	oPos, v0  ;	clip space quad, no	transforms needed.
-				
+
 				mov	oT0.xy,	v1
 				mov	oT1.xy,	v1
 				mov	oT2.xy,	v1
 				mov	oT3.xy,	v1
-				
+
 			endShaderSource
-		
-		end		
-	
+
+		end
+
 		shaderProgram -target pixelProgram -method assemble
 
-			shaderSource 
+			shaderSource
 				ps_1_1
 				def	c0,	0.5,0.5,1,0
 				tex	t0	; the baseTexture1 ,(base 0	is 'the	skin', and doesn't need	compositing
 				tex	t1	; the first	layer bumpmap
-				
+
 				lrp	r0,	t0.a, t1, c0  ;	LRP	between	0,0,1 (skin) or	the	normal map normal, based on	the	'clothing' alpha.
-					
+
 			endShaderSource
-				
+
 		end	# shader pixel program
 
-		sampler	0 
+		sampler	0
 			texture	$baseTexture1
 			textureFilterHint point	point
 		end
-			
+
 		sampler	1
 			texture	$bumpTexture1
 			textureFilterHint point	point
 		end
-				
+
 	end	# pass
 
 enddef
@@ -1204,7 +1204,7 @@ enddef
 
 define CompositingSamplersFirstFourBase(layerCount)
 
-	
+
 			sampler	0
 				texture	$baseTexture0
 				textureFilterHint point	point
@@ -1216,53 +1216,53 @@ define CompositingSamplersFirstFourBase(layerCount)
 					texture	$baseTexture1
 					textureFilterHint point	point
 				end
-				
+
 			endif
-			
+
 			if (&layerCount	> 2)
 				sampler	2
 					texture	$baseTexture2
 					textureFilterHint point	point
 				end
 			endif
-			
+
 			if (&layerCount	> 3)
 				sampler	3
 					texture	$baseTexture3
 					textureFilterHint point	point
 				end
 			endif
-			
+
 enddef
 
 
 
 define CompositingSamplersBump(layerCount)
 
-	
+
 	sampler	0
 		texture	$baseTexture0
 		textureFilterHint point	point
 	end
-	
+
 	sampler	1
 		texture	$bumpTexture0
 		textureFilterHint point	point
 	end
-	
+
 	if (&layerCount	= 2)
 		sampler	2
 			texture	$baseTexture1
 			textureFilterHint point	point
 		end
-				
+
 		sampler	3
 			texture	$bumpTexture1
 			textureFilterHint point	point
 		end
-		
+
 	endif
-			
+
 enddef
 
 
@@ -1282,23 +1282,23 @@ define CompositingSamplersLastFourBase(layerCount)
 					texture	$baseTexture5
 					textureFilterHint point	point
 				end
-				
+
 			endif
-			
+
 			if (&layerCount	> 2)
 				sampler	2
 					texture	$baseTexture6
 					textureFilterHint point	point
 				end
 			endif
-			
+
 			if (&layerCount	> 3)
 				sampler	3
 					texture	$baseTexture7
 					textureFilterHint point	point
 				end
 			endif
-	
+
 enddef
 
 
@@ -1311,12 +1311,12 @@ define SimSkinPixelShaderPS1()
 
 
 	#trace "$currentMaterialName : simskinpixel	shader dx8"
-	
+
 	shaderProgram -target pixelProgram -method assemble
-		
+
 		if ($stdMatShapeColorIndex !=-1)
-			bindConstants 0	-bindingID shapeColorIndex0	
-			
+			bindConstants 0	-bindingID shapeColorIndex0
+
 			shaderSource
 				ps_1_1
 				tex	t0
@@ -1326,15 +1326,15 @@ define SimSkinPixelShaderPS1()
 			endShaderSource
 
 		else
-		
+
 			shaderSource
 				ps_1_1
 				tex	t0
 				mul_x2 r0, t0, v0
-	
+
 			endShaderSource
 		endif
-		
+
 	end
 
 enddef
@@ -1348,11 +1348,11 @@ define SimSkinBumpPixelShaderPS1(lightCount)
 
 
 	#trace "$currentMaterialName : SimSkin BUMP	shader dx8"
-	
+
 	shaderProgram -target pixelProgram -method assemble
-		
+
 		bindConstants 0	-bindingID allStandardLightColorsHalf -constantCount 3
-		
+
 		if (&lightCount	= 2)
 			shaderSource
 				ps_1_1
@@ -1360,23 +1360,23 @@ define SimSkinBumpPixelShaderPS1(lightCount)
 				tex	t1
 				texcoord t2
 				texcoord t3
-			  
+
 				dp3_sat	r1,	t1_bx2,	t2_bx2		; light	1 N.L
 				dp3_sat	r1.rgb,	t1_bx2,	t3_bx2	; light	2 N.L
-				
+
 				mul	r0.rgb,	r1.a, c0   ; light 1 color
 				mad	r0.rgb,	r1,	c2,	r0	; light	2 color
-				
+
 				add	r0.rgb,	r0,	v0	 ; add ambient,	and	vertex light
-				
+
 				mul_x2 r0.rgb, r0, t0  ; base texture *	light result.
 				+mov r0.a, t0.a
 
 			endShaderSource
 
-			
+
 		endif
-		
+
 		if (&lightCount	= 3)
 			shaderSource
 				ps_1_1
@@ -1384,25 +1384,25 @@ define SimSkinBumpPixelShaderPS1(lightCount)
 				tex	t1
 				texcoord t2
 				texcoord t3
-			
+
 				dp3_sat	r1,	t1_bx2,	t2_bx2
 				dp3_sat	r1.rgb,	t1_bx2,	t3_bx2
 				dp3_sat	r0,	t1_bx2,	v1_bx2	 ; 3rd light
-				
+
 				mul	r0.rgb,	r1.a, c0
 				mad	r0.rgb,	r1,	c1,	r0
 				mad	r0.rgb,	r0.a, c2, r0
-				
+
 				add	r0.rgb,	r0,	v0	; add any ambient or vertex	lighting.
-				
+
 				mul_x2 r0.rgb, r0, t0
 				+mov r0.a, t0.a
-			
+
 			endShaderSource
 		endif
 
 	end	#end shader	program
-	
+
 
 enddef
 
@@ -1416,36 +1416,36 @@ define SimSkinPerPixelLightingPS1(lightCount)
 
 
 	#trace "$currentMaterialName : SimSkin PPL shader dx8"
-	
+
 	shaderProgram -target pixelProgram -method assemble
-		
+
 		bindConstants 0	-bindingID allStandardLightColorsHalf -constantCount 3
-		
+
 		if (&lightCount	= 2)
-		
+
 			shaderSource
 				ps_1_1
 				def	c5,0,0,1,0
 				tex	t0
 				texcoord t2
 				texcoord t3
-			  
+
 				dp3_sat	r1,	c5,	t2_bx2		; light	1 N.L
 				dp3_sat	r1.rgb,	c5,	t3_bx2	; light	2 N.L
-				
+
 				mul	r0.rgb,	r1.a, c0   ; light 1 color
 				mad	r0.rgb,	r1,	c2,	r0	; light	2 color
-				
+
 				add	r0.rgb,	r0,	v0	 ; add ambient,	and	vertex light
-				
+
 				mul_x2 r0.rgb, r0, t0  ; base texture *	light result.
 				+mov r0.a, t0.a
 
 			endShaderSource
-				
-		
+
+
 		endif
-		
+
 		if (&lightCount	= 3)
 			shaderSource
 				ps_1_1
@@ -1453,25 +1453,24 @@ define SimSkinPerPixelLightingPS1(lightCount)
 				tex	t0
 				texcoord t2
 				texcoord t3
-			
+
 				dp3_sat	r1,	c5,	t2_bx2
 				dp3_sat	r1.rgb,	c5,	t3_bx2
 				dp3_sat	r0,	c5,	v1_bx2	 ; 3rd light
-				
+
 				mul	r0.rgb,	r1.a, c0
 				mad	r0.rgb,	r1,	c1,	r0
 				mad	r0.rgb,	r0.a, c2, r0
-				
+
 				add	r0.rgb,	r0,	v0	; add any ambient or vertex	lighting.
-				
+
 				mul_x2 r0.rgb, r0, t0
 				+mov r0.a, t0.a
-			
+
 			endShaderSource
 		endif
 
 	end	#end shader	program
-	
+
 
 enddef
-

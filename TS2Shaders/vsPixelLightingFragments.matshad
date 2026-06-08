@@ -4,9 +4,9 @@
 define VertexShaderPixelLightingFragments()
 
 	create VS2SharedPixelLightingFragments(2_0)
-	
+
 	create VS1PixelLightingFragments()
-	
+
 enddef
 
 
@@ -18,14 +18,14 @@ define VS2SharedPixelLightingFragments(versionString)
 shaderSource
 
 
-vertexfragment TransformTangentSpaceWithCompositeMatrix&{versionString} = 
+vertexfragment TransformTangentSpaceWithCompositeMatrix&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	// composite matrix is (still) in 5,6,7
 	// transform tangent into local space.
-	
+
 	dp3 r_tangent.x, v_TANGENT, r_temp5
 	dp3 r_tangent.y, v_TANGENT, r_temp6
 	dp3 r_tangent.z, v_TANGENT, r_temp7
@@ -38,20 +38,20 @@ asm_fragment
 
 
 
-vertexfragment TransformTangentSpaceNoSkinning&{versionString} = 
+vertexfragment TransformTangentSpaceNoSkinning&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
 
 	m3x3 r_tangent.xyz, v_TANGENT, c_objectToCameraSpaceMatrix
-	
+
 	crs r_binormal.xyz, r_tangent, r_temp9  // Binormal = csTangent X csNormal
 
 };
 
 
 
-vertexfragment PixelLightingDistantSetupX&{versionString} = 
+vertexfragment PixelLightingDistantSetupX&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
@@ -64,7 +64,7 @@ asm_fragment
 };
 
 
-vertexfragment PixelLightingDistantSetupY&{versionString} = 
+vertexfragment PixelLightingDistantSetupY&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
@@ -77,7 +77,7 @@ asm_fragment
 };
 
 
-vertexfragment PixelLightingDistantSetupXY&{versionString} = 
+vertexfragment PixelLightingDistantSetupXY&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
@@ -85,15 +85,15 @@ asm_fragment
 	dp3 oT4.x, c_lightDirections[a0.x], r_tangent  // camera tangent
 	dp3 oT4.y, c_lightDirections[a0.x], r_binormal  // camera binormal
 	dp3 oT4.z, c_lightDirections[a0.x], r_temp9   // camera normal
-		
+
 	dp3 oT5.x, c_lightDirections[a0.x+1], r_tangent  // camera tangent
 	dp3 oT5.y, c_lightDirections[a0.x+1], r_binormal  // camera binormal
 	dp3 oT5.z, c_lightDirections[a0.x+1], r_temp9   // camera normal
-	
+
 };
 
 
-vertexfragment PixelLightingDistantSetupXYZ&{versionString} = 
+vertexfragment PixelLightingDistantSetupXYZ&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
@@ -101,7 +101,7 @@ asm_fragment
 	dp3 oT4.x, c_lightDirections[a0.x], r_tangent  // camera tangent
 	dp3 oT4.y, c_lightDirections[a0.x], r_binormal  // camera binormal
 	dp3 oT4.z, c_lightDirections[a0.x], r_temp9   // camera normal
-		
+
 	dp3 oT5.x, c_lightDirections[a0.x+1], r_tangent  // camera tangent
 	dp3 oT5.y, c_lightDirections[a0.x+1], r_binormal  // camera binormal
 	dp3 oT5.z, c_lightDirections[a0.x+1], r_temp9   // camera normal
@@ -116,11 +116,11 @@ asm_fragment
 
 // in general, only the 3rd light matters, since I only bump map 3 lights at the max, and the first 2 are (always) distant lights.
 
-vertexfragment PixelLightingPointSpotSetupZ&{versionString} = 
+vertexfragment PixelLightingPointSpotSetupZ&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	dp3 r_lightVector.x, r_temp6, r_tangent  // camera tangent
 	dp3 r_lightVector.y, r_temp6, r_binormal  // camera binormal
 	dp3 r_lightVector.z, r_temp6, r_temp9   // camera normal
@@ -131,11 +131,11 @@ asm_fragment
 
 
 
-vertexfragment PixelLightingPointSpotSetupX&{versionString} = 
+vertexfragment PixelLightingPointSpotSetupX&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	dp3 r_lightVector.x, r_temp6, r_tangent  // camera tangent
 	dp3 r_lightVector.y, r_temp6, r_binormal  // camera binormal
 	dp3 r_lightVector.z, r_temp6, r_temp9   // camera normal
@@ -147,11 +147,11 @@ asm_fragment
 
 
 // just in case these cases show up.
-vertexfragment PixelLightingPointSpotSetupY&{versionString} = 
+vertexfragment PixelLightingPointSpotSetupY&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	dp3 r_lightVector.x, r_temp5, r_tangent  // camera tangent
 	dp3 r_lightVector.y, r_temp5, r_binormal  // camera binormal
 	dp3 r_lightVector.z, r_temp5, r_temp9   // camera normal
@@ -161,55 +161,55 @@ asm_fragment
 };
 
 
-vertexfragment PixelLightingPointSpotSetupW&{versionString} = 
+vertexfragment PixelLightingPointSpotSetupW&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	dp3 r_lightVector.x, r_temp7, r_tangent  // camera tangent
 	dp3 r_lightVector.y, r_temp7, r_binormal  // camera binormal
 	dp3 r_lightVector.z, r_temp7, r_temp9   // camera normal
 
 	mul r_lightVector.xyz, r_attenuation.w, r_lightVector
-	
+
 };
 
-vertexfragment ZeroDiffuse&{versionString} = 
+vertexfragment ZeroDiffuse&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	mov r_diffuse_r2, c_basics.x
-	
+
 };
 
 
-vertexfragment WriteLightVectorToTex4&{versionString} = 
+vertexfragment WriteLightVectorToTex4&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	mov oT4.xyz, r_lightVector
 
 };
 
-vertexfragment WriteLightVectorToTex5&{versionString} = 
+vertexfragment WriteLightVectorToTex5&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	mov oT5.xyz, r_lightVector
-	
+
 };
 
 
-vertexfragment WriteLightVectorToTex6&{versionString} = 
+vertexfragment WriteLightVectorToTex6&{versionString} =
 asm_fragment
 {
 	vs_&{versionString}
-	
+
 	mov oT6.xyz, r_lightVector
-	
+
 };
 
 
@@ -225,25 +225,25 @@ define VS1PixelLightingFragments()
 shaderSource
 
 
-vertexfragment ZeroDiffuse1_1 = 
+vertexfragment ZeroDiffuse1_1 =
 asm_fragment
 {
 	vs_1_1
-	
+
 	mov r_diffuse_r2, c_basics.x
-	
+
 };
 
 
 
-vertexfragment TransformTangentSpaceWithCompositeMatrix1_1 = 
+vertexfragment TransformTangentSpaceWithCompositeMatrix1_1 =
 asm_fragment
 {
 	vs_1_1
-	
+
 	// composite matrix is (still) in 5,6,7
 	// transform tangent into local space.
-	
+
 	dp3 r_tangent.x, v_TANGENT, r_temp5
 	dp3 r_tangent.y, v_TANGENT, r_temp6
 	dp3 r_tangent.z, v_TANGENT, r_temp7
@@ -251,20 +251,20 @@ asm_fragment
 	// cross to get the binormal, to assure orthoganal-ism.
 	mul r_binormal.xyz, r_tangent.yzx, r_temp9.zxy
 	mad r_binormal.xyz, -r_tangent.zxy, r_temp9.yzx, r_binormal
-	
+
 	mov oT1.xy, v_TEXCOORD
 };
 
 
 
 
-vertexfragment TransformTangentSpaceNoSkinning1_1 = 
+vertexfragment TransformTangentSpaceNoSkinning1_1 =
 asm_fragment
 {
 	vs_1_1
 
 	m3x3 r_tangent.xyz, v_TANGENT, c_objectToCameraSpaceMatrix
-	
+
 	mul r_binormal.xyz, r_tangent.yzx, r_temp9.zxy
 	mad r_binormal.xyz, -r_tangent.zxy, r_temp9.yzx, r_binormal
 
@@ -273,7 +273,7 @@ asm_fragment
 };
 
 
-vertexfragment PixelLightingDistantSetupX1_1 = 
+vertexfragment PixelLightingDistantSetupX1_1 =
 asm_fragment
 {
 	vs_1_1
@@ -286,7 +286,7 @@ asm_fragment
 };
 
 
-vertexfragment PixelLightingDistantSetupXY1_1 = 
+vertexfragment PixelLightingDistantSetupXY1_1 =
 asm_fragment
 {
 	vs_1_1
@@ -314,7 +314,7 @@ asm_fragment
 // V1 = light Vector 3
 
 
-vertexfragment PixelLightingDistantSetupXYZ1_1 = 
+vertexfragment PixelLightingDistantSetupXYZ1_1 =
 asm_fragment
 {
 	vs_1_1
@@ -330,7 +330,7 @@ asm_fragment
 	dp3 r_lightVector.z, c_lightDirections[a0.x+1], r_temp9   // camera normal
 
 	mad oT2.xyz, r_lightVector, c_basics.y, c_basics.y
-	
+
 	dp3 r_lightVector.x, c_lightDirections[a0.x+2], r_tangent  // camera tangent
 	dp3 r_lightVector.y, c_lightDirections[a0.x+2], r_binormal  // camera binormal
 	dp3 r_lightVector.z, c_lightDirections[a0.x+2], r_temp9   // camera normal
@@ -343,11 +343,11 @@ asm_fragment
 
 
 
-vertexfragment PixelLightingPointSpotSetupZ1_1 = 
+vertexfragment PixelLightingPointSpotSetupZ1_1 =
 asm_fragment
 {
 	vs_1_1
-	
+
 	dp3 r_lightVector.x, r_temp6, r_tangent  // camera tangent
 	dp3 r_lightVector.y, r_temp6, r_binormal  // camera binormal
 	dp3 r_lightVector.z, r_temp6, r_temp9   // camera normal
@@ -359,11 +359,11 @@ asm_fragment
 
 
 
-vertexfragment PixelLightingPointSpotSetupW1_1 = 
+vertexfragment PixelLightingPointSpotSetupW1_1 =
 asm_fragment
 {
 	vs_1_1
-	
+
 	dp3 r_lightVector.x, r_temp7, r_tangent  // camera tangent
 	dp3 r_lightVector.y, r_temp7, r_binormal  // camera binormal
 	dp3 r_lightVector.z, r_temp7, r_temp9   // camera normal
@@ -375,11 +375,11 @@ asm_fragment
 
 
 
-vertexfragment PixelLightingPointSpotSetupY1_1 = 
+vertexfragment PixelLightingPointSpotSetupY1_1 =
 asm_fragment
 {
 	vs_1_1
-	
+
 	dp3 r_lightVector.x, r_temp5, r_tangent  // camera tangent
 	dp3 r_lightVector.y, r_temp5, r_binormal  // camera binormal
 	dp3 r_lightVector.z, r_temp5, r_temp9   // camera normal
@@ -389,11 +389,11 @@ asm_fragment
 
 
 
-vertexfragment PixelLightingPointSpotSetupX1_1 = 
+vertexfragment PixelLightingPointSpotSetupX1_1 =
 asm_fragment
 {
 	vs_1_1
-	
+
 	dp3 r_lightVector.x, r_temp4, r_tangent  // camera tangent
 	dp3 r_lightVector.y, r_temp4, r_binormal  // camera binormal
 	dp3 r_lightVector.z, r_temp4, r_temp9   // camera normal
@@ -402,33 +402,33 @@ asm_fragment
 };
 
 
-vertexfragment WriteLightVectorToSpecular1_1 = 
+vertexfragment WriteLightVectorToSpecular1_1 =
 asm_fragment
 {
 	vs_1_1
-	
+
 	mad oD1.xyz, r_lightVector, c_basics.y, c_basics.y  // compress into unsigned range.
-	
+
 };
 
 
-vertexfragment WriteLightVectorToTex21_1 = 
+vertexfragment WriteLightVectorToTex21_1 =
 asm_fragment
 {
 	vs_1_1
-	
+
 	mad oT2.xyz, r_lightVector, c_basics.y, c_basics.y  // compress into unsigned range.
-	
+
 };
 
 
-vertexfragment WriteLightVectorToTex31_1 = 
+vertexfragment WriteLightVectorToTex31_1 =
 asm_fragment
 {
 	vs_1_1
-	
+
 	mad oT3.xyz, r_lightVector, c_basics.y, c_basics.y  // compress into unsigned range.
-	
+
 };
 
 

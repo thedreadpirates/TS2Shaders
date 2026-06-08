@@ -42,9 +42,9 @@ setb rampAddEdge false
 #attrdescription Whether to enable the edge intensity term.
 
 set rampEdgeRampTexture "blackwhite"
-#attrdescription Lookup texture for edge intensity: how much the 
+#attrdescription Lookup texture for edge intensity: how much the
 #attrdescription surface faces the camera. The left of the texture
-#attrdescription faces the camera, the middle is edge-on, and the right 
+#attrdescription faces the camera, the middle is edge-on, and the right
 #attrdescription faces away. This can be used to provide an outline or fresnel effect.
 
 sete rampEdgeFilter point (point bilinear)
@@ -90,7 +90,7 @@ setb rampAddEnvironmentMap false
 
 set rampEnvironmentMapTexture "reflectionoutdoorwater-envcube"
 #attrdescription Environment cube map texture
- 
+
 setv3 rampEnvironmentMapTint (1, 1, 1)
 #attrdescription Color to tint the environment map
 
@@ -106,42 +106,42 @@ setb rampEnvironmentMapCameraRelative false
 
 define RampMaterial()
    material
-      
+
       # Debugging
       #set rampAddSpecular true
       #set rampAddOutline true
       #set rampAddEdge true
       #set stdMatBaseTextureEnabled true
       #set stdMatBaseTextureName    DefaultWhiteA1Texture
-      
+
       create DetermineSkinningState()
       create DetermineMorphingState()
-      
+
       setb usesT0 ($stdMatBaseTextureEnabled or $rampRouteColorFromTexture)
       setb usesT1 ($stdMatBaseTextureEnabled and $rampRouteColorFromTexture)
-   
+
       shader
          if (not hasVertexFormat(color, 0))
             set rampRouteColorFromAlpha false
          endif
-   
+
          vertexFormatPred position      0 true
          vertexFormatPred normal        0 true
          #vertexFormatPred texcoord      0 $usesT0
          #vertexFormatPred texcoord      1 $usesT1
          vertexFormatPred color         0 $rampRouteColorFromAlpha
-         
+
          viewerRenderTypePred viewerRenderType
 
          create SetSkinningPredicates()
-         create SetMorphingPredicates() 
+         create SetMorphingPredicates()
          #create NonStandardLighting()  this seems to give errors?
 
          # OUTLINE PASS
-         if ($rampAddOutline) 
-            pass 
+         if ($rampAddOutline)
+            pass
                create PreprocessVertexShader()
-               
+
                create VS_NormalOffsetProgram($rampOutlineWidth)
 
                alphaBlend srcFactor(one) add dstFactor(zero)
@@ -151,22 +151,22 @@ define RampMaterial()
                if ($rampOutlineAlpha > 0)
                   alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
                endif
-               
+
                colorScalar $rampOutlineColor $rampOutlineAlpha
-               stage                  
+               stage
                   textureBlend select(colorScalar) select(colorScalar)
                end
             end
          endif
-                  
+
          # MAIN RAMP PASS
          pass
             if (not $rampAddOutline)
                create PreprocessVertexShader()
             endif
-            
+
             create StandardShaderFBAlphaState($stdMatAlphaBlendMode)
-            
+
             # texture stage allocation
             seti ts 1
             if ($stdMatBaseTextureEnabled)
@@ -185,28 +185,28 @@ define RampMaterial()
             shaderProgram
                vsAsm vs_1_1
                if ($doSkinning)
-                  vsConstants -camToClip           0 
+                  vsConstants -camToClip           0
                else
-                  vsConstants -geomToClip          0 
+                  vsConstants -geomToClip          0
                endif
                vsConstants -geomToCam              4
                const4f                            c7    (0, $rampShininess, 0.5, 1)   # all used
                const4f                            c8    ($rampEdgeOffset, $rampEdgeLightDamping, $rampSpecTintAmount, (1 - $rampSpecTintAmount))            # used: x, y
-               
+
                if ($stdMatBaseTextureEnabled)
                   const4f                         c9    ($stdMatDiffCoef * (0.25).xxx)
                else
                   const4f                         c9    ($stdMatDiffCoef  * (1).xxx)
                endif
-               
+
                vsConstants -camDirLights           10    4
                vsConstants -camPointLights         18    2
                vsConstants -camSpotLights          22    2
-               
+
                const4f                            c28    ${rampSpecTintColor}
                vsConstants -ambientLight           29
-               
-               vsAsm 
+
+               vsAsm
                   dcl_position0 v0
                   dcl_normal0   v1
                endasm
@@ -216,52 +216,52 @@ define RampMaterial()
                if ($usesT1)
                   vsAsm "dcl_texcoord1 v3"
                endif
-               
+
                if ($rampRouteColorFromAlpha)
                   vsAsm "dcl_color0 v4"
                endif
-                  
+
                if ($doSkinning)
                   # position/normal already in camera space.
-                  vsAsm 
+                  vsAsm
                      # position to clip space
-                     m4x4 oPos, v0, c0 
+                     m4x4 oPos, v0, c0
                      # normal already in camera space
                      mov r0, v1
                   endasm
                else
-                  vsAsm 
+                  vsAsm
                      # position to camera space
-                     m4x4 oPos, v0, c0 
-                  
+                     m4x4 oPos, v0, c0
+
                      # transform normal to camera space
                      mov r0.w, c7.w
                      m3x3 r0, v1, c4
                   endasm
                endif
-                  
-               vsAsm                  
+
+               vsAsm
                   # r0 = N^
                   # r1 = P
                   # r2 = E^
                   # r3..r5 = scratch
-                  
+
                   # normalize normal (perhaps only if skinning?)
                   create VS_Normalize(r0 r0)
-                  
+
                   # position in camera space
                   mov r1.w, c7.w
                   m4x3 r1, v0, c4
-                  
+
                   # E = -P
                   mov r2, -r1
-                  
+
                   # normalize E
                   create VS_Normalize(r2 r2)
-                  
+
                   #################################
                   # Lighting
-                  
+
                   # r6  = dirTemp
                   # r7  = colourTemp
                   # r8  = intensity output
@@ -271,15 +271,15 @@ define RampMaterial()
 
                   # NOTE: VS_DirectionalLight instantiated directly because
                   # we're right up against the instruction count, and we
-                  # save a couple of movs this way. 
-                  
+                  # save a couple of movs this way.
+
                   # Diffuse lights
                   mov r9,   c29
                   #mov r10,    c7.x
                   mov r11,  c7.w
-                  
+
                   # DIRECTIONAL 1
-                  #create VS_DirectionalLight(r6 r7 c10 c11)   
+                  #create VS_DirectionalLight(r6 r7 c10 c11)
                          # oDir oClr rL0 rL1
                   create VS_ApplyPhongLighting(r8 c10 r0 r2 c7.y c7.z r3)
                          # (rDst rSrc rN rE rExp rHalf rT0)
@@ -289,7 +289,7 @@ define RampMaterial()
                   add r11, r8,   r11
 
                   # DIRECTIONAL 2
-                  #create VS_DirectionalLight(r6 r7 c12 c13)   
+                  #create VS_DirectionalLight(r6 r7 c12 c13)
                          # oDir oClr rL0 rL1
                   create VS_ApplyPhongLighting(r8 c12 r0 r2 c7.y c7.z r3)
                          # (rDst rSrc rN rE rExp rHalf rT0)
@@ -299,7 +299,7 @@ define RampMaterial()
                   add r11, r8,   r11
 
                   # DIRECTIONAL 3
-                  #create VS_DirectionalLight(r6 r7 c14 c15)   
+                  #create VS_DirectionalLight(r6 r7 c14 c15)
                          # oDir oClr rL0 rL1
                   create VS_ApplyPhongLighting(r8 c14 r0 r2 c7.y c7.z r3)
                          # (rDst rSrc rN rE rExp rHalf rT0)
@@ -309,7 +309,7 @@ define RampMaterial()
                   add r11, r8,   r11
 
                   # DIRECTIONAL 4
-                  #create VS_DirectionalLight(r6 r7 c16 c17)   
+                  #create VS_DirectionalLight(r6 r7 c16 c17)
                          # oDir oClr rL0 rL1
                   create VS_ApplyPhongLighting(r8 c16 r0 r2 c7.y c7.z r3)
                          # (rDst rSrc rN rE rExp rHalf rT0)
@@ -317,10 +317,10 @@ define RampMaterial()
                   mad r9,  r8.y, c17, r9
                   mad r10, r8.z, c17, r10
                   add r11, r8,   r11
-                  
+
                   # Point lights
                   # POINT 1
-                  create VS_PointLight(r6 r7 r1 c18 c19 c7.w r3 r4)   
+                  create VS_PointLight(r6 r7 r1 c18 c19 c7.w r3 r4)
                          # oDir oClr rP rL0 rL1 rOne rT0 rT1
                   create VS_ApplyPhongLighting(r8 r6 r0 r2 c7.y c7.z r3)
                          # (rDst rSrc rN rE rExp rHalf rT0)
@@ -331,7 +331,7 @@ define RampMaterial()
                   add r11, r8, r11
 
                   # POINT 2
-                  create VS_PointLight(r6 r7 r1 c20 c21 c7.w r3 r4)   
+                  create VS_PointLight(r6 r7 r1 c20 c21 c7.w r3 r4)
                          # oDir oClr rP rL0 rL1 rOne rT0 rT1
                   create VS_ApplyPhongLighting(r8 r6 r0 r2 c7.y c7.z r3)
                          # (rDst rSrc rN rE rExp rHalf rT0)
@@ -340,13 +340,13 @@ define RampMaterial()
                   mad r9,  r8.y, r7, r9
                   mad r10, r8.z, r7, r10
                   add r11, r8, r11
-                  
+
                   # These are treated as point lights at the mo', but
                   # we disable them 'cause we're really short on instruction slots.
                   # Spot lights
                #<
                   # SPOT 1
-                  create VS_SpotLight(r6 r7 r1 c22 c23 c24 c7.w r3 r4)   
+                  create VS_SpotLight(r6 r7 r1 c22 c23 c24 c7.w r3 r4)
                          # oDir oClr rP rL0 rL1 rL2 rOne rT0 rT1
                   create VS_ApplyPhongLighting(r8 r6 r0 r2 c7.y c7.z r3)
                          # (rDst rSrc rN rE rExp rHalf rT0)
@@ -357,7 +357,7 @@ define RampMaterial()
                   add r11, r8, r11
 
                   # SPOT 2
-                  create VS_SpotLight(r6 r7 r1 c25 c26 c27 c7.w r3 r4)   
+                  create VS_SpotLight(r6 r7 r1 c25 c26 c27 c7.w r3 r4)
                          # oDir oClr rP rL0 rL1 rL2 rOne rT0 rT1
                   create VS_ApplyPhongLighting(r8 r6 r0 r2 c7.y c7.z r3)
                          # (rDst rSrc rN rE rExp rHalf rT0)
@@ -367,23 +367,23 @@ define RampMaterial()
                   mad r10, r8.z, r7, r10
                   add r11, r8, r11
                #>
-               
+
                   ###############################
-                  
+
                   # the texture is going to clamp us, and we need the remaining calcs to be consistent
-                  min r11, r11, c7.w   
-                  
+                  min r11, r11, c7.w
+
                   #hack to map [0, 1] to [0.25, 0.75] for test ramp texture.
-                  #mul r3.z, c7.z, c7.z  
+                  #mul r3.z, c7.z, c7.z
                   #mad oT0.x, r11.y, c7.z, r3.z    # diffuse intensity
-                  
+
                   mov oT0.x, r11.y    # diffuse intensity
-                  
+
                   rcp r3, r11.y
                   mul r5, r3, r9                # normalized diffuse light colour.
                   mul oD0.xyz, r5, c9           # colour x reflectance.
                endasm
-               
+
                if ($rampRouteColorFromAlpha)
                   vsAsm "mov oT0.y, v4.w"    # pass through color0 alpha
                elseif ($rampRouteColorFromTexture)
@@ -397,7 +397,7 @@ define RampMaterial()
                   vsAsm "mov oT${texReg}, v2"
                endif
                if ($rampAddEdge)
-                  vsAsm "dp3 r3, r0, r2"                    # N . E    
+                  vsAsm "dp3 r3, r0, r2"                    # N . E
                   if ($rampEdgeLightDamping != 0)
                      vsAsm "mad r3, r11.y, c8.y, r3"        # offset by scaled diffuse term
                   endif
@@ -417,7 +417,7 @@ define RampMaterial()
                endif
             end
 
-            if ($rampAddOutline) 
+            if ($rampAddOutline)
                depthTestFunction acceptIfLessOrEqual
             endif
 
@@ -434,7 +434,7 @@ define RampMaterial()
                stage
                   texture $stdMatBaseTextureName
                   textureAddressing $stdMatBaseTextureAddressingU $stdMatBaseTextureAddressingV $stdMatBaseTextureAddressingW
-   
+
                   textureBlend multiplyScale4(texture outRegister) multiply(texture outRegister)
                end
             endif
@@ -460,10 +460,10 @@ define RampMaterial()
                end
             endif
          end
-         
+
          # ENVIRONMENT MAP PASS
          if ($rampAddEnvironmentMap)
-            pass               
+            pass
                alphaBlend srcFactor(srcAlpha) add dstFactor(one)
                depthTest true -enableDepthWrite false
                depthTestFunction acceptIfEqual
@@ -472,26 +472,26 @@ define RampMaterial()
                # depth results with the previous pass.
                shaderProgram
                   vsAsm vs_1_1
-                  
+
                   # TODO: needs to handle skinning
-                  
-                  vsConstants -geomToClip             0 
+
+                  vsConstants -geomToClip             0
                   vsConstants -geomToCam              4
                   const4f c7 (0, 0, 0, 1)
-                  
-                  vsAsm 
+
+                  vsAsm
                      dcl_position0 v0
                      dcl_normal0   v1
-                     
+
                      m4x4 oPos, v0, c0
                   endasm
-                  
+
                   if ($rampEnvironmentMapCameraRelative)
-                     vsAsm                  
+                     vsAsm
                         # transform normal to camera space
                         mov r0.w, c7.w
                         m3x3 r0, v1, c4
-                        
+
                         # look up cube map.
                         mov oT0, r0
                      endasm
@@ -499,15 +499,15 @@ define RampMaterial()
                      vsAsm "mov oT0, v1"
                   endif
                end
-               
+
                colorScalar  $rampEnvironmentMapTint $rampEnvironmentMapStrength
-               
+
                stage
                   texture $rampEnvironmentMapTexture
                   textureMIPFilter disabled
                   textureFilterHint bilinear bilinear
                   textureAddressing clamp clamp clamp
-                  
+
                   textureBlend multiply(texture colorScalar) multiply(texture colorScalar)
                end
             end
@@ -517,4 +517,3 @@ define RampMaterial()
 enddef
 
 #endshader RampMaterial
-

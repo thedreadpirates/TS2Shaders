@@ -2,8 +2,8 @@ version 4
 
 # Shaders for mirror reflections.
 
-# Note: These materials assume that the reflection camera uses the same handed coordinate system as 
-# the main camera, with the x axis flipped. Therefore, when marking out the area in the stencil buffer 
+# Note: These materials assume that the reflection camera uses the same handed coordinate system as
+# the main camera, with the x axis flipped. Therefore, when marking out the area in the stencil buffer
 # to be filled in the with the reflection view, the x clip coordinate of the mirror vertices is
 # negated.
 #
@@ -36,14 +36,14 @@ define SimpleMirrorReflection()
 			create BlankMirrorMaterial(viewerRenderType $impostorMirrorColor)
 		elseif (viewerRenderType = $kRenderTypeOceanReflection)
 			create BlankMirrorMaterial(viewerRenderType $impostorMirrorColor)
-		else            
+		else
 			if (not $mirrorReflectionsEnabled)
 				set currentType (viewerRenderType)
 				create BlankMirrorMaterial($currentType $reflectionsOffMirrorColor)
 			else
 				create MirrorReflectionMaterial()
-			endif            
-		endif         
+			endif
+		endif
       endif
    end
 enddef
@@ -53,8 +53,8 @@ define BlankMirrorMaterial(renderType mirrorColor)
       # mirror shader for thumbnails. Output a single flat color.
       shader
          validateRenderShaderContext -viewerRenderType  &renderType
-         
-         pass             
+
+         pass
             shaderProgram -target vertexProgram -method assemble
                bindConstants 0 -bindingID geomToClip -constantCount 4
                shaderSource
@@ -63,25 +63,25 @@ define BlankMirrorMaterial(renderType mirrorColor)
                   m4x4 oPos, v0, c0
                endShaderSource
             end
-            
+
             colorScalar &mirrorColor
             stage
                textureBlend select(colorScalar) select(colorScalar)
-            end            
+            end
          end
-      end      
+      end
 enddef
 
 # shader to prep stencil buffer on the rendertarget for the mirror reflection view.
 # When objects are rendered from the viewpoint of the reflection camera after this shader runs, they will
-# render only to the area of the rendertarget marked out in the stencil buffer by this shader.   
+# render only to the area of the rendertarget marked out in the stencil buffer by this shader.
 define MirrorReflectionMaterial()
       create DetermineHardwareSupport()
       # write depth into the depth buffer as seen from the main camera. Write stencil = 1
       # if this is the mirror we are rendering the reflection for, and 0 otherwise.
       shader -layer -9998   # this material must render first
          validateRenderShaderContext -viewerRenderType $kRenderTypeMirror  # reflection render
-         
+
          # write stencil in area occupied by mirror
          if ($useSWVertexShaderPath)
             pass -renderEachFrame -modifiedEachFrameHint
@@ -101,31 +101,31 @@ define MirrorReflectionMaterial()
             #     set stencil test to write 0 when depth test passes
             #
             applyStencilStateForOverlappingReflections
-              
+
             # do not write color
             #colorWriteEnable -red false -green false -blue false -alpha false
             alphaBlend srcFactor(zero) add dstFactor(one)
-            
+
             # since we are negating clip space x below we need to prevent this quad from being culled
             cullmode none
-            
+
             # vertex program
-            shaderProgram -target vertexProgram -method assemble            
+            shaderProgram -target vertexProgram -method assemble
                bindConstants 0 -bindingID geomToClipFromParentView -constantCount 4 # set the matrices from the parent (i.e. the main view) so that the stencil is written to the right place
-      
+
                shaderSource
                   vs_1_1
                   dcl_position v0
-                  
+
                   ; color output for debugging
                   def c5, 1,0,0,1
-                 
+
                   ; project vertex to clip coords
                   m4x4 r0,   v0,  c0
-                  
+
                   ; flip the x coordinate so the stencil is marked in the right place
                   mov oPos.x,  -r0
-                  mov oPos.yzw, r0                  
+                  mov oPos.yzw, r0
                endShaderSource
             end
          end # pass
@@ -134,113 +134,113 @@ define MirrorReflectionMaterial()
       # render of the mirror from the main camera. This samples from the reflection render target texture.
       shader -layer 16  # this must be after all opaque objects (especially Sims), but before transparent objects and the censor compositing pass
          validateRenderShaderContext -viewerRenderType $kRenderTypeNormal
-         
+
          pass -modifiedEachFrameHint  # we want the mirrors to be rendered every frame even in dirty rect mode
 
-            shaderProgram -target vertexProgram -method assemble            
+            shaderProgram -target vertexProgram -method assemble
                bindConstants 0 -bindingID geomToClip -constantCount 4
                bindConstants 4 -bindingID clipToViewTarget -constantCount 4
                shaderSource
                   vs_1_1
                   dcl_position v0
                   def c8,    -0.5, -0.5, 1, 1
-                  def c9,     0.5,  0.5, 0, 0 
-                  
+                  def c9,     0.5,  0.5, 0, 0
+
                   def c10,    0.25, 0.25, 0, 0
-                  
+
                   # project vertex to clip coords
                   m4x4 r0,   v0,  c0
                   mov oPos, r0
-                  
+
                   # multiply 0.5 * w so homogenous divide will make it 0.5 again
                   mul r2, c9, r0.w
-                  
+
                   # scale projected xy by .5 and re-center so it's in 0-w range
                   mad r4, r0, c8, r2
-                  
+
                   # Try to get an exact texel to pixel mapping by shifting texture coordinates
                   # slightly.
-                  # A texture coordinate of 0 must map to 1/2*(texture dimension) and a 
+                  # A texture coordinate of 0 must map to 1/2*(texture dimension) and a
                   # coordinate of 1 must map to (1 - 1/2*(texture dimension)).
                   # Note: This does not seem to eliminate the wobble on the mirror
                   # reflection entirely.
-                  rcp r3.x, c4.x   ;# 2/width                                    
+                  rcp r3.x, c4.x   ;# 2/width
                   rcp r3.y, c5.y   ;# 2/height
                   mov r3.zw, c9.zw ;# r3 = (2/width, 2/height, 0, 0)
-                  
+
                   mul r3, r3, c10  ;# r3 = (1/2*width, 1/2*height, 0, 0)
                   mad r6, r0, r3, r4
                   mov oT0, r6.xyww ;# move w into z so we can divide by z in the texture stage; some cards don't handle division by w correctly
-               endShaderSource               
+               endShaderSource
             end
-            
+
             stage
                textureTransformType vector3 homogeneous # divide the xy components of the texture coordinate by z
                textureAddressing clamp clamp
                texture $reflectionRenderTarget
                textureBlend select(texture) select(texture)
             end # stage
-                       
+
          end # pass
       end # shader
-      
+
       # this shader is in case the above case fails. This does projection per vertex.
-      shader -layer 16      
-         validateRenderShaderContext -viewerRenderType $kRenderTypeNormal      
-         
+      shader -layer 16
+         validateRenderShaderContext -viewerRenderType $kRenderTypeNormal
+
          pass -modifiedEachFrameHint  # we want the mirrors to be rendered every frame even in dirty rect mode
 
-            shaderProgram -target vertexProgram -method assemble            
+            shaderProgram -target vertexProgram -method assemble
                bindConstants 0 -bindingID geomToClip -constantCount 4
                bindConstants 4 -bindingID clipToViewTarget -constantCount 4
-               
+
                shaderSource
                   vs_1_1
                   dcl_position v0
                   def c8,    -0.5, -0.5, 1, 1
-                  def c9,     0.5,  0.5, 0, 0 
-                  
+                  def c9,     0.5,  0.5, 0, 0
+
                   def c10,    0.25, 0.25, 0, 0
-                  
+
                   # project vertex to clip coords
                   m4x4 r0,   v0,  c0
                   mov oPos, r0
-                  
+
                   # multiply 0.5 * w so homogenous divide will make it 0.5 again
                   mul r2, c9, r0.w
-                  
+
                   # scale projected xy by .5 and re-center so it's in 0-w range
                   mad r4, r0, c8, r2
-                  
+
                   # Try to get an exact texel to pixel mapping by shifting texture coordinates
                   # slightly.
-                  # A texture coordinate of 0 must map to 1/2*(texture dimension) and a 
+                  # A texture coordinate of 0 must map to 1/2*(texture dimension) and a
                   # coordinate of 1 must map to (1 - 1/2*(texture dimension)).
                   # Note: This does not seem to eliminate the wobble on the mirror
                   # reflection entirely.
-                  rcp r3.x, c4.x   ;# 2/width                                    
+                  rcp r3.x, c4.x   ;# 2/width
                   rcp r3.y, c5.y   ;# 2/height
                   mov r3.zw, c9.zw ;# r3 = (2/width, 2/height, 0, 0)
-                  
+
                   mul r3, r3, c10  ;# r3 = (1/2*width, 1/2*height, 0, 0)
-                                       
+
                   mad r1, r0, r3, r4  ; write to a temp instead of output texcoord (as above)
-                  
+
                   rcp r1.w, r1.w    ; calc 1/w
-                  
+
                   mul oT0.xy, r1.w, r1.xy  ; project per vertex since the intel HW (and maybe others) can't do it per pixel.
-                  
-               endShaderSource               
+
+               endShaderSource
             end    #shader
-            
+
             stage
                textureAddressing clamp clamp
                texture $reflectionRenderTarget
                textureBlend select(texture) select(texture)
-            end # stage    
-            
+            end # stage
+
          end # pass
-      end #shader   
+      end #shader
 enddef
 
 # material to clear stencil buffer and set depth buffer to "correct" value on rendertarget.
@@ -257,34 +257,34 @@ enddef
 # used by the mirror render. Sets z to the specified value on the entire reflection render target.
 define SetSpecifiedZOnMirrorRTT(zValue)
    material
-      shader      
-         pass         
+      shader
+         pass
             renderClipSpaceRect
-            renderTarget $reflectionRenderTarget -setViewport fullRenderTargetViewport            
-                        
+            renderTarget $reflectionRenderTarget -setViewport fullRenderTargetViewport
+
             # turn off stencil test
             stencil false
-            
+
             # depth test accept always, write depth
             depthTest true -enableDepthWrite true
             depthTestFunction accept
-            
+
             # do not write color
             alphaBlend srcFactor(zero) add dstFactor(one)
-            
+
             # vertex program
             shaderProgram -target vertexProgram -method compile -version 1_1
                bindConstants 0 -bindingID immediateData -data (0,0,&zValue, 0)
-               
+
                shaderSource
                   float4 zValue : register(c0);
-                  
+
                   void VertexMain(float4 position : POSITION, out float4 oPosition : POSITION)
                   {
                      oPosition = position;
                      oPosition.z = zValue.z;    // set specified z value
                   }
-                  
+
                endShaderSource
             end
          end # pass
@@ -305,22 +305,22 @@ enddef
 # used by the censor render in the mirror. Sets stencil on the entire censor render target to 1.
 define SetStencilOnCensorRTT()
    material
-      shader       
-         pass 
+      shader
+         pass
             renderClipSpaceRect
-                        
+
             # set stencil to 1 everywhere
             stencil true
             stencilFunction accept -refValue 1
             stencilOperation -onPass writeRef
-            
+
             # depth test accept, do not write depth
             depthTest false -enableDepthWrite false
             depthTestFunction accept
-            
+
             # do not write color
             alphaBlend srcFactor(zero) add dstFactor(one)
-            
+
             shaderProgram -target vertexProgram -method assemble
                shaderSource
                   vs_1_1
@@ -328,11 +328,11 @@ define SetStencilOnCensorRTT()
                   mov oPos, v0
                endShaderSource
             end
-            
+
             stage
                textureBlend select(colorScalar) select(colorScalar)
             end
-            
+
          end # pass
       end # shader
    end # material
@@ -348,7 +348,7 @@ end
 
 if (not varExists(isContentViewer))
    # only render where the stencil is zero in turbo rect mode
-   defaultState $kRenderTypeNormal # Stencil   
+   defaultState $kRenderTypeNormal # Stencil
       stencil true
       stencilFunction acceptIfEqual -refValue 0
       stencilOperation -onPass noWrite

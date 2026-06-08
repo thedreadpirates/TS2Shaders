@@ -50,42 +50,42 @@ set wmRefractionTexture reflectionoutdoorwater-envcube
 #EndStdAttrBlock
 
 define PoolWaterSurfaceMaterial()
-   material      
+   material
       shader -layer $poolWaterLayer
          validateRenderShaderContext -vertexFormat position 0 required
- 
+
          create DetermineHardwareSupport()
-    
+
          if ($useSWVertexShaderPath or $useFixedFunctionPath)
             # The vertex shader to ripple the water surface is deemed too expensive for SWVS.
             # Note that because on some low-end cards shaders are turned off, DetermineHardwareSupport()
-            # will set $useFixedFunctionPath to true and $useSWVertexShaderPath to false; however, 
+            # will set $useFixedFunctionPath to true and $useSWVertexShaderPath to false; however,
             # since the device is in swvp mode, the RegularWavesHLSL shader would validate anyway, which
             # we don't want. Therefore here we do the simplified water surface if using either SWVS or FFP.
             create SimplifiedWaterSurface()
          else
             if ($useHWShader2Path)
-               create HighEndWaterSurface()               
+               create HighEndWaterSurface()
             else
                create RegularWavesHLSL()
             endif
          endif
-         
+
       end #end shader
-      
+
       # basic fallback.
       shader -layer $poolWaterLayer
-         create SimplifiedWaterSurface()          
+         create SimplifiedWaterSurface()
       end #end shader
-      
+
    end  #end material
 enddef
 
 define SimplifiedWaterSurface()
-   pass -fixedFunction      
+   pass -fixedFunction
       alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
       depthTest true -enableDepthWrite false
-      colorScalar (0.2,0.3,1.0) 0.4            
+      colorScalar (0.2,0.3,1.0) 0.4
       stage
          textureBlend select(colorScalar) select(colorScalar)
       end
@@ -94,7 +94,7 @@ enddef
 
 
 define RegularWavesHLSL()
-	
+
    #DRIVERBUG
    # The -clipAlways flag is needed to work around what appears to be a driver bug.
    # On NVIDIA GF2 class HW, the presence of the cube map texture in the pass below
@@ -107,14 +107,14 @@ define RegularWavesHLSL()
 	pass -clipAlways -modifiedEachFrameHint
 		#fillmode wireframe
 		alphaBlend srcFactor(one) add dstFactor(one)
-      seti textureLights (numLightsOfType(environmentCube))        
-   
+      seti textureLights (numLightsOfType(environmentCube))
+
 		shaderProgram -target vertexProgram -method compile -version 1_1
 
 			bindConstants 0 -bindingID geomToClip -constantCount 4
 			bindConstants 4 -bindingID geomToCamera -constantCount 3
 
-			bindConstants 7 -bindingID frameInfo 
+			bindConstants 7 -bindingID frameInfo
 
 			bindConstants 11 -bindingID immediateData -data ($wmXRepeat, 0, $wmXWaveHeight, $wmXSpeed)
 			bindConstants 12 -bindingID immediateData -data (0, $wmYRepeat, $wmYWaveHeight, $wmYSpeed)
@@ -125,11 +125,11 @@ define RegularWavesHLSL()
 			bindConstants 13 -bindingID immediateData -data ($xscale,$yscale, 1,0)
 			bindConstants 14 -bindingID allStandardLightData -constantCount 4 -constantType float
 			bindConstants 18 -bindingID cameraToGlobal -constantCount 3
-         
-         if (tsIsDay)         
-            bindConstants 25 -bindingID immediateData -data (0.75, 0.75, 0.75, 1)         
+
+         if (tsIsDay)
+            bindConstants 25 -bindingID immediateData -data (0.75, 0.75, 0.75, 1)
          else
-            bindConstants 25 -bindingID immediateData -data (0.2, 0.2, 0.2, 1)         
+            bindConstants 25 -bindingID immediateData -data (0.2, 0.2, 0.2, 1)
          endif
 
 			shaderSource
@@ -141,112 +141,112 @@ define RegularWavesHLSL()
 				float4x4 clipSpaceMatrix : register(c0);
 				float4x3 cameraSpaceMatrix : register(c4);
 				float4x3 cameraToGlobalMatrix : register(c18);
-				
+
             float4 nightColor: register(c25);
-            
+
 				float4 lightDirection : register(c14);
 				float4 lightColor : register(c15);
 				const static float4 refractionWeights={1,1,2,0};
-				
+
 				const static float4 layerBlue={0.3, 0.7, 1.0, 1};
-				
+
 				struct InputVertex
 				{
 					float3 position: POSITION0;
 					float3 normal : NORMAL0;
 				};
-				
+
 				struct OutputVertex
 				{
 					float4 clipPosition : POSITION;
 					float4 diffuseColor: COLOR0;
 					float4 specularColor: COLOR1;
 					float3 reflection : TEXCOORD0;
-					
+
 				};
-            
-		
-		
+
+
+
 				OutputVertex VertexMain( InputVertex inputVertex)
 				{
 					// Do	Y-direction	waves
 					// r0	= (x, y, z,	t)
-					
+
 					OutputVertex outputVertex;
-					
+
 					float4 posAndTime;
 					posAndTime.xyz = inputVertex.position;
 					posAndTime.w = frameInfo.w;
-					
+
 					float temp = dot(posAndTime, waveDataX);
-								
+
 					// z = h * sin(...)
 
 					float z;
 					// scale temp to fit -pi +pi range
 					//temp = temp *  (1 / (2 * 3.14159)) + 0.5;
-					
+
 					float3 waveNormal;
-					
+
 					z = sin(temp) * waveDataX.z + inputVertex.position.z;
-					
+
 					waveNormal.x = cos(temp) * waveDataHelper.x + inputVertex.normal.x;
-					
+
 					temp = dot(posAndTime, waveDataY);
 					//temp = temp *  (1 / (2 * 3.14159)) + 0.5;
-					
+
 					z +=  sin(temp) * waveDataY.z;
-					
+
 					waveNormal.y = cos(temp) * waveDataHelper.y + inputVertex.normal.y;
-					
+
 					waveNormal.z = inputVertex.normal.z;
-					
+
 					waveNormal = normalize(waveNormal);
-					
+
 					posAndTime.w = 1.0;
 					posAndTime.z = z;
-					
+
 					outputVertex.clipPosition = mul( posAndTime, clipSpaceMatrix);
-					
+
 					float3 cameraSpaceNormal = normalize(mul(waveNormal, cameraSpaceMatrix));
 
 					float3 cameraSpacePosition = mul( posAndTime, cameraSpaceMatrix);
-					
+
 					float3 viewVector = normalize(-cameraSpacePosition);
-					
+
 					float3 R = reflect(viewVector, cameraSpaceNormal);
-					
+
 					outputVertex.reflection = mul( -R, cameraToGlobalMatrix);
-					
-							
+
+
 					float fresnel = dot(viewVector , cameraSpaceNormal);
-							
+
 					float rdotl = saturate(dot(R, lightDirection));
-					
+
 					float I = pow(rdotl+0.1, 15); // fudge factor to punch up the highlights.
-					
-               nightColor = nightColor * 2;                           
-                           
+
+               nightColor = nightColor * 2;
+
 					outputVertex.diffuseColor = ((1.0 - fresnel) * saturate(nightColor) * 0.5) * layerBlue;
-					
+
 					outputVertex.specularColor = I;
 					return(outputVertex);
-					
+
 				}
 
 
-			endShaderSource  
+			endShaderSource
 		end # shaderProgram
-		
+
 		stage
 			texture $wmReflectionTexture
 			textureAddressing clamp clamp clamp
 			textureBlend multiply(texture diffuse) select(diffuse)
 		end
-      
-      
+
+
 		addSpecular true
-					
+
 	end # end pass
 
 
@@ -254,19 +254,19 @@ enddef
 
 
 define HighEndWaterSurface()
-   
+
 	pass -clipAlways -modifiedEachFrameHint
 		#fillmode wireframe
 		alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
-      seti textureLights (numLightsOfType(environmentCube))  
-      depthTest true -enableDepthWrite false          
-   
+      seti textureLights (numLightsOfType(environmentCube))
+      depthTest true -enableDepthWrite false
+
 		shaderProgram -target vertexProgram -method compile -version 1_1
 
 			bindConstants 0 -bindingID geomToClip -constantCount 4
 			bindConstants 4 -bindingID geomToCamera -constantCount 3
 
-			bindConstants 7 -bindingID frameInfo 
+			bindConstants 7 -bindingID frameInfo
 
 			bindConstants 11 -bindingID immediateData -data ($wmXRepeat, 0, $wmXWaveHeight, $wmXSpeed)
 			bindConstants 12 -bindingID immediateData -data (0, $wmYRepeat, $wmYWaveHeight, $wmYSpeed)
@@ -278,11 +278,11 @@ define HighEndWaterSurface()
 			bindConstants 14 -bindingID allStandardLightData -constantCount 4 -constantType float
 			bindConstants 18 -bindingID cameraToGlobal -constantCount 3
 			bindConstants 21 -bindingID cameraToGeom -constantCount 3
-         
-         if (tsIsDay)         
-            bindConstants 25 -bindingID immediateData -data (0.75, 0.75, 0.75, 1)         
+
+         if (tsIsDay)
+            bindConstants 25 -bindingID immediateData -data (0.75, 0.75, 0.75, 1)
          else
-            bindConstants 25 -bindingID immediateData -data (0.2, 0.2, 0.2, 1)         
+            bindConstants 25 -bindingID immediateData -data (0.2, 0.2, 0.2, 1)
          endif
 
 			shaderSource
@@ -295,107 +295,107 @@ define HighEndWaterSurface()
 				float4x3 cameraSpaceMatrix : register(c4);
 				float4x3 cameraToGlobalMatrix : register(c18);
 				float4x3 cameraToGeomMatrix : register(c21);
-				
-				
+
+
             float4 nightColor: register(c25);
-            
+
 				float4 lightDirection : register(c14);
 				float4 lightColor : register(c15);
 				float4 lightSpecular : register(c16);
 				const static float4 refractionWeights={1,1,2,0};
-				
+
 				const static float4 layerBlue={0.3, 0.7, 1.0, 1};
-				
+
 				struct InputVertex
 				{
 					float3 position: POSITION0;
 					float3 normal : NORMAL0;
 				};
-				
+
 				struct OutputVertex
 				{
-					float4 clipPosition : POSITION;					
-					float4 sPos         : TEXCOORD0;					
+					float4 clipPosition : POSITION;
+					float4 sPos         : TEXCOORD0;
 					float2 Wave0        : TEXCOORD1;
                float2 Wave1        : TEXCOORD2;
                float2 Wave2        : TEXCOORD3;
                float2 Wave3        : TEXCOORD4;
                float3 Eye          : TEXCOORD5;
-               float4 specular     : COLOR0;     
+               float4 specular     : COLOR0;
 				};
-            
-		
-		
+
+
+
 				OutputVertex VertexMain( InputVertex inputVertex)
 				{
 					// Do	Y-direction	waves
 					// r0	= (x, y, z,	t)
-					
+
 					OutputVertex outputVertex;
-					
+
 					float4 posAndTime;
 					posAndTime.xyz = inputVertex.position;
 					posAndTime.w = frameInfo.w;
-					
-					float temp = dot(posAndTime, waveDataX);					
-					float z = sin(temp) * waveDataX.z + inputVertex.position.z;															
-					temp = dot(posAndTime, waveDataY);										
-					posAndTime.z =  z + sin(temp) * waveDataY.z;									
-					posAndTime.w = 1.0f;					 
-										
+
+					float temp = dot(posAndTime, waveDataX);
+					float z = sin(temp) * waveDataX.z + inputVertex.position.z;
+					temp = dot(posAndTime, waveDataY);
+					posAndTime.z =  z + sin(temp) * waveDataY.z;
+					posAndTime.w = 1.0f;
+
 					outputVertex.clipPosition = mul( posAndTime, clipSpaceMatrix);
-					outputVertex.sPos = float4(0.5f*(outputVertex.clipPosition.ww - outputVertex.clipPosition.xy), outputVertex.clipPosition.ww);					
-					
-					float3 waveNormal = normalize(inputVertex.normal + float3(cos(temp)*waveDataHelper.xy, 0));															
-		         float3 cameraSpaceNormal = normalize(mul(waveNormal, cameraSpaceMatrix));					
-					float3 cameraSpacePosition = mul( posAndTime, cameraSpaceMatrix);					
-					float3 viewVector = normalize(-cameraSpacePosition);	
-					
+					outputVertex.sPos = float4(0.5f*(outputVertex.clipPosition.ww - outputVertex.clipPosition.xy), outputVertex.clipPosition.ww);
+
+					float3 waveNormal = normalize(inputVertex.normal + float3(cos(temp)*waveDataHelper.xy, 0));
+		         float3 cameraSpaceNormal = normalize(mul(waveNormal, cameraSpaceMatrix));
+					float3 cameraSpacePosition = mul( posAndTime, cameraSpaceMatrix);
+					float3 viewVector = normalize(-cameraSpacePosition);
+
 					float3 halfVector = normalize(viewVector + lightDirection);
-					outputVertex.specular = lightSpecular*pow(dot(cameraSpaceNormal, halfVector), 50)*nightColor*lightColor*0.5;									
-					
-					
+					outputVertex.specular = lightSpecular*pow(dot(cameraSpaceNormal, halfVector), 50)*nightColor*lightColor*0.5;
+
+
 					float2 fTranslation=float2(fmod(frameInfo.w, 100)*0.005, fmod(frameInfo.w, 100)*0.005);
                float2 vTexCoords = posAndTime.xy*0.05;
-                
-               // Output bump layers texture coordinates    
+
+               // Output bump layers texture coordinates
                float fSinTranslation=sin(fTranslation*100)*0.005;
                float2 vTranslation0=fTranslation+fSinTranslation;
                float2 vTranslation1=fTranslation-fSinTranslation;
                float2 vTranslation2=fTranslation;
-                
+
                // Scale texture coordinates to get mix of low/high frequency details
                outputVertex.Wave0.xy = vTexCoords.xy+fTranslation*2.0;
                outputVertex.Wave1.xy = vTexCoords.xy*2.0+fTranslation*4.0;
                outputVertex.Wave2.xy = vTexCoords.xy*7.0+fTranslation*2.0;
-               outputVertex.Wave3.xy = vTexCoords.xy*12.0+fTranslation;                															
-	                  	                  
+               outputVertex.Wave3.xy = vTexCoords.xy*12.0+fTranslation;
+
 	            // compute binormal
-	            float3 binormal = normalize(cross(waveNormal, float3(1.0f, 0.0f, 0.0f)));	            
+	            float3 binormal = normalize(cross(waveNormal, float3(1.0f, 0.0f, 0.0f)));
 	            float3 tangent = normalize(cross(binormal, waveNormal));
-	            
+
 	            // tangent space matrix
 	            float3x3 objToTangentSpace = float3x3(tangent, binormal, waveNormal);
-	            
+
 	            float3 viewVectorInObjSpace = mul(viewVector, (float3x3)cameraToGeomMatrix);
-	            
+
 	            outputVertex.Eye.xyz = mul(objToTangentSpace, viewVectorInObjSpace);
-												
-					
-					return(outputVertex);					
+
+
+					return(outputVertex);
 				}
 
 
-			endShaderSource  
+			endShaderSource
 		end # shaderProgram
-		
-		shaderProgram -target pixelProgram -method compile -version 2_0              
-         shaderSource                            
-            sampler reflect;  
-            sampler bump;          
+
+		shaderProgram -target pixelProgram -method compile -version 2_0
+         shaderSource
+            sampler reflect;
+            sampler bump;
             struct cInputPixel
-            {               
-               float4 sPos         : TEXCOORD0;               
+            {
+               float4 sPos         : TEXCOORD0;
                float2 Wave0        : TEXCOORD1;
                float2 Wave1        : TEXCOORD2;
                float2 Wave2        : TEXCOORD3;
@@ -403,14 +403,14 @@ define HighEndWaterSurface()
                float3 Eye          : TEXCOORD5;
                float4 specular     : COLOR0;
             };
-            
+
             float Fresnel(float NdotL, float fresnelBias, float fresnelPow, float facing)
-            {               
+            {
                return max(fresnelBias + (1.0f - fresnelBias)*pow(facing, fresnelPow), 0.0);
             }
-            
+
             float4 PixelMain(cInputPixel pi) : COLOR
-            {         
+            {
                float3 vEye = normalize(pi.Eye);
 
                // Get bump layers
@@ -418,38 +418,38 @@ define HighEndWaterSurface()
                float3 vBumpTexB = tex2D(bump, pi.Wave1.xy).xyz;
                float3 vBumpTexC = tex2D(bump, pi.Wave2.xy).xyz;
                float3 vBumpTexD = tex2D(bump, pi.Wave3.xy).xyz;
-                 
+
                // Average bump layers
                float3 vBumpTex=normalize(2.0 * (vBumpTexA.xyz + vBumpTexB.xyz + vBumpTexC.xyz + vBumpTexD.xyz)-4.0);
-                 
-               // Apply individual bump scale for refraction and reflection               
-               float3 vReflBump = vBumpTex.xyz * float3(0.1, 0.1, 1.0);  
-               
+
+               // Apply individual bump scale for refraction and reflection
+               float3 vReflBump = vBumpTex.xyz * float3(0.1, 0.1, 1.0);
+
                float4 vReflection = tex2Dproj(reflect, pi.sPos + float4(vReflBump.xy, 0.0f, 0.0f));//*0.001 + float4(2.0*vBumpTexD-1.0f.xxx, 1);
-               
+
                // Compute Fresnel term
                float NdotL = max(dot(vEye, vReflBump), 0);
                float facing = (1.0 - NdotL);
                float fresnel = Fresnel(NdotL, 0.2, 5.0, facing);
-                              
-               vReflection.a = fresnel;               
+
+               vReflection.a = fresnel;
                return saturate(vReflection + float4(0.0, 0.25, 0.5, 0.0) + pi.specular);
             }
          endShaderSource
-      end                                                     
-      
+      end
+
       sampler reflect
          texture "PoolReflection"
          textureAddressing clamp clamp
-      end		
-      
+      end
+
       sampler bump
          texture "poolShape-body-bump"
          textureAddressing tile tile
-      end   
-            
+      end
+
 	end # end pass
-   
+
 enddef
 
 
@@ -457,7 +457,7 @@ enddef
 
 
 
-# NOTE: 
+# NOTE:
 # refraction in vector terms:
 #   v  = incoming unit vector
 #   n  = surface normal
@@ -475,66 +475,66 @@ enddef
 
 define TiledTextureAnimShaderProgram(tilesX tilesY speed)
    shaderProgram -target vertexProgram -method assemble
-   
+
       bindConstants 0 -bindingID frameInfo            # for time in .w
       bindConstants 1 -data      (&tilesX, &tilesY, &speed, 1)         # tx, ty, speed
-      bindConstants 2 -data      ((1/&tilesX), (1/&tilesY), (&tilesY - 1), 1) # 1/tx 1/ty ty-1      
+      bindConstants 2 -data      ((1/&tilesX), (1/&tilesY), (&tilesY - 1), 1) # 1/tx 1/ty ty-1
       if (tsIsDay)
          bindConstants 3 -bindingID immediateData -data (0.75, 0.75, 0.75, 1)
       else
          bindConstants 3 -bindingID immediateData -data (0.2, 0.2, 0.2, 1)
       endif
-      
+
       shaderSource
          vs_1_1
          dcl_position v0
          dcl_texcoord v1
 
          mov oPos, v0  # clip space quad, no transforms needed.
-      
+
          # tiled texture animation
          mov r0, c0
          mul r1, c1.z, r0.w
          frc r5.y, r1.y
-         
+
          mul r1, c1.y, r5.y    # f -> [0, ty)
          frc r5.y, r1
          sub r3.y, r1, r5.y    # v' = floor(f)
-         
+
          mul r1, c1.x, r5.y    # f -> [0, tx)
          frc r5.y, r1
          sub r3.x, r1, r5.y    # u' = floor(f)
 
          add r8.xy, v1.xy,  r3.xy
          mul oT0.xy, r8.xy, c2.xy
-         
+
          mov oD0, c3 # also spit out diffuse color with modcolor information
-         
+
       endShaderSource
-   
-   end		
+
+   end
 enddef
 
-define CausticsGeneratorMaterial()   
-   material      
+define CausticsGeneratorMaterial()
+   material
       # This material updates a render target with the current frame
       # of the tile animation. This is the only way to handle a repeated
       # animating texture (not to mention using it for projective texturing)
       # in the absence of clip maps.
-      
-      create DetermineHardwareSupport()
-      
-      if ($causticsEnabled and $useFixedFunctionPath = false and $useSWVertexShaderPath = false)
-      
-         shader -layer +9999 
 
-            pass              
+      create DetermineHardwareSupport()
+
+      if ($causticsEnabled and $useFixedFunctionPath = false and $useSWVertexShaderPath = false)
+
+         shader -layer +9999
+
+            pass
                renderClipSpaceRect
-               
+
                renderTarget causticsTile -fixed (64, 64) -allocateDepthBuffer false -undo
 
                create TiledTextureAnimShaderProgram(8 4 1)
-               
+
                alphaBlend srcFactor(one) add dstFactor(zero)
                alphaTest false 0
                alphaTestFunction acceptIfGreater
@@ -542,15 +542,15 @@ define CausticsGeneratorMaterial()
                depthTest false -enableDepthWrite false
                depthTestFunction accept
 
-               # 7/24/2004 Fix bug with kRenderTypeNormal default stencil state and nv40.  
-               # It reads random stencil values even this target has no depth stencil target.               
+               # 7/24/2004 Fix bug with kRenderTypeNormal default stencil state and nv40.
+               # It reads random stencil values even this target has no depth stencil target.
                # This stencil call will break pixo, but pixo does not show caustics.
                stencil false
 
-               fillmode $stdMatFillMode                             
-               
-               shaderProgram -target pixelProgram -method compile -version 1_1               
-                  shaderSource                            
+               fillmode $stdMatFillMode
+
+               shaderProgram -target pixelProgram -method compile -version 1_1
+                  shaderSource
                      sampler caustics;
                      struct cInputPixel
                      {
@@ -558,28 +558,28 @@ define CausticsGeneratorMaterial()
                         float2 tc0 : TEXCOORD0;
                      };
                      float4 PixelMain(cInputPixel pi) : COLOR
-                     {         
-                        float4 texColor = tex2D(caustics, pi.tc0);                                                
-                        return texColor*pi.color;                        
+                     {
+                        float4 texColor = tex2D(caustics, pi.tc0);
+                        return texColor*pi.color;
                      }
                   endShaderSource
-               end                                                     
-               
+               end
+
                sampler 0
                   texture causticsTiled
-                  textureAddressing tile tile                  
+                  textureAddressing tile tile
                end
-                              
-            end   
+
+            end
          end
       else
          shader
-         
+
          end
       endif
    end
 enddef
- 
+
 setf causticsStrength 0.8
 setf causticsBaseStrength 0.5
 
@@ -592,16 +592,16 @@ setf causticsBaseStrength 0.5
 # Pool surface materials
 materialDefinition "poolWater-0"
    setDefinition PoolWaterSurfaceMaterial
-   addParam stdMatDiffCoef (0, 0, 1)   
+   addParam stdMatDiffCoef (0, 0, 1)
    addParam wmRefractionEnabled true
 end
 
 materialDefinition "poolWater-1"
-   setDefinition PoolWaterSurfaceMaterial   
+   setDefinition PoolWaterSurfaceMaterial
    addParam stdMatLightingEnabled false
    addParam stdMatLayer 0
-   
-   addParam stdMatDiffCoef (1, 1, 1)   
+
+   addParam stdMatDiffCoef (1, 1, 1)
 
    addParam wmReflectionTexture swimming_pool-envcube
 
@@ -609,29 +609,29 @@ materialDefinition "poolWater-1"
 
    addParam wmXSpeed        3
    addParam wmXRepeat       5
-   addParam wmXWaveHeight   0.01 
-   
+   addParam wmXWaveHeight   0.01
+
    addParam wmYSpeed        3
    addParam wmYRepeat       6
-   addParam wmYWaveHeight   0.01 
+   addParam wmYWaveHeight   0.01
 end
 
 materialDefinition "poolWater-2"
    setDefinition PoolWaterSurfaceMaterial
    addParam stdMatLightingEnabled false
    addParam stdMatLayer 0
-   
-   addParam stdMatDiffCoef (0, 0, 1)   
+
+   addParam stdMatDiffCoef (0, 0, 1)
 
    addParam wmTransparency 0.5
 
    addParam wmXSpeed        3
    addParam wmXRepeat       12
-   addParam wmXWaveHeight   0 #0.02 
-   
+   addParam wmXWaveHeight   0 #0.02
+
    addParam wmYSpeed        3
-   addParam wmYRepeat       12 
-   addParam wmYWaveHeight   0 # 0.02 
+   addParam wmYRepeat       12
+   addParam wmYWaveHeight   0 # 0.02
 end
 
 materialDefinition "poolWater-4"
@@ -645,11 +645,11 @@ end
 # this is here soley because the layering on standard material
 # is too constrained. We need a layer less than 7, or we'll
 # render over transparent areas of Sims (e.g. hair) when
-# they're in the pool at a shallow view angle. 
+# they're in the pool at a shallow view angle.
 setc poolLayerColour (0, 0.5, 1.0, 1.0)
 define PoolDepthLayerMaterial()
-   material     
-      create DetermineHardwareSupport() 
+   material
+      create DetermineHardwareSupport()
       if ($useSWVertexShaderPath or $useFixedFunctionPath)
          shader
          end
@@ -657,7 +657,7 @@ define PoolDepthLayerMaterial()
          shader -layer $poolWaterLayer
             validateRenderShaderContext -vertexFormat position 0 required
             validateRenderShaderContext -vertexFormat texcoord 0 required
-            
+
             pass
                alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
 			      depthTest true -enableDepthWrite false
@@ -665,43 +665,43 @@ define PoolDepthLayerMaterial()
                shaderProgram -target vertexProgram -method compile -version 1_1
                   bindConstants 0 -bindingID geomToClip -constantCount 4
                   bindConstants 4 -bindingID immediateData -data ($poolLayerColour)
-                  
+
                   shaderSource
                      float4x4 clipSpaceMatrix      : register(c0);
                      float4   poolLayer            : register(c4);
-                     
+
                      struct cVertexIn
                      {
-                        float3 mPosition : POSITION0;   
-                        float2 alpha     : TEXCOORD0;                  
+                        float3 mPosition : POSITION0;
+                        float2 alpha     : TEXCOORD0;
                      };
-                     
+
                      struct cVertexOut
                      {
-                        float4 mClipPosition : POSITION;                     
+                        float4 mClipPosition : POSITION;
                         float4 mColor        : COLOR0;
                      };
-                     
+
                      cVertexOut VertexMain(cVertexIn vertexIn)
-                     {                 
-                        cVertexOut result;                                                                        
-                        result.mClipPosition = mul(float4(vertexIn.mPosition, 1), clipSpaceMatrix);                     
-                        result.mColor = float4(poolLayer.r, poolLayer.g, poolLayer.b, poolLayer.a * vertexIn.alpha.x); 
-                        return result;         
+                     {
+                        cVertexOut result;
+                        result.mClipPosition = mul(float4(vertexIn.mPosition, 1), clipSpaceMatrix);
+                        result.mColor = float4(poolLayer.r, poolLayer.g, poolLayer.b, poolLayer.a * vertexIn.alpha.x);
+                        return result;
                      }
-                     
+
                   endShaderSource
-               end                       
-               
+               end
+
                shaderProgram -target pixelProgram -method compile -version 1_1
-                  shaderSource                  
+                  shaderSource
                      float4 PixelMain(float4 color : COLOR) : COLOR
-                     {                                             
+                     {
                         return color;
                      }
                   endShaderSource
-               end                        
-            end         
+               end
+            end
          end
       endif
    end
@@ -709,20 +709,20 @@ enddef
 
 materialDefinition "poolWaterLayer-0"
    # this layer does nothing but create the caustics tile.
-   setDefinition CausticsGeneratorMaterial   
-end 
+   setDefinition CausticsGeneratorMaterial
+end
 
 materialDefinition "poolWaterLayer-1"
-   setDefinition PoolDepthLayerMaterial   
+   setDefinition PoolDepthLayerMaterial
    addParam poolLayerColour (0, 0.5, 1.0, 0.2)
 end
-materialDefinition "poolWaterLayer-2" 
-   setDefinition PoolDepthLayerMaterial  
-   addParam poolLayerColour (0, 0.5, 1.0, 0.2)    
+materialDefinition "poolWaterLayer-2"
+   setDefinition PoolDepthLayerMaterial
+   addParam poolLayerColour (0, 0.5, 1.0, 0.2)
 end
 materialDefinition "poolWaterLayer-3"
    setDefinition PoolDepthLayerMaterial
-   addParam poolLayerColour (0, 0.5, 1.0, 0.5)   
+   addParam poolLayerColour (0, 0.5, 1.0, 0.5)
 end
 
 materialDefinition mtl_0
@@ -730,8 +730,8 @@ materialDefinition mtl_0
 end
 
 materialDefinition "lightingwallpoolsimple_reflective"
-   setDefinition StandardMaterial   
-   addParam   stdMatDiffCoef (0.8, 0.8, 0.8)   
+   setDefinition StandardMaterial
+   addParam   stdMatDiffCoef (0.8, 0.8, 0.8)
    addParam   stdMatAlphaMultiplier 1.0
    addParam   stdMatAlphaBlendMode none
    addParam   stdMatSpecCoef 0.091,0.091,0.091

@@ -7,19 +7,19 @@ define PixelShader2Rendering(normalMapFlag pixelLightCount)
 	#fillmode wireframe
 
 	create StandardShaderFBAlphaState($stdMatAlphaBlendMode)
-	
+
 	set cutoutTexture false
-   
+
 	if (strcmp("${stdMatCutoutTextureName}", "0") != 0)
 		setb cutoutTexture true
 	endif
-   
+
 
 	shaderProgram -target pixelProgram -method assemble
 
 # in FFblending, this is the "ColorScalar" (D3DRS_TEXTUREFACTOR), here,	it's a constant.
-	
-	if ($stdMatBaseTextureEnabled) 
+
+	if ($stdMatBaseTextureEnabled)
 		bindConstants 2	-bindingID immediateData -data (1,1,1,$stdMatAlphaMultiplier) -constantType	float
 	else
 		setf alpha ($stdMatUntexturedDiffAlpha * $stdMatAlphaMultiplier)
@@ -29,44 +29,44 @@ define PixelShader2Rendering(normalMapFlag pixelLightCount)
 	bindConstants 11 -bindingID	immediateData -data	($finalShaderDiffuse,  1) -constantType	float
 
    seti localPerPixelLightCount (&pixelLightCount)
-	
+
    if ($vs2LoopsFunctional)
       bindConstants 12 -bindingID perPixelLightColors -constantType float -constantCount 3
       if (&normalMapFlag)
          seti localPerPixelLightCount 3
       endif
-      
+
    else
       bindConstants 12 -bindingID	allStandardLightColors -constantCount 4	-constantType float
    endif
-   
+
 
 	setv3 finalShaderSpecular ($stdMatSpecCoef.xyz)
-	
+
 	setf adjustedSpecularPower ($stdMatSpecPower * 0.2)
-	
+
 	bindConstants 16 -bindingID	immediateData -data	($finalShaderSpecular, $adjustedSpecularPower)
-   
+
    seti	textureLightCount (numLightsOfType(environmentCube))
    #trace "$currentMaterialName	envcube	light count: $textureLightCount"
-   
+
    if ($textureLightCount)
 	  bindConstants	17 -bindingID allTextureLights -constantCount 1
    endif
-   
-   
+
+
 # cube map scalar.
 	setv3 cubeCoef (($stdMatEnvCubeCoef).xyz)
 	bindConstants 3	-bindingID immediateData -data ($cubeCoef, $stdMatUntexturedDiffAlpha) -constantType float
-	
+
 	if ($stdMatShapeColorIndex = 0)
 		#trace "Shape color	active for $currentMaterialName"
-		bindConstants 4	-bindingID shapeColorIndex0	
+		bindConstants 4	-bindingID shapeColorIndex0
 	else
 		bindConstants 4	-bindingID immediateData -data (1,1,1,1)
 	endif
-	
-	
+
+
 	if ($stdMatLightingEnabled = false and $stdMatBaseTextureEnabled = false)
 		shaderSource
 			ps_2_0
@@ -77,22 +77,22 @@ define PixelShader2Rendering(normalMapFlag pixelLightCount)
 	else
 
 		shaderSource
-		
+
 			ps_2_0
       endShaderSource
-      
+
       if ($stdMatBaseTextureEnabled)
 			shaderSource "dcl	t0.xy	 ; a 2D	texture	coordinate"
       endif
-      
+
       shaderSource
 			dcl	t2.xyz ; a high	precision diffuse color
 			dcl	t3.xyz ; a high	precision specular color
 		endShaderSource
-		
+
 		if ($cubeMappingEnable)
          #trace "$currentMaterialName  cubemap on in PS"
-         shaderSource 
+         shaderSource
 				dcl	t1.xyz	  ;	a 3D vector	for	cubemap	lookups
 				dcl_cube	s2
 			endShaderSource
@@ -101,8 +101,8 @@ define PixelShader2Rendering(normalMapFlag pixelLightCount)
 		if ($stdMatSpecMaskTextureEnabled)
 			shaderSource "dcl_2d		s1"
 		endif
-	  
-	  
+
+
 		if (&normalMapFlag)
 			shaderSource
 				dcl_2d		s4
@@ -110,32 +110,32 @@ define PixelShader2Rendering(normalMapFlag pixelLightCount)
 				dcl	t4.xyz	   ; light 1
 				dcl	t5.xyz	   ; light 2
          endShaderSource
-         
+
          if ($localPerPixelLightCount> 2)
             shaderSource
                dcl	t6.xyz	   ; light 3
             endShaderSource
          endif
-         
+
 		endif
-		
+
 		if ($cutoutTexture)
 			shaderSource "dcl_2d		s3	; cutout"
 		endif
-		
+
 		shaderSource
 			dcl_2d		s0	; base texture
-		
+
 			def	c0,	0, 0.5,	1, 2
 			def	c1,	4,0,0,0
-		
+
 		endShaderSource
-		
+
 # r9 = base	texture	or base	color
 # r10 =	the	diffuse	lighting
 # r11 =	the	specular lighting, if any
 # r8 = the current final color
-				
+
 		if ($cutoutTexture)
 			shaderSource
 				texld r0, t0, s3
@@ -144,56 +144,56 @@ define PixelShader2Rendering(normalMapFlag pixelLightCount)
 				texkill	r1
 			endShaderSource
 		endif
-		
+
 		if ($stdMatSpecMaskTextureEnabled)
 			shaderSource
 				texld r11, t0, s1  ; sample	the	specular mask.
 				mul	r11.xyz, t3, r11.a	; apply	the	result to  the specular	color.
 			endShaderSource
 		else
-			shaderSource 
+			shaderSource
 				mov	r11.xyz, t3	  ;	put	specular into it's holder register (r10	= diff,	r11	= spec)
 			endShaderSource
 		endif
-		
+
 # load the base	texture, or	white if none is present
 		if ($stdMatBaseTextureEnabled)
-			shaderSource 
+			shaderSource
 				texld r9, t0, s0
-				
+
 				mul	r9.a, r9.a,	c2.a
 			endShaderSource
 		else
-# if there is no texture, then use the current 'colorScalar', which	is set above.	
-			shaderSource 
+# if there is no texture, then use the current 'colorScalar', which	is set above.
+			shaderSource
 				mov	r9,	c2
 			endShaderSource
 		endif
-		
+
 # preload the diffuse temp register	with the incoming diffuse
-		shaderSource 
+		shaderSource
 			mov	r10.xyz, t2	; no clamping...
 		endShaderSource
-	
-# if 'diffuse radiance'	case, then sample the cubemap, and add it to the current diffuse 
+
+# if 'diffuse radiance'	case, then sample the cubemap, and add it to the current diffuse
 		if (strcmp("${stdMatEnvCubeMode}", "diffuseRadiance") =	0)
 			shaderSource
 				texld r2, t1, s2
 				mad	r10.xyz, r2, c2, r10   # apply scalar, and add to diffuse.
 			endShaderSource
 		endif
-		
+
 # check	for	alpha *	base color
 		if ($stdMatBaseTextureAlphaReplicate)
-			shaderSource 
+			shaderSource
 				mov	r9,	r9.a
 			endShaderSource
 		endif
-	
+
 		if (&normalMapFlag)
-	
+
 			#trace "$currentMaterialName  PS2 bumpmap enabled, lights: &pixelLightCount"
-	
+
 			if ($localPerPixelLightCount = 3)
 				create ThreeAttenuatedLightsBumpDiffuse()
 			endif
@@ -209,57 +209,57 @@ define PixelShader2Rendering(normalMapFlag pixelLightCount)
 		endif
 
 
-		
+
 # start	computing the final	color,	Base Texture * diffuse lighting.
 
-		shaderSource 
+		shaderSource
 
 			mul	r8.rgb,	r9,	r10
-		
+
 			mov	r8.a, r9.a
 		endShaderSource
 
 # consider specular	adds now
 
 		if ($stdMatSpecPower !=	0)
-			shaderSource 
+			shaderSource
 				add	r8.xyz,	r8,	r11
 			endShaderSource
 		endif
 
-	
+
 # reflection based lookup, T1 will be a	reflection vector from the VS
 		if ( $cubeMappingEnable	)
-		
+
 			if (strcmp("${stdMatEnvCubeMode}", "reflection") = 0)
 
 			   # specular like reflection map
 			   shaderSource	"texld r2, t1, s2	 ; sample the current cube map"
-			   
+
 			   if ($textureLightCount)
 				  shaderSource "mul	r2.rgb,	r2,	c17"
 			   endif
-				  
+
 			   shaderSource	"mad r8.xyz, r2, c3, r8	  ;	add	to the current color."
-				
+
 			endif
-			
+
 		endif
-		
-		 
-	  if ($stdMatShapeColorIndex = 0)	
+
+
+	  if ($stdMatShapeColorIndex = 0)
 		 shaderSource "mul r8, r8, c4 ;	apply shapeColor, if active."
 	  endif
-		 
+
 		shaderSource "mov oC0, r8"
-				
-				
+
+
 	endif
 
-		
+
 	end	 #end shader program
-	
-	
+
+
 	if ($stdMatBaseTextureEnabled)
 		sampler 0
 			texture $stdMatBaseTextureName	${stdMatBaseTextureParam}
@@ -287,7 +287,7 @@ define PixelShader2Rendering(normalMapFlag pixelLightCount)
 
 		if ($cutoutTexture)
 			sampler	3
-				texture	$stdMatCutoutTextureName  
+				texture	$stdMatCutoutTextureName
 				textureAddressing $stdMatCutoutTextureAddressingU $stdMatCutoutTextureAddressingV $stdMatCutoutTextureAddressingW
 			end
 		endif
@@ -314,17 +314,17 @@ define ThreeAttenuatedLightsBumpDiffuse()
 				texld r0, t0, s4
 				mad	r0.xyz,	r0,	c0.w, -c0.z	; Emulate _BX2
 				nrm	r1.xyz,	r0
-															
+
 				dp3_sat	r2.x, r1, t4 ; N.L for light 1
 				dp3_sat	r2.y, r1, t5 ; N . L  #2
 				dp3_sat	r2.z, r1, t6  ;	N .	L  #3
-				
+
 				mul	r4.rgb,	r2.x, c12  //apply light 1 color
 				mad	r4.rgb,	r2.y, c13, r4  ; light 2 color
 				mad	r4.rgb,	r2.z, c14, r4  ; light 3 color
-			
+
 				mad	r10.rgb, r4, c11, r10 ;	apply material color
-				
+
 			endShaderSource
 
 enddef
@@ -335,15 +335,15 @@ define TwoAttenuatedLightsBumpDiffuse()
 				texld r0, t0, s4
 				mad	r0.xyz,	r0,	c0.w, -c0.z	; Emulate _BX2
 				nrm	r1.xyz,	r0
-					
+
 				dp3_sat	r2.x, r1, t4 ; N.L for light 1
 				dp3_sat	r2.y, r1, t5 ; N . L  #2
 
 				mul	r4.rgb,	r2.x, c12  //apply light 1 color
 				mad	r4.rgb,	r2.y, c13, r4  ; light 3 color
-			
+
 				mad	r10.rgb, r4, c11, r10 ;	apply material color
-				
+
 			endShaderSource
 
 enddef
@@ -354,18 +354,13 @@ define OneAttenuatedLightBumpDiffuse()
 				texld r0, t0, s4
 				mad	r0.xyz,	r0,	c0.w, -c0.z	; Emulate _BX2
 				nrm	r1.xyz,	r0
-					
+
 				dp3_sat	r2.x, r1, t4 ; N.L for light 1
-				
+
 				mul	r4.rgb,	r2.x, c12  // apply	light 1	color
-				
+
 				mad	r10.rgb, r4, c11, r10 ;	apply material color
-				
+
 			endShaderSource
 
 enddef
-
-
-
-
-

@@ -21,7 +21,7 @@ define ShadowShader()
 
          pass -fixedFunction
             create LightingStatesNoStdLights()
-            
+
             ffMatCoef -amb $stdMatDiffCoef -diff $stdMatDiffCoef -emit $stdMatEmissiveCoef -spec $stdMatSpecCoef -specPow $stdMatSpecPower
             addSpecular false
 
@@ -30,7 +30,7 @@ define ShadowShader()
             else
                alphaBlend srcFactor(destColor) add dstFactor(zero)
             endif
-            
+
             depthTest true -enableDepthWrite false
             fillmode $stdMatFillMode
 
@@ -40,7 +40,7 @@ define ShadowShader()
                textureMIPFilterHint disabled
                ffTextureCoordsSource 0
                textureBlend select(texture) select(texture)
-            end 
+            end
          end
       end
    end
@@ -56,11 +56,11 @@ define ProjectiveShadowDef()
 
          pass -fixedFunction
             create LightingStatesNoStdLights()
-            
+
             addSpecular false
 
             alphaBlend srcFactor(one) add dstFactor(invSrcAlpha)
-            
+
             fillmode $stdMatFillMode
 
             colorScalar $shadowColor $shadowStrength
@@ -71,8 +71,8 @@ define ProjectiveShadowDef()
                textureAddressing clamp clamp
                textureMIPFilterHint disabled
                textureBlend multiply(colorScalar texture:alphaReplicate) multiply(colorScalar texture)
-            end 
-            
+            end
+
             # apply mask to prevent repeat off to infinity.
             stage
                texture overlayMask
@@ -87,7 +87,7 @@ define ProjectiveShadowDef()
       end
    end
 enddef
- 
+
 
 materialDefinition ProjectiveShadow
    setDefinition ProjectiveShadowDef

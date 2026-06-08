@@ -5,13 +5,13 @@ define SimMaterialTransformSetupSWVS(eyeShifterEnable)
 
 	create BindsForSoftwareVSTransforms($doSkinning $doMorphing)
 	set lightingMode $kFullLighting
-		
+
 	if ($totalLights = 0)
 		set lightingMode $kAmbientOnly
 		setb transformNormals false
 	endif
-	
-			
+
+
 	create BindsForLighting($lightingMode)
 
 	if (&eyeShifterEnable)
@@ -19,45 +19,45 @@ define SimMaterialTransformSetupSWVS(eyeShifterEnable)
 	endif
 
 	# skinning can be turned off for some sim cases, like CAS, so I have to honor this setting.
-		
+
 	create TransformFragments($doSkinning $stdMatReduceBoneWeights true $doMorphing $numPosMorphs $numNormMorphs $transformNormals 2_x)
-	
+
 	# hasTangents is a good substitute for a bumpmapping flag on the sim materials, since it always tends to be on.
 	# create a tangent space matrix to transform our light vectors.
-		
+
 	if ($totalLights > 0)
 		create StandardLightFragmentsSWVS(false 2_x)
 	else
 		set stdMatEnvCubeMode none
 		shaderFragment AmbientLighting2_x
 	endif
-	
-	
+
+
 	if (&eyeShifterEnable)
 		shaderFragment EyeShifterTexGen2_x
-	else 
-	
+	else
+
 		if (strcmp("${stdMatEnvCubeMode}", "none") = 0)
 			if ($hasTexcoords)
 				shaderFragment NoTextureMagic2_x
 			endif
-			
+
 		else
 			if ($hasTexcoords)
 				shaderFragment NoTextureMagic2_x
 			endif
-		
-		
-			if ($transformNormals)		
+
+
+			if ($transformNormals)
 				shaderFragment CreateReflectionVector2_x
 				shaderFragment TexgenReflectionVector2_x
 			endif
-			
+
 		endif
-		
+
 	endif
-	
-		
+
+
 enddef
 
 
@@ -69,29 +69,29 @@ enddef
 define SWVSGhostPass()
 
 	pass
-      
+
 		depthTest true -enableDepthWrite true
-	#	colorWriteEnable -red false -green false -blue false -alpha false		
+	#	colorWriteEnable -red false -green false -blue false -alpha false
 		alphaBlend srcFactor(zero) add dstFactor(one)
 
 		alphaTest true 128
 		alphaTestFunction acceptIfGreaterOrEqual
-      
+
 		shaderProgram -target vertexProgram -method link
 			create BindsForSoftwareVSTransforms($doSkinning $doMorphing)
 			create TransformFragments($doSkinning $stdMatReduceBoneWeights true $doMorphing $numPosMorphs $numNormMorphs false 2_x)
 			shaderFragment NoTextureMagic2_x
 		end
-		
+
 		stage
 			texture $stdMatBaseTextureName
 			textureBlend select(texture) select(texture)
 			textureAddressing clamp clamp clamp
 		end
-      
-      
+
+
 	end #end pass
-	
+
 enddef
 
 
@@ -100,7 +100,7 @@ enddef
 
 define CreateSimStandardMaterialSWVS()
 
-	
+
 	material
 
 		setb alphaBlendingOn false
@@ -111,56 +111,56 @@ define CreateSimStandardMaterialSWVS()
          if (strcmp("${stdMatAlphaBlendMode}", "none"))
             setb alphaBlendingOn true
          endif
-         
+
          if (numLightsOfType(${kShapeColorLight}) > 0)
             setb alphaBlendingOn true
          endif
-         
+
          seti  layerNumber ($stdMatLayer	* 18	+ ($alphaBlendingOn ? 17 : 0))
-   
+
          ##trace "Dx9 sim standard: $currentMaterialName, layer : $layerNumber alphaBlend: $alphaBlendingOn"
-   
+
          shader -layer $layerNumber
-   
+
             create SimMaterialSetup()
-   
+
             if (numLightsOfType(${kShapeColorLight}) > 0)
                seti shapeColorLightCount (numLightsOfType(${kShapeColorLight}))
                ##trace "Sim standard, shape color count: $shapeColorLightCount"
                seti stdMatShapeColorIndex 0
             endif
-               
+
             if ($stdMatShapeColorIndex = 0)
                set stdMatAlphaBlendMode blend
                ##trace "Sim standard with shapeColor active"
                create SWVSGhostPass()
             endif
-   
+
             #trace "SimStandardDX9, tangents: $hasTangents"
-   
+
             setb localNormalMappingFlag false
-            seti perPixelLightCount 0 
-               
+            seti perPixelLightCount 0
+
             if ($stdMatNormalMapTextureEnabled)
                if ($hasTangents)
                   setb localNormalMappingFlag true
                endif
             endif
-               
+
             pass
-                        
+
                fillmode $stdMatFillMode
-               
+
                #fillmode wireframe
-               
+
                create NonStandardLighting()
-   
+
                create StandardShaderFBAlphaState($stdMatAlphaBlendMode)
-   
+
                shaderProgram -target vertexProgram -method link
                   create SimMaterialTransformSetupSWVS(false)
                end
-               
+
                if ($stdMatBaseTextureEnabled)
                   stage
                      textureBlend multiplyScale2(texture diffuse) select(texture)
@@ -173,63 +173,63 @@ define CreateSimStandardMaterialSWVS()
                      textureBlend multiplyScale2(colorScalar diffuse) select(colorScalar)
                   end
                endif
-               
+
             end #end the pass
-            
-            if (viewerRenderType = $kRenderTypeThumbnail)			   
-               pass                           
+
+            if (viewerRenderType = $kRenderTypeThumbnail)
+               pass
                   shaderProgram -target vertexProgram -method link
                      create SimMaterialTransformSetupSWVS(false)
                   end
-                  
-			         alphaBlend srcFactor(srcAlpha) add dstFactor(one)								
-			         stage                  
+
+			         alphaBlend srcFactor(srcAlpha) add dstFactor(one)
+			         stage
                         texture	$stdMatBaseTextureName
                         colorScalar (0, 0, 0, 1)
-                        textureBlend select(colorScalar) select(texture)                  
-                  end                                               
+                        textureBlend select(colorScalar) select(texture)
+                  end
                end #end the pass
             endif
          end # end shader
-         
+
          if ($appInDebugMode = false)
             shader -layer $layerNumber
-               
+
                create SimMaterialSetup()
-      
-                  
+
+
                #trace "SimStandardDX9, tangents: $hasTangents"
-      
+
                setb localNormalMappingFlag false
-               seti perPixelLightCount 0 
-                  
+               seti perPixelLightCount 0
+
                if ($stdMatNormalMapTextureEnabled)
                   if ($hasTangents)
                      setb localNormalMappingFlag true
                   endif
                endif
-                  
+
                pass
 
                   create NonStandardLighting()
-      
+
                   create StandardShaderFBAlphaState($stdMatAlphaBlendMode)
-      
+
                   shaderProgram -target vertexProgram -method link
                      create SimMaterialTransformSetupSWVS(false)
                   end
-                  
-                  
+
+
                   colorScalar $finalShaderDiffuse 1
                   stage
                      textureBlend multiplyScale2(colorScalar diffuse) select(colorScalar)
                   end
-                              
-                  
+
+
                end #end the pass
             end # end shader
          endif # debug mode test
-         
+
       endif #shadow or not
    end #end the material
 enddef
@@ -241,29 +241,25 @@ enddef
 
 define SimShadowSWVS()
 	shader
-	
+
 		validateRenderShaderContext -viewerRenderType $kRenderTypeShadow
 
 		create SimMaterialSetup()
 
 		pass
-	
+
 			shaderProgram -method link -target vertexProgram
 				create BindsForSoftwareVSTransforms(true $doMorphing)
 				create TransformFragments($doSkinning true true $doMorphing $numPosMorphs $numNormMorphs true 2_x)
 			end
-			
+
 			colorScalar $stdMatShadowColor
-         
-			stage 
+
+			stage
             textureBlend select(colorScalar) select(colorScalar)
          end
-		
+
 		end
-	
+
 	end
 enddef
-
-
-
-

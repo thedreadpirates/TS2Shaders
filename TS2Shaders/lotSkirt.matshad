@@ -17,10 +17,10 @@ define LotSkirtMaterialDefinition()
    create DetermineHardwareSupport()
    seti snowLevel (tsHasSnow)
    if (($useHWShader2Path or $useHWShader1Path) and $snowLevel > 1)
-		create LotSkirtMaterialDefinitionVSPS1()		
-	else   
+		create LotSkirtMaterialDefinitionVSPS1()
+	else
       create LotSkirtMaterialDefinitionFF()
-   endif      
+   endif
 enddef
 
 
@@ -31,40 +31,40 @@ define LotSkirtMaterialDefinitionFF()
 
    material
       setc stdMatDiffCoef $terrainMatDiffCoef
-      
+
       shader -layer ($lotSkirtLayer * 8)
          validateRenderShaderContext -vertexFormat position      0 required
          validateRenderShaderContext -vertexFormat normal        0 required
          validateRenderShaderContext -vertexFormat texcoord      0 required
 
-      
+
          # not all lots seem to have this data, causing validation errors, making this a dynamic predicate solves this problem.
          setb  hasColor (hasVertexFormat(color,0))
          if ($hasColor)
             validateRenderShaderContext -vertexFormat      color   0 required
-         endif                  
-                
+         endif
+
          pass -fixedFunction
             create LightingStates()
-            
+
             depthTestFunction acceptIfLessOrEqual
             ffDepthOffset -1
 
             create AttenuatedMatCoef(1.0)
             alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
-            fillmode $stdMatFillMode                        
-            
+            fillmode $stdMatFillMode
+
             seti currSeason 4
-            
+
             if (tsIsDay)
                seti currSeason (tsSeasonEnum)
                colorScalar (0.965,0.965,1,1)
             else
-               colorScalar (0.96,0.96,0.96,1) 
+               colorScalar (0.96,0.96,0.96,1)
             endif
-                        
 
-            if (not tsIsCloudy)                           
+
+            if (not tsIsCloudy)
                if ($currSeason = $kFall)
                   colorScalar (1,0.95,0.95,1)
                elseif ($currSeason = $kSpring)
@@ -74,372 +74,372 @@ define LotSkirtMaterialDefinitionFF()
                elseif ($currSeason = $kSummer)
                   colorScalar (1,1,1,1) #summer
                else
-                  colorScalar (0.96,0.96,0.96,1) 
+                  colorScalar (0.96,0.96,0.96,1)
                endif
             endif
-               
+
             stage
                texture $surfaceTexture
                textureAddressing tile tile
 
                textureBlend multiply(texture diffuse) select(diffuse)
-            end        
-            
-            
+            end
+
+
             stage
                textureBlend multiply(colorScalar outRegister) select(outRegister)
             end
-         end       
-        
+         end
+
         seti snowLevel (tsHasSnow)
         seti hailLevel (tsHasHail)
-        
+
         if ($snowLevel >= 1 or $hailLevel >= 1)
             pass -fixedFunction
                alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
-               
+
                create LightingStates()
-            
+
                create AttenuatedMatCoef(1.0)
-               fillmode $stdMatFillMode      
+               fillmode $stdMatFillMode
                ffDepthOffset 1
-               depthTest true -enableDepthWrite false            
-               depthTestFunction acceptIfLessOrEqual      
-               
+               depthTest true -enableDepthWrite false
+               depthTestFunction acceptIfLessOrEqual
+
                setv2 scaleStage1 (23, 23)
-               
+
                if (tsIsDay)
                   colorScalar (0.5, 0.5, 0.52, 1)
                else
                   colorScalar (0.15, 0.15, 0.375, 1)
                endif
-                              
-                                 
+
+
                stage
                   if ($snowLevel = 1)
                      texture "snow-light-pass2"
                      textureAddressing tile tile
                      ffTextureCoordsSource fromPosition
-                     ffTextureMatrix -cameraToGlobal -scalev $scaleStage1 -invert               
+                     ffTextureMatrix -cameraToGlobal -scalev $scaleStage1 -invert
                      textureBlend select(texture) select(texture)
                   elseif ($hailLevel = 1)
                      texture "hail-ground-surface"
                      setv2 scaleStage1 (4, 4)
                      textureAddressing tile tile
                      ffTextureCoordsSource fromPosition
-                     ffTextureMatrix -cameraToGlobal -scalev $scaleStage1 -invert               
+                     ffTextureMatrix -cameraToGlobal -scalev $scaleStage1 -invert
                      textureBlend select(texture) select(texture)
                   else
-                     texture "snow-ground-diffuse"                 
+                     texture "snow-ground-diffuse"
                      setv2 scaleStage1 (2, 2)
                      textureAddressing tile tile
                      ffTextureCoordsSource fromPosition
-                     ffTextureMatrix -cameraToGlobal -scalev $scaleStage1 -invert               
+                     ffTextureMatrix -cameraToGlobal -scalev $scaleStage1 -invert
                      textureBlend multiply(texture colorScalar) select(colorScalar)
-                  endif                                    
+                  endif
                end
-               
-               if ($snowLevel = 1)              
+
+               if ($snowLevel = 1)
                   stage
                      texture "snow-light-pass1"
                      textureAddressing tile tile
                      ffTextureMatrix  -cameraToGlobal -scalev (17, 17) -invert
                      ffTextureCoordsSource fromPosition
                      textureBlend add(texture outRegister) add(texture outRegister)
-                  end                                 
-               endif                 
-               
-               if ($hailLevel = 1)              
+                  end
+               endif
+
+               if ($hailLevel = 1)
                   stage
                      texture "hail-ground-surface"
                      textureAddressing tile tile
                      ffTextureMatrix  -cameraToGlobal -scalev (3, 3) -invert
                      ffTextureCoordsSource fromPosition
                      textureBlend add(texture outRegister) add(texture outRegister)
-                  end                                 
-               endif                 
-               
-               if ($snowLevel = 1)
-                  if (not tsIsDay)                  
-                     stage 
-                        textureBlend multiply(diffuse outRegister) select(outRegister)
-                     end  
-                  else
-                     stage 
-                        textureBlend select(outRegister) multiply(outRegister diffuse)
-                     end                               
-                  endif
-               elseif ($snowLevel = 2)                  
-                  stage 
-                     texture "snow-ground-diffuse"
-                     textureAddressing tile tile  
-                     ffTextureCoordsSource fromPosition
-                     ffTextureMatrix -cameraToGlobal -scalev (13, 13) -invert                            
-                     textureBlend multiplyAdd(texture colorScalar outRegister) select(diffuse)
-                  end          
-               else
-                  stage 
-                     textureBlend multiply(diffuse outRegister) multiply(diffuse outRegister)
-                  end             
+                  end
                endif
-             
-            end   
-         endif   
-     
+
+               if ($snowLevel = 1)
+                  if (not tsIsDay)
+                     stage
+                        textureBlend multiply(diffuse outRegister) select(outRegister)
+                     end
+                  else
+                     stage
+                        textureBlend select(outRegister) multiply(outRegister diffuse)
+                     end
+                  endif
+               elseif ($snowLevel = 2)
+                  stage
+                     texture "snow-ground-diffuse"
+                     textureAddressing tile tile
+                     ffTextureCoordsSource fromPosition
+                     ffTextureMatrix -cameraToGlobal -scalev (13, 13) -invert
+                     textureBlend multiplyAdd(texture colorScalar outRegister) select(diffuse)
+                  end
+               else
+                  stage
+                     textureBlend multiply(diffuse outRegister) multiply(diffuse outRegister)
+                  end
+               endif
+
+            end
+         endif
+
 		 create DetermineHardwareSupport()
-         
+
          if ($useHWShader2Path or $useHWShader1Path)
 			pass -fixedFunction
                alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
-               
+
                create LightingStates()
-            
+
                create AttenuatedMatCoef(1.0)
-               fillmode $stdMatFillMode      
+               fillmode $stdMatFillMode
                ffDepthOffset 1
-               depthTest true -enableDepthWrite false            
+               depthTest true -enableDepthWrite false
                depthTestFunction acceptIfLessOrEqual
-               
+
                stage
 				texture "alphaRamp" # texture name
 				textureAddressing clamp clamp
 				ffTextureCoordsSource 1
 				textureBlend select(texture) select(texture)
                end
-               
+
 			   if (tsIsDay)
 			    colorScalar (0.965,0.965,1,1)
 			   else
 				colorScalar (0.3, 0.3, 0.7, 1)
 			   endif
-               
+
                stage
 				texture "lot-sand-02"
 				textureAddressing tile tile
 				ffTextureCoordsSource 0
 				textureBlend select(texture) multiply(outRegister diffuse)
                end
-               
+
 			   stage
 				textureBlend multiply(colorScalar outRegister) select(outRegister)
                end
             end
          endif
-         
+
          if ($useHWShader2Path or $useHWShader1Path)
 			pass -fixedFunction
                alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
-               
+
                create LightingStates()
-            
+
                create AttenuatedMatCoef(1.0)
-               fillmode $stdMatFillMode      
+               fillmode $stdMatFillMode
                ffDepthOffset 1
-               depthTest true -enableDepthWrite false            
+               depthTest true -enableDepthWrite false
                depthTestFunction acceptIfLessOrEqual
-               
+
                stage
 				texture "alphaRamp" # texture name
 				textureAddressing clamp clamp
 				ffTextureCoordsSource 2
 				textureBlend select(texture) select(texture)
                end
-           
+
 			   if (tsIsDay)
 			    colorScalar (0.965,0.965,1,1)
 			   else
-				colorScalar (0.4,0.4,0.4,1) 
+				colorScalar (0.4,0.4,0.4,1)
 			   endif
-               
+
                stage
                 texture "terrain-deepwatersand"
 				textureAddressing tile tile
 				ffTextureCoordsSource 0
 				textureBlend select(texture) multiply(outRegister diffuse)
                end
-               
+
 			   stage
 				textureBlend multiply(colorScalar outRegister) select(outRegister)
                end
             end
-         endif    
-         
+         endif
+
       end #end shader
    end #end material
 enddef
 
 define LotSkirtMaterialDefinitionVSPS1()
    material
-      shader -layer ($lotSkirtLayer * 8)         
+      shader -layer ($lotSkirtLayer * 8)
          validateRenderShaderContext -vertexFormat position 0 required
          validateRenderShaderContext -vertexFormat normal 0 required
-         validateRenderShaderContext -vertexFormat texcoord 0 required         
-         
+         validateRenderShaderContext -vertexFormat texcoord 0 required
+
          create DetermineHardwareSupport()
-                          
-         pass 
+
+         pass
             alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
-            
+
             shaderProgram -target vertexProgram -method compile -version 1_1
-               bindConstants 0 -bindingID  geomToClip     -constantCount 4        
+               bindConstants 0 -bindingID  geomToClip     -constantCount 4
                bindConstants 4 -bindingID  geomToCamera   -constantCount 3
-			      bindConstants 7 -bindingID  cameraToGeom   -constantCount 3			
-			      bindConstants 15 -bindingID ambientLight -constantCount 1 -constantType float	                   			      
-			      bindConstants 18 -bindingID allStandardLightData -constantCount 4 -constantType float			      
-			      
-			      if (tsIsDay)         
-                  bindConstants 10 -bindingID immediateData -data (1, 1, 1, 1)         
+			      bindConstants 7 -bindingID  cameraToGeom   -constantCount 3
+			      bindConstants 15 -bindingID ambientLight -constantCount 1 -constantType float
+			      bindConstants 18 -bindingID allStandardLightData -constantCount 4 -constantType float
+
+			      if (tsIsDay)
+                  bindConstants 10 -bindingID immediateData -data (1, 1, 1, 1)
                else
-                  bindConstants 10 -bindingID immediateData -data (0.46, 0.46, 0.91, 1)         
+                  bindConstants 10 -bindingID immediateData -data (0.46, 0.46, 0.91, 1)
                endif
-               
+
                bindConstants 12 -bindingID geomToGlobal -constantCount 3
-                              
-               bindConstants 22 -bindingID cameraToClipWithDepthOffset -constantCount 4 -data(0.5, 0.5, 0.5, 0.5) 
-			      
+
+               bindConstants 22 -bindingID cameraToClipWithDepthOffset -constantCount 4 -data(0.5, 0.5, 0.5, 0.5)
+
 			      shaderSource
 			         float4x4 modelviewproj : register(c0);
 			         float4x3 modelview : register(c4);
-				      float4x3 modelviewInv : register(c7);				      				      
+				      float4x3 modelviewInv : register(c7);
                   // light direction
 				      float4 lightDir0 : register(c18);
 				      float4x4 cameraToClipWithDOMatrix : register(c22);
-                  float4 ambient : register(c15);                                   
+                  float4 ambient : register(c15);
                   float4x3 modelToWorld : register(c12);
-				      				      
-				      struct a2v 
+
+				      struct a2v
                   {
-                     float4 pos		: POSITION;                     
+                     float4 pos		: POSITION;
                      float3 normal	: NORMAL;
                      float4 color   : COLOR0;
                   };
 
                   struct v2f
                   {
-                     float4 hpos		 : POSITION;                                          
-	                  float4 color : COLOR0;	                  	                  
+                     float4 hpos		 : POSITION;
+	                  float4 color : COLOR0;
 	                  float3 worldPos : TEXCOORD0;
-	                  float2 bumpCoords : TEXCOORD1;	                  	                  	                  	                  
-	                  float3 tanLightDir : TEXCOORD2;    	               	                         	            
-	                  float2 bumpCoords2 : TEXCOORD3;      
+	                  float2 bumpCoords : TEXCOORD1;
+	                  float3 tanLightDir : TEXCOORD2;
+	                  float2 bumpCoords2 : TEXCOORD3;
                   };
-                  
+
                   v2f VertexMain(a2v IN)
                   {
 	                  v2f OUT;
 
 	                  // vertex position in object space
-	                  float4 pos = float4(IN.pos.x,IN.pos.y,IN.pos.z,1.0);	  
-	                  
+	                  float4 pos = float4(IN.pos.x,IN.pos.y,IN.pos.z,1.0);
+
 	                  float3 tangent = float3(1, 0, 0);
-	                  	                  
+
 	                  // compute binormal
 	                  float3 binormal = normalize(cross(IN.normal, tangent));
-	                  
+
 	                  // tangent space matrix
 	                  float3x3 tbn = float3x3(tangent, binormal, IN.normal);
-	                  
-	                  // light direction in object space	                  
+
+	                  // light direction in object space
 	                  float3 lt0 = mul(lightDir0, (float3x3)modelviewInv);
-	                  
-	                  // light 0 direction in tangent space	                  	                  
+
+	                  // light 0 direction in tangent space
 	                  OUT.tanLightDir = normalize(mul(tbn, lt0));
-	                  
+
 	                  float3 worldPos = mul(float4(IN.pos.xyz, 1.0f), modelToWorld);
 	                  OUT.bumpCoords = float2(worldPos.x, worldPos.y);
 	                  OUT.bumpCoords2 = float2(worldPos.x, worldPos.y)*0.4f;
-	                  
+
 	                  // compute tangent space view vector
 	                  // object space view point
 	                  float3 viewPoint = mul(float4(0, 0, 0, 1), modelviewInv).xyz;
 	                  float3 viewVecObj = normalize(viewPoint - IN.pos.xyz);
-	                  
+
 	                  // object space light
 	                  float3 lightDirObj = normalize(mul(lightDir0, (float3x3)modelviewInv));
-	                  
+
 	                  // half angle vector in object space
-	                  float3 halfWayVector = normalize(lightDirObj + viewVecObj);	                  
-	                  
+	                  float3 halfWayVector = normalize(lightDirObj + viewVecObj);
+
 	                  // transform half angle vector to tangent space
 	                  //OUT.tanHalfAngle.xyz = normalize(mul(tbn, halfWayVector));
-	                  
+
 	                  // specular shadowing term
-	                  //OUT.tanHalfAngle.w = max(dot(halfWayVector, IN.normal), 0);	                  
-	                  
+	                  //OUT.tanHalfAngle.w = max(dot(halfWayVector, IN.normal), 0);
+
 	                  // vertex position in clip space
 	                  float3 hposView = mul(pos, modelview);
-                     OUT.hpos = mul(float4(hposView, 1), cameraToClipWithDOMatrix);                     	                   
-                     
+                     OUT.hpos = mul(float4(hposView, 1), cameraToClipWithDOMatrix);
+
                      // vertex position in world space
-                     OUT.worldPos = mul(pos, modelToWorld)/64.0f;                     
-                     
-	                  	                                    		                  
+                     OUT.worldPos = mul(pos, modelToWorld)/64.0f;
+
+
 	                  OUT.color.xyz = ambient.xyz*0.3f;
-	                  OUT.color.w = IN.color.a;	                  
+	                  OUT.color.w = IN.color.a;
 	                  return OUT;
                   }
-                  			         
+
 			      endShaderSource
             end # end shader program
-            
+
             if ($useHWShader1Path)
-               shaderProgram -target pixelProgram -method compile -version 1_1 # -disassemble "c:\sims2ep5\hlslPS1_1.txt"                                                          
+               shaderProgram -target pixelProgram -method compile -version 1_1 # -disassemble "c:\sims2ep5\hlslPS1_1.txt"
             else
-               shaderProgram -target pixelProgram -method compile -version ${psVersion}_0 
+               shaderProgram -target pixelProgram -method compile -version ${psVersion}_0
             endif
-            
-               if (tsIsDay)         
-                  bindConstants 0 -bindingID immediateData -data (1.1, 1.1, 1.175, 1)         
+
+               if (tsIsDay)
+                  bindConstants 0 -bindingID immediateData -data (1.1, 1.1, 1.175, 1)
                else
-                  bindConstants 0 -bindingID immediateData -data (0.35, 0.35, 1.0, 1)         
+                  bindConstants 0 -bindingID immediateData -data (0.35, 0.35, 1.0, 1)
                endif
-                        
-            
-               shaderSource                         
+
+
+               shaderSource
                   float4 colorFactor : register(c0);
-                  sampler normmap;                                                      
+                  sampler normmap;
                   sampler normmap2;
-            
-                  
+
+
                   struct v2f
-                  { 
-                     float4 hpos	: POSITION;                             
-	                  float4 color : COLOR0;	                     	                     
-	                  float3 worldPos : TEXCOORD0;              
-	                  float2 bumpCoords : TEXCOORD1;               	                     
-	                  float3 tanLightDir : TEXCOORD2;  
-	                  float2 bumpCoords2 : TEXCOORD3; 	   	                     	              
+                  {
+                     float4 hpos	: POSITION;
+	                  float4 color : COLOR0;
+	                  float3 worldPos : TEXCOORD0;
+	                  float2 bumpCoords : TEXCOORD1;
+	                  float3 tanLightDir : TEXCOORD2;
+	                  float2 bumpCoords2 : TEXCOORD3;
                   };
 
                   float4 PixelMain(v2f pi) : COLOR
-                  {                                                  
-                     float4 normal0 = 2.0f * (tex2D(normmap, pi.bumpCoords) - 0.5f);                        
+                  {
+                     float4 normal0 = 2.0f * (tex2D(normmap, pi.bumpCoords) - 0.5f);
                      float4 normal1 = 2.0f * (tex2D(normmap2, pi.bumpCoords2) - 0.5f);
-                     float4 normal = 0.5f*(normal0+normal1);                        
-                     float3 diffuse = saturate(dot(pi.tanLightDir, normal.xyz))*colorFactor.xyz;                                          
-                     return float4(float3(diffuse.xyz+ pi.color.xyz), pi.color.a);                        
+                     float4 normal = 0.5f*(normal0+normal1);
+                     float3 diffuse = saturate(dot(pi.tanLightDir, normal.xyz))*colorFactor.xyz;
+                     return float4(float3(diffuse.xyz+ pi.color.xyz), pi.color.a);
                   }
                endShaderSource
-            end                                            
-            
+            end
+
             sampler normmap
                texture "snow-ground-bump"
                textureAddressing tile tile
-            end    
-            
+            end
+
             sampler normmap2
                texture "snow-ground-bump"
                textureAddressing tile tile
-            end                                                           
-                                                   
+            end
+
          end # end pass
-         
+
       end #end shader
    end # end material
 enddef
 
 define LotSkirtRoadMaterialDefinition()
-   
+
    setb hasColor false
    seti totalLights 0
 
@@ -448,30 +448,30 @@ define LotSkirtRoadMaterialDefinition()
          validateRenderShaderContext -vertexFormat position      0 required
          validateRenderShaderContext -vertexFormat normal        0 required
          validateRenderShaderContext -vertexFormat texcoord      0 required
-     
+
 
          setb  hasColor (hasVertexFormat(color,0))
-         
+
          if ($hasColor)
                validateRenderShaderContext -vertexFormat  color         0 required
          endif
-         
+
          pass -fixedFunction
             create LightingStates()
             #create LightingStatesNoStdLights()
             create AttenuatedMatCoef(1.0)
             alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
             fillmode $stdMatFillMode
-            
+
             seti currSeason 4
-            
+
             if (tsIsDay)
                seti currSeason (tsSeasonEnum)
                colorScalar (0.81,0.85,1,1)
             else
-               colorScalar (0.83,0.83,0.94,1) 
-            endif                                    
-                        
+               colorScalar (0.83,0.83,0.94,1)
+            endif
+
             if (not tsIsCloudy)
                if ($currSeason = $kFall)
                   colorScalar (0.975,0.82,0.9,1)
@@ -482,50 +482,50 @@ define LotSkirtRoadMaterialDefinition()
                elseif ($currSeason = $kSummer)
                   colorScalar (1,1,1,1) #summer
                else
-                  colorScalar (0.83,0.83,0.94,1) 
+                  colorScalar (0.83,0.83,0.94,1)
                endif
             endif
-            
+
             set weatherSuffix ""
-            seti snowLevel (tsHasSnow)               
-            if (strstr("$surfaceTexture", "f04") != 0 or strstr("$surfaceTexture", "304") != 0)                              
-               if ($snowLevel > 1)                  
+            seti snowLevel (tsHasSnow)
+            if (strstr("$surfaceTexture", "f04") != 0 or strstr("$surfaceTexture", "304") != 0)
+               if ($snowLevel > 1)
                   set weatherSuffix "_HSNOW"
                endif
-               if ($snowLevel > 0 and $snowLevel < 2)                  
+               if ($snowLevel > 0 and $snowLevel < 2)
                   set weatherSuffix "_LSNOW"
                endif
             endif
-                        
-               
-            stage               
-               texture "${surfaceTexture}${weatherSuffix}"						
+
+
+            stage
+               texture "${surfaceTexture}${weatherSuffix}"
                textureAddressing clamp clamp
                textureBlend multiply(texture diffuse) multiply(texture diffuse)
-            end 
-            
+            end
+
             stage
                textureBlend multiply(colorScalar outRegister) select(outRegister)
             end
          end
-         
+
          seti hailLevel (tsHasHail)
          if (tsHasSnow >= 1 or $hailLevel >= 1)
             pass -fixedFunction
                alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
-               
-               fillmode $stdMatFillMode                     
-               depthTest true -enableDepthWrite false            
-               depthTestFunction acceptIfLessOrEqual      
-               
+
+               fillmode $stdMatFillMode
+               depthTest true -enableDepthWrite false
+               depthTestFunction acceptIfLessOrEqual
+
                if (tsIsDay)
                   colorScalar (1.0, 1.0, 1.0, 1.0) -applyTextureLightColor 0 0
                else
                   colorScalar (0.485, 0.485, 0.6, 1) -applyTextureLightColor 0 0
                endif
-               
+
                setv2 scaleStage1 (23, 23)
-                  
+
                stage
                   if ($hailLevel)
                      texture "hail-ground-surface"
@@ -535,15 +535,15 @@ define LotSkirtRoadMaterialDefinition()
                   endif
                   textureAddressing tile tile
                   ffTextureCoordsSource fromPosition
-                  ffTextureMatrix -cameraToGlobal -scalev $scaleStage1 -invert               
-                  
+                  ffTextureMatrix -cameraToGlobal -scalev $scaleStage1 -invert
+
                   if (not tsIsDay)
                      textureBlend multiply(texture diffuse) multiply(texture diffuse)
                   else
                      textureBlend select(texture) multiply(texture diffuse)
                   endif
-               end                                                                                               
-            end        
+               end
+            end
          endif
 
 
@@ -564,11 +564,11 @@ define LotSkirtBoundaryClipMaterial()
          pass -fixedFunction -clipAlways
             colorScalar (1, 1, 1, 1)
             depthTest true -enableDepthWrite true
-            alphaBlend srcFactor(destColor) add dstFactor(zero)            
+            alphaBlend srcFactor(destColor) add dstFactor(zero)
             depthTestFunction acceptIfLess
 				cullmode cullCounterClockwise
             stage
-               textureBlend select(colorScalar) select(colorScalar)				
+               textureBlend select(colorScalar) select(colorScalar)
             end
          end
       end

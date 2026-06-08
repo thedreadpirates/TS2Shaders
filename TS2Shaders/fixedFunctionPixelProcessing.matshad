@@ -3,41 +3,41 @@
 
 define FixedFunctionPixelProcessingForVS(envCubeMode lightingMode)
 
-	# Pixomatic seems to have a bug when Alpharef is 255. 
+	# Pixomatic seems to have a bug when Alpharef is 255.
 	# cubemaps off + SWVP is a good indicator of pixo, so when that is true and ref is 255, we'll
 	# force the value to 254, which is enough of a fudge to get it working again.
 	# Originally found when dealing with the Crib, might also fix other objects and shadows (if you are brave enough to run pixo with shadows on)
-	
+
 	if ($cubeMapSupport = false and $stdMatAlphaRefValue = 255)
 		seti stdMatAlphaRefValue 254
 	endif
-      
-   
+
+
    create StandardShaderFBAlphaState($stdMatAlphaBlendMode)
-      
+
    fillmode $stdMatFillMode
    cullmode $stdMatCullMode
 
-   setb hasEmissive (($stdMatEmissiveCoef).x > 0 or ($stdMatEmissiveCoef).y > 0 or ($stdMatEmissiveCoef).z > 0 or tsIsLightMaterial("${currentMaterialName}"))       
-   
-   setv3 evalDiffuse (($stdMatDiffCoef + $stdMatEmissiveCoef).xyz)    
+   setb hasEmissive (($stdMatEmissiveCoef).x > 0 or ($stdMatEmissiveCoef).y > 0 or ($stdMatEmissiveCoef).z > 0 or tsIsLightMaterial("${currentMaterialName}"))
+
+   setv3 evalDiffuse (($stdMatDiffCoef + $stdMatEmissiveCoef).xyz)
 
 	if ($stdMatBaseTextureEnabled =	false)
 	   setf	finalAlphaScale	($stdMatUntexturedDiffAlpha	* $stdMatAlphaMultiplier)
 	else
 	   setf	finalAlphaScale	($stdMatAlphaMultiplier)
 	endif
-	            
-    if (strcmp("&{envCubeMode}", "none") = 0 or strcmp("${stdMatTextureCoordAnimMode}", "none") = 0 or $hasEmissive)            
-		colorScalar ($evalDiffuse,$finalAlphaScale) -applyShapeColor $stdMatShapeColorIndex		
+
+    if (strcmp("&{envCubeMode}", "none") = 0 or strcmp("${stdMatTextureCoordAnimMode}", "none") = 0 or $hasEmissive)
+		colorScalar ($evalDiffuse,$finalAlphaScale) -applyShapeColor $stdMatShapeColorIndex
     else
 		colorScalar $stdMatEnvCubeCoef $finalAlphaScale -applyTextureLightColor 0 0 -applyShapeColor $stdMatShapeColorIndex
 	endif
-	
+
 	setb isDay tsIsDay
-            
+
 	create BaseColorSetup(&lightingMode )
-	
+
 
     # cube environment map reflection stage
     if (strcmp("&{envCubeMode}", "reflection") = 0)
@@ -45,15 +45,15 @@ define FixedFunctionPixelProcessingForVS(envCubeMode lightingMode)
 		# Texcoords & texgen comes from the SW/HW VS.
 
 			create CubeMapTextureSetup()
-			
+
 			# COLOR = Texture * colorScalar + lastStage
 			# Alpha = laststage.Alpha
-			
+
             #textureBlend select(texture) select(outRegister)
             textureBlend multiplyAdd(texture colorScalar outRegister) select(outRegister)
         end
     endif
-	
+
 	if ($stdMatLightingEnabled)
 		if (not $stdMatSpecMaskTextureEnabled)
 			if ($stdMatSpecPower != 0)
@@ -73,7 +73,7 @@ define CubeMapTextureSetup()
    texture $stdMatEnvCubeTextureName
 
    textureMIPFilterHint linear $stdMatEnvCubeBlurFactor
-  
+
    textureAddressing clamp clamp clamp
 
 enddef
@@ -82,35 +82,35 @@ enddef
 
 
 define BaseColorSetup( lightingMode )
-    
 
-	 if	($stdMatBaseTextureEnabled)	   
+
+	 if	($stdMatBaseTextureEnabled)
 		stage
 			texture	$stdMatBaseTextureName # ${stdMatBaseTextureParam}
-			
+
 			textureAddressing $stdMatBaseTextureAddressingU	$stdMatBaseTextureAddressingV $stdMatBaseTextureAddressingW
 
 			if $stdMatBaseTextureAlphaReplicate
 				# COLOR = Texture.A * Current
 				# ALPHA = Texture.A * Current
-		   		      
+
 				textureBlend multiply(texture:alphaReplicate colorScalar) multiply(texture outRegister)
-						  
+
 			else
 				# COLOR = Texture * Current
-				# ALPHA = Texture.A * current								
-								
-				if (&lightingMode = $kNoLighting)		   				   				   
-               if (not $isDay and strcmp("${stdMatTextureCoordAnimMode}",	"none") = 0 and not $hasEmissive)                  
-                  colorScalar ($evalDiffuse *  (0.35, 0.35, 0.7)) $finalAlphaScale -applyShapeColor $stdMatShapeColorIndex		            
-               endif               
+				# ALPHA = Texture.A * current
+
+				if (&lightingMode = $kNoLighting)
+               if (not $isDay and strcmp("${stdMatTextureCoordAnimMode}",	"none") = 0 and not $hasEmissive)
+                  colorScalar ($evalDiffuse *  (0.35, 0.35, 0.7)) $finalAlphaScale -applyShapeColor $stdMatShapeColorIndex
+               endif
 				   textureBlend multiply(texture colorScalar)	multiply(texture outRegister)
-				else				   
-               textureBlend multiplyScale2(texture outRegister)	multiply(texture outRegister)				   
+				else
+               textureBlend multiplyScale2(texture outRegister)	multiply(texture outRegister)
 				endif
 
 			endif
-			
+
 		end
       # add 2nd stage to apply "shape color" if active
       if ($stdMatShapeColorIndex >= 0)
@@ -118,26 +118,26 @@ define BaseColorSetup( lightingMode )
             textureBlend multiply(colorScalar outRegister)	multiply(outRegister colorScalar)
          end
       endif
-      
+
 	else
-		# diffuse color	(no	base texture) 
-		
-		if (&lightingMode = $kNoLighting)		   
+		# diffuse color	(no	base texture)
+
+		if (&lightingMode = $kNoLighting)
 			stage
   				# COLOR = Current
 				# alpha = current * tfactor, alpha comes from first stage, or the vertex alpha, or the fixed alpha factor.
-	 
+
 				textureBlend	select(colorScalar)	multiply(colorScalar)
 			end
-		else		   
+		else
 			stage
   				# COLOR = Current
 				# alpha = current * tfactor, alpha comes from first stage, or the vertex alpha, or the fixed alpha factor.
-	 
+
 				textureBlend	add(outRegister diffuse)	multiply(outRegister colorScalar)
 			end
 		endif
 	endif
-	
+
 
 enddef

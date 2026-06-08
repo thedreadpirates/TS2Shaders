@@ -6,32 +6,32 @@ include bloomfilter.matshad
 seti kPostEffectsLayer 11000
 
 define SepiaTonesPostProcess()
-	
-	# convert to BW, then to sepia	
+
+	# convert to BW, then to sepia
 	pass
-		
+
 		renderTarget viewerCompositingTarget
-		
+
 		create PassThroughVertexShader()
-		
+
 		shaderProgram -target pixelProgram -method assemble
 			shaderSource
 				ps_1_1
 				def c0, 0.23,0.66, 0.11,1
-				def c1, 0.8, 0.5,0.3,1								
+				def c1, 0.8, 0.5,0.3,1
 				tex t0
 				dp3 r0, t0, c0  ; convert to BW
 				mul_x4 r0, r0, c1
 			endShaderSource
 		end
-		
+
 		sampler 0
 			texture "@@PostEffectsTexture@@"
 			textureAddressing clamp clamp clamp
 		end
-	
+
 	end
-	
+
 enddef
 
 
@@ -46,13 +46,13 @@ define FilmGrainPostProcess(sourceTexture  destinationTarget)
 
       shaderProgram -target vertexProgram -method compile -version 1_1
 
-         bindConstants 0 -bindingID frameTimeInfo 
+         bindConstants 0 -bindingID frameTimeInfo
 
          shaderSource
-         
+
          float4 frameTimeInfo : register(c0);
 
-            
+
          struct OutputVertex
          {
             float4 clipSpace :POSITION;
@@ -61,48 +61,48 @@ define FilmGrainPostProcess(sourceTexture  destinationTarget)
             float2 tc2 : TEXCOORD2;
             float2 tc3 : TEXCOORD3;
          };
-         
-         OutputVertex  VertexMain( float4 pos : POSITION, float2 tc0 : TEXCOORD0) 
+
+         OutputVertex  VertexMain( float4 pos : POSITION, float2 tc0 : TEXCOORD0)
          {
             OutputVertex outputVertex;
-            
+
             outputVertex.clipSpace = pos;
             outputVertex.tc0 = tc0;
-            
+
             float sawtooth = abs( (frameTimeInfo.y*2) - 1);
-            
+
             float2 rotate = tc0*8 +  sawtooth * 8.953;
-            
+
             float radians = sawtooth * 3.14159;
-            
+
             // basically, do all sorts of crazy stuff, scale images, translate, and even rotate
             // this doesn't have to be super efficient, this is only a single quad.
-            
+
             float2 row1 = float2( cos(radians)  , sin(radians));
             float2 row2 = float2( -sin(radians) , cos(radians));
-            
+
             outputVertex.tc1.x = dot(rotate, row1);
             outputVertex.tc1.y = dot(rotate, row2);
-                        
+
             float timeScaleShift = frameTimeInfo.y * 4 + 12;
             float timeScaleShift2 = frameTimeInfo.y + 1;
-            
+
             rotate.x = tc0.y*timeScaleShift+ sawtooth * 0.113;
             rotate.y = tc0.x*timeScaleShift + sawtooth * -0.513;
-            
+
             outputVertex.tc2.x = dot(rotate, row1);
             outputVertex.tc2.y = dot(rotate, row2);
-                        
+
             rotate.x = tc0.x*timeScaleShift2 + sawtooth * -3;
             rotate.y = tc0.y*timeScaleShift2 + sawtooth * -7;
 
             outputVertex.tc3.x = dot(rotate, row1);
             outputVertex.tc3.y = dot(rotate, row2);
-            
+
             return(outputVertex);
-            
+
          }
-         
+
          endShaderSource
       end
 
@@ -111,50 +111,50 @@ define FilmGrainPostProcess(sourceTexture  destinationTarget)
          shaderSource
             ps_1_1
             ;  c0 final grain amount
-            
+
             def c1, 0.10,0.10,0.10, 0.5  ; tex2 tex3 multipliers
             tex t0
             tex t1
             tex t2
             tex t3
-            
+
             mul r0, t1_bx2.a, c1.a  ; scale first noise
             mad r0.rgb, t3_bx2.a, c1, r0 ; scale 2nd noise, add to first
             add r0, r0, t2_bx2.a         ; add in next noise.
-            
+
             mul r0, r0, c0.a      ; scale grain to a small value down.
-            
+
             add r0, r0, t0  ; add in background (signed noise + background)
-         
+
             ; REMOVE ME
             ;mov r0, t0
          endShaderSource
       end
-      
-      
+
+
       sampler 0
 			texture &sourceTexture
 			textureAddressing clamp clamp clamp
 		end
-      
+
       # noise textures are A8 textures to save space, so be sure to read alpha only.
       sampler 1
          texture "filmgrainnoise1" -noise (512,512) 1234 (20,10)
          #textureFilterHint point point
       end
-      
+
       sampler 2
-         texture "filmgrainnoise1" 
+         texture "filmgrainnoise1"
          #textureFilterHint point point
       end
-      
+
        sampler 3
-         texture "filmgrainnoise1" 
+         texture "filmgrainnoise1"
          textureFilterHint point point
       end
-      
+
    end
-   
+
 enddef
 
 
@@ -167,29 +167,29 @@ enddef
 define VignettePostProcess(cleanImage)
 
 
-   
+
    # reuse these backbuffers for another blur operation.
    #create DX8GaussianBlurFilterPasses(&cleanImage "postProcessScratchRTT256Square" "postProcessFinalRTT256Square" false)
-   
+
    create DX8WideBoxFilter(&cleanImage "postProcessScratchRTT256Square" "postProcessFinalRTT256Square" 256)
-   
-   
+
+
    pass
-	
+
 		renderClipSpaceRect
 		renderTarget "vignetteResult"  -ratio (1,1) -bppHint 32 -alphaBitsHint 8 -clearColor (1,0,0,0) -allocateDepthBuffer false
       cullmode none
-      
+
 		depthTest false -enableDepthWrite false
-		
-	
+
+
       shaderProgram -target vertexProgram -method assemble
 			bindConstants 12 -bindingID immediateData -data (@cameraletterbox)
          bindConstants 13 -bindingID immediateData -data (@cameraVignette)
-         
+
          shaderSource
             vs_1_1
-            def c0,0,0.0078125,0,0 
+            def c0,0,0.0078125,0,0
             def c1, 0,0.5,1,2
             def c2, 0.5, -0.5, 0.5, 0.5
             def c3, 0.5,0.5,0,0.5
@@ -198,40 +198,40 @@ define VignettePostProcess(cleanImage)
             def c11, 0.001953125, -0.001953125 , 0.0078125,   -0.00390625
             dcl_position v0
             dcl_texcoord v1
-            
-            
+
+
             mov oPos.xzw, v0
             mov oPos.y, -v0.yyy
-            
+
             mad r0.xy, v0, c1.yy, c1.yy ; convert clip space pos to texture coords
-            
+
             mad r1.xy, r0, c3.xy,  c3.zw ; since the blur pixels are in a portion of the src RTT, then account for that here.
-            
+
             mov oT0.xy, r0
-            
+
             mad oT1.xy, r1, c10.xy, c10.zw  ; the blur result
-            
+
             mad oT2.xy, v0, c1.y, c1.y
 				mov oT2.zw, c0.x ; assure ZW to be zero.
-            
+
             mov r1, c12.x
-            
+
             add oT3.x, v1.y, -r1.x   ; V - letterboxAmount
-            
+
             add r2, c1.z, -v1.y   ; 1-V
             add oT3.y, r2.y, -r1.x   ; (1-V) - letterboxAmount
             mov oT3.z, c1.z ; set 1 into Z
-            
+
             mov oD0.xy, c13      ; emit XY of center to diffuse.
             mov oD0.zw, c0.xxxx    ; clear ZW,  so the PS can do a two dimensional dot product.
             mov oD1, c13.zzzz   ; move vignette amount into specular
-                        
+
          endShaderSource
-	
+
       end
 
 		shaderProgram -target pixelProgram -method assemble
-      
+
          shaderSource
             ps_1_1
 				def c0, 0.5,0.5,0.5,0.5
@@ -242,46 +242,46 @@ define VignettePostProcess(cleanImage)
 				tex t0
 				tex t1
 				texcoord t2   ; current position
-            
-				
+
+
             texkill t3   ; if any channel is negative, drop the pixel (x = from top, y = from bottom)
-            
+
 				add r0.rgb, t2, -v0    ; subtract the two locations. to get a vector.
-            
+
             mul r0.rgb, r0, c2.a
             mov_x4 r0.rgb, r0
-            
+
 				dp3_sat r1, r0, r0    ; (x*x + y*y + 0*0) R1.rgba = (2D) dist squared (d*d)
-            
-            
+
+
             mul_sat r1.a, r1.a, v1.b
-            
+
             lrp r0.rgb, r1.a, t1, t0
-            
+
             ;mov r0, r1.a
-            
+
             mov r0.a, c2.b
             ;mov r0, t1
-            
+
          endShaderSource
-      
-         
+
+
 		end
-      
-			
+
+
 		sampler 0
 			texture &cleanImage
 			textureAddressing clamp clamp clamp
 
 		end
-		
+
 		sampler 1
 			texture "postProcessFinalRTT256Square"
 			textureAddressing clamp clamp clamp
 		end
-		
+
 	end
-   
+
 
 enddef
 
@@ -298,41 +298,41 @@ define LightBloomPostProcess(cleanImage)
    create DX8GaussianBlurFilterPasses(&cleanImage "postProcessScratchRTT256Square" "postProcessFinalRTT256Square" false)
 
    pass
-	
+
 		renderClipSpaceRect
 
 		renderTarget &cleanImage
 		depthTest false -enableDepthWrite false
-		
+
       # note that I scale the original by the outbound alpha
       alphaBlend srcFactor(one) add dstFactor(srcAlpha)
-      
+
 		create PassThroughVertexShader()
-	
+
 		shaderProgram -target pixelProgram -method assemble
          # RGB = blur amount to add back in, alpha is FB scalar
-         
+
          bindConstants 0 -bindingID immediateData -data (@cameraBloom)
-     
+
 			shaderSource
 				ps_1_1
-                        
+
             tex t0
-            
+
             mul r0.rgb, t0, c0  ; scale or tint the blurry image.
             mov r0.a, c0.a  ; inplace op, alpha is original scalar.
-            
+
 			endShaderSource
 		end
-			
+
 
 		sampler 0
 			texture "postProcessFinalRTT256Square"
 			textureAddressing clamp clamp clamp
 		end
-		
+
 	end
-   
+
 
 enddef
 
@@ -350,21 +350,21 @@ define PostProcessingMaterial()
 			attribute camerafilmgrain float1 0
          attribute cameraletterbox float1 0
 		end
-		
+
       shader -layer $kPostEffectsLayer
-			
-         
+
+
          # in place operation
          create LightBloomPostProcess("@@PostEffectsTexture@@")
-         
+
          # Can't be done in place, also handles letterboxing
          create VignettePostProcess("@@PostEffectsTexture@@")
 
          # reads from arg1, writes to arg2.
          create FilmGrainPostProcess("vignetteResult" viewerCompositingTarget)
 
-         
-         
+
+
       end
    end
 enddef
@@ -372,5 +372,3 @@ enddef
 materialDefinition postprocessingmaterial
    setDefinition PostProcessingMaterial
 end
-
-

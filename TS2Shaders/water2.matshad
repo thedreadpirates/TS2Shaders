@@ -32,7 +32,7 @@ materialDefinition waterfaucet_underwaterwaterdispersion
    addParam stdMatLightingEnabled false
    addParam stdMatAlphaBlendMode additive
    addParam stdMatAlphaTestEnabled false
-   addParam stdMatAlphaMultiplier 3 
+   addParam stdMatAlphaMultiplier 3
    addParam stdMatBaseTextureAlphaReplicate false
    addParam stdMatDiffCoef (1, 1, 1)
    addParam stdMatBaseTextureEnabled true
@@ -42,7 +42,7 @@ materialDefinition waterfaucet_underwaterwaterdispersion
    addParam stdMatBaseTextureAddressingV clamp
 end
 
-# This used to be called bugZapperFireFlies. Renaming it since bugZapperFireflies material now exists as a 
+# This used to be called bugZapperFireFlies. Renaming it since bugZapperFireflies material now exists as a
 # separate file and is being used to test custom content.
 materialDefinition lightningSpark
    setDefinition StandardMaterial

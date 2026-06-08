@@ -6,21 +6,21 @@ define DebugFloorPixelShader(normalMapping)
 
    shaderProgram -target pixelProgram -method assemble
 
-      shaderSource 
+      shaderSource
          ps_1_1
          def c0, 0.5,0.5,1.0,1
          tex t0
-         
+
       endShaderSource
       if ($debugShowLightMapTexcoords)
          shaderSource
             texcoord t1
             mov r0, t1
          endShaderSource
-         
+
       else
          if ($debugShowFloorIncidence)
-               shaderSource 
+               shaderSource
                   tex t2
                   tex t3
                   mov r0, t3
@@ -28,7 +28,7 @@ define DebugFloorPixelShader(normalMapping)
          else
             if ($debugShowFloorNormalMap)
                if (&normalMapping)
-                  shaderSource 
+                  shaderSource
                      tex t2
                      mov r0, t2
                   endShaderSource
@@ -37,9 +37,9 @@ define DebugFloorPixelShader(normalMapping)
                endif
             else
                if ($debugFloorLighting)
-                  
+
                   if (&normalMapping)
-                     shaderSource 
+                     shaderSource
                         tex t1
                         tex t2
                         tex t3
@@ -49,52 +49,52 @@ define DebugFloorPixelShader(normalMapping)
                   else
                      shaderSource  "mov r0, t0"
                   endif
-            
+
                endif
             endif
          endif
       endif
-      
+
    end
-      
+
 enddef
 
 
 define FloorsPS3()
-   shaderProgram -target pixelProgram -method compile -version 3_0                        
-      bindConstants 2 -bindingID allTextureLights -constantCount 1                     
-      
-      shaderSource                                                          
-         float4 textureLight : register(c2);    
-                        
-                        
+   shaderProgram -target pixelProgram -method compile -version 3_0
+      bindConstants 2 -bindingID allTextureLights -constantCount 1
+
+      shaderSource
+         float4 textureLight : register(c2);
+
+
          sampler base;
          sampler lightmap;
          sampler caustics;
-         sampler shadowMap;               
+         sampler shadowMap;
          struct cInputPixel
-         {               
+         {
             float2 txBase    : TEXCOORD0;
 				float2 txLightMap: TEXCOORD1;
 				float2 txCaustics: TEXCOORD2;
 				float4 vPosLight : TEXCOORD3;
-				float4 shadowTex : TEXCOORD4;				      
+				float4 shadowTex : TEXCOORD4;
          };
-         
+
          float OffsetLookup(sampler2D map, float4 loc, float4 offset)
-         {	               
+         {
 	         return tex2Dproj(map, float4(loc+offset)).r;
-         }     
-         
-         
+         }
+
+
          float4 PixelMain(cInputPixel pi) : COLOR
-         {         
-            float4 baseColor     = tex2D(base, pi.txBase);                                                
-            float4 lightMapColor = tex2D(lightmap, pi.txLightMap);  
-            lightMapColor = textureLight.r < 0.5 ? lightMapColor : 0.5f.xxxx;                            
+         {
+            float4 baseColor     = tex2D(base, pi.txBase);
+            float4 lightMapColor = tex2D(lightmap, pi.txLightMap);
+            lightMapColor = textureLight.r < 0.5 ? lightMapColor : 0.5f.xxxx;
             float4 causticsColor = tex2D(caustics, pi.txCaustics);
-            float4 result = baseColor * saturate(lightMapColor * 2);                  
-            
+            float4 result = baseColor * saturate(lightMapColor * 2);
+
             float4 vTexCoords[25];
             vTexCoords[0] = float4(-0.000976563f, -0.000976563f, 0.0f, 0.0f );
             vTexCoords[1] = float4(-0.000976563f, -0.000488281f, 0.0f, 0.0f );
@@ -122,7 +122,7 @@ define FloorsPS3()
             vTexCoords[23] = float4(0.000976563f, 0.000488281f, 0.0f, 0.0f );
             vTexCoords[24] = float4(0.000976563f, 0.000976563f, 0.0f, 0.0f );
 
-            
+
 
             float4 vWeights[6] = {{0.0232468,0.0338240,0.0383276,0.0338240},
                                     {0.0232468,0.0338240,0.0492136,0.0557663},
@@ -130,71 +130,71 @@ define FloorsPS3()
                                     {0.0631915,0.0557663,0.0383276, 0.0338240},
                                     {0.0492136,0.0557663,0.0492136,0.0338240},
                                     {0.0232468,0.0338240,0.0383276,0.0338240}};
-            
-            float4 depth = (pi.vPosLight.z / pi.vPosLight.w) - 0.003;                                     
-            
+
+            float4 depth = (pi.vPosLight.z / pi.vPosLight.w) - 0.003;
+
             float lastWeight = 0.0232468;
-            
+
             float lightAmount = 0.0f;
-            
+
             float4 depths[6];
             int i = 0;
             for(int j = 0; j < 6; i+=4, ++j)
-            {     
-               float4 results;                                     
+            {
+               float4 results;
                results.x = OffsetLookup(shadowMap, pi.shadowTex, vTexCoords[i]);
                results.y = OffsetLookup(shadowMap, pi.shadowTex, vTexCoords[i+1]);
                results.z = OffsetLookup(shadowMap, pi.shadowTex, vTexCoords[i+2]);
                results.w = OffsetLookup(shadowMap, pi.shadowTex, vTexCoords[i+3]);
-               depths[j] = results > depth ? vWeights[j] : float4(0.0, 0.0, 0.0, 0.0);                     
-            }   
+               depths[j] = results > depth ? vWeights[j] : float4(0.0, 0.0, 0.0, 0.0);
+            }
             float lastDepth = OffsetLookup(shadowMap, pi.shadowTex, vTexCoords[24]);
             lightAmount += lastDepth <= depth ? lastWeight : 0.0f;
-            lightAmount += dot(depths[0] + depths[1] + depths[2] + depths[3] + depths[4] + depths[5], 1.0f);                  
-                                                
+            lightAmount += dot(depths[0] + depths[1] + depths[2] + depths[3] + depths[4] + depths[5], 1.0f);
+
             return result*0.9f + causticsColor*lightAmount*textureLight + 0.1f*result*lightAmount;
          }
       endShaderSource
-   end # end shader program      
+   end # end shader program
 enddef
 
 define FloorsPS2()
-   shaderProgram -target pixelProgram -method compile -version 2_0                        
-      bindConstants 2 -bindingID allTextureLights -constantCount 1                     
-      
-      shaderSource                                                          
-         float4 textureLight : register(c2);    
-                        
-                        
+   shaderProgram -target pixelProgram -method compile -version 2_0
+      bindConstants 2 -bindingID allTextureLights -constantCount 1
+
+      shaderSource
+         float4 textureLight : register(c2);
+
+
          sampler base;
          sampler lightmap;
          sampler caustics;
-         sampler shadowMap;               
+         sampler shadowMap;
          struct cInputPixel
-         {               
+         {
             float2 txBase    : TEXCOORD0;
 				float2 txLightMap: TEXCOORD1;
 				float2 txCaustics: TEXCOORD2;
 				float4 vPosLight : TEXCOORD3;
-				float4 shadowTex : TEXCOORD4;				      
+				float4 shadowTex : TEXCOORD4;
          };
-         
+
          float OffsetLookup(sampler2D map, float4 loc, float4 offset)
-         {	               
+         {
 	         return tex2Dproj(map, float4(loc+offset)).r;
-         }     
-         
-         
+         }
+
+
          float4 PixelMain(cInputPixel pi) : COLOR
-         {         
-            float4 baseColor     = tex2D(base, pi.txBase);                                                
+         {
+            float4 baseColor     = tex2D(base, pi.txBase);
             float4 lightMapColor = tex2D(lightmap, pi.txLightMap);
-            lightMapColor = textureLight.r < 0.5 ? lightMapColor : 0.5f.xxxx;                              
+            lightMapColor = textureLight.r < 0.5 ? lightMapColor : 0.5f.xxxx;
             float4 causticsColor = tex2D(caustics, pi.txCaustics);
-            float4 result = baseColor * saturate(lightMapColor * 2);                  
-            
-            float4 depth = (pi.vPosLight.z / pi.vPosLight.w) - 0.003;                                                
-                        
+            float4 result = baseColor * saturate(lightMapColor * 2);
+
+            float4 depth = (pi.vPosLight.z / pi.vPosLight.w) - 0.003;
+
             float4 vTexCoords[16];
             vTexCoords[0] = float4(-0.000732422f, -0.000732422f, 0.0f, 0.0f );
             vTexCoords[1] = float4(-0.000732422f, -0.000244141f, 0.0f, 0.0f );
@@ -212,33 +212,33 @@ define FloorsPS2()
             vTexCoords[13] = float4(0.000732422f, -0.000244141f, 0.0f, 0.0f );
             vTexCoords[14] = float4(0.000732422f, 0.000244141f, 0.0f, 0.0f );
             vTexCoords[15] = float4(0.000732422f, 0.000732422f, 0.0f, 0.0f );
-            
+
             float4 vWeights[4] = {{0.0479224,0.0615335,0.0615335,0.0479224},
                                   {0.0615335,0.0790106,0.0790106,0.0615335},
                                   {0.0615335,0.0790106,0.0790106,0.0615335},
                                   {0.0479224,0.0615335,0.0615335,0.0479224}};
-            
+
             float4 depths[4];
             int i = 0;
             for(int j = 0; j < 4; i+=4, ++j)
-            {     
-               float4 results;                                     
+            {
+               float4 results;
                results.x = OffsetLookup(shadowMap, pi.shadowTex, vTexCoords[i]);
                results.y = OffsetLookup(shadowMap, pi.shadowTex, vTexCoords[i+1]);
                results.z = OffsetLookup(shadowMap, pi.shadowTex, vTexCoords[i+2]);
                results.w = OffsetLookup(shadowMap, pi.shadowTex, vTexCoords[i+3]);
-               depths[j] = results > depth ? vWeights[j] : float4(0.0, 0.0, 0.0, 0.0);                     
-            }               
-            
-            float lightAmount = dot(depths[0] + depths[1] + depths[2] + depths[3], 1.0f);                                                
+               depths[j] = results > depth ? vWeights[j] : float4(0.0, 0.0, 0.0, 0.0);
+            }
+
+            float lightAmount = dot(depths[0] + depths[1] + depths[2] + depths[3], 1.0f);
             return result*0.9f + causticsColor*lightAmount*textureLight + 0.1f*result*lightAmount;
          }
       endShaderSource
-   end # end shader program      
+   end # end shader program
 enddef
 
 define PixelShaderFloorsWithShadowMapping()
-   shader -layer $floorLayer  
+   shader -layer $floorLayer
       validateRenderShaderContext -vertexFormat position  0 required
       validateRenderShaderContext -vertexFormat texcoord  0 required
       validateRenderShaderContext -vertexFormat texcoord  1 required
@@ -246,8 +246,8 @@ define PixelShaderFloorsWithShadowMapping()
       pass -modifiedEachFrameHint
          setf scaleU (1.0 / $floorMaterialScaleU)
 			setf scaleV (1.0 / $floorMaterialScaleV)
-			
-      
+
+
          shaderProgram -target vertexProgram -method compile -version 2_0
             bindConstants 0 -bindingID geomToClip -constantCount 4
 			   bindConstants 4 -bindingID immediateData -data ( $scaleU, $scaleV, 1, 1)
@@ -255,9 +255,9 @@ define PixelShaderFloorsWithShadowMapping()
 			   bindConstants 11 -bindingID immediateData -data ( 1, -1, 0, 0.3)
 			   bindConstants 12 -bindingID immediateData -data ( 1, 1, 1, 1)
 			   bindConstants 13 -bindingID immediateData -data ( -1, -1, 1, 1)
-			   bindConstants 14 -bindingID cameraToLightClip -constantCount 4			   
-			   bindConstants 18 -bindingID cameraToLightClipAdj -constantCount 4	
-      		
+			   bindConstants 14 -bindingID cameraToLightClip -constantCount 4
+			   bindConstants 18 -bindingID cameraToLightClipAdj -constantCount 4
+
 		      shaderSource
 			      float4x4 clipSpaceMatrix    : register(c0);
 			      float4   textureConstants   : register(c4);
@@ -267,14 +267,14 @@ define PixelShaderFloorsWithShadowMapping()
 			      float4   projCaustics2 : register(c13);
 			      float4x4 lightClipSpaceMatrix : register(c14);
 			      float4x4 lightClipSpaceMatrixAdj : register(c18);
-      		
+
 		      struct InputVertex
 			      {
 				      float3 position: POSITION0;
 				      float2 tc0 : TEXCOORD0;
-				      float2 tc1 : TEXCOORD1;				      
+				      float2 tc1 : TEXCOORD1;
 			      };
-      			
+
 			      struct OutputVertex
 			      {
 				      float4 clipPosition : POSITION;
@@ -284,7 +284,7 @@ define PixelShaderFloorsWithShadowMapping()
 				      float4 vPosLight : TEXCOORD3;
 				      float4 shadowTex : TEXCOORD4;
 			      };
-      			
+
 			      OutputVertex VertexMain( InputVertex i)
 			      {
 				      OutputVertex o;
@@ -294,57 +294,57 @@ define PixelShaderFloorsWithShadowMapping()
 				      float3 wPosition = mul(i.position, objToGlobal);
 				      float3 wPos = wPosition*0.3;
 				      o.txCaustics.x = (wPos.x * projCaustics0.x) + (wPos.y * projCaustics0.y) + (wPos.z * projCaustics0.z);
-				      o.txCaustics.y = (wPos.x * projCaustics1.x) + (wPos.y * projCaustics1.y) + (wPos.z * projCaustics1.z);				   
-				      o.vPosLight = mul(float4(wPosition, 1), lightClipSpaceMatrix);				      
+				      o.txCaustics.y = (wPos.x * projCaustics1.x) + (wPos.y * projCaustics1.y) + (wPos.z * projCaustics1.z);
+				      o.vPosLight = mul(float4(wPosition, 1), lightClipSpaceMatrix);
 				      o.shadowTex = mul(float4(wPosition, 1), lightClipSpaceMatrixAdj);
 				      return o;
 			      }
-		      endShaderSource  
+		      endShaderSource
          end # end shader program
-         
+
          #if ($psVersion >= 3)
          #   create FloorsPS3()
          #else
             create FloorsPS2()
          #endif
-         
-            
+
+
          sampler base
             texture $stdMatBaseTextureName ${stdMatBaseTextureParam}
             textureAddressing tile tile
          end
-         
+
          sampler lightmap
             texture "floorLightMap_0"
             textureAddressing tile tile
-         end      
+         end
 
          sampler caustics
             texture causticsTile   #TODO, make "-flipBook" switch.
             textureAddressing tile tile
          end
-         
+
          sampler shadowMap
             texture poolRenderTarget
             textureFilterHint point point
             textureMIPFilterHint disabled
             textureAddressing clamp clamp
          end
-         
+
       end
-   end		   
+   end
 enddef
 
 
 define ShadowPassThroughVS()
-   shaderProgram -target vertexProgram -method compile -version 2_0         
-		shaderSource               	
+   shaderProgram -target vertexProgram -method compile -version 2_0
+		shaderSource
 			struct OutputVertex
 			{
 				float4 clipPosition : POSITION;
-				float2 txBase    : TEXCOORD0;				   
+				float2 txBase    : TEXCOORD0;
 			};
-         
+
 			OutputVertex VertexMain( float2 position : POSITION0)
 			{
 				OutputVertex o;
@@ -352,102 +352,102 @@ define ShadowPassThroughVS()
 				o.txBase = 0.5f*position + 0.5f.xx;
 				return o;
 			}
-   		
-		endShaderSource  
+
+		endShaderSource
    end # end shader program
 enddef
 
 define GaussHPS()
-   shaderProgram -target pixelProgram -method compile -version 2_0                           
-   
-      shaderSource                                      
-      
-         static const int kKernelSize = 8;                       
-         
+   shaderProgram -target pixelProgram -method compile -version 2_0
+
+      shaderSource
+
+         static const int kKernelSize = 8;
+
          float2 PixelKernel[kKernelSize] =
          {
             { -4, 0 },
             { -3, 0 },
             { -2, 0 },
-            { -1, 0 },               
+            { -1, 0 },
             {  1, 0 },
             {  2, 0 },
             {  3, 0 },
             {  4, 0 }
-         };         
-         
-         static const float BlurWeights[kKernelSize] = 
+         };
+
+         static const float BlurWeights[kKernelSize] =
          {
             0.0276306,
             0.0662822,
             0.1238315,
-            0.1801738,            
+            0.1801738,
             0.1801738,
             0.1238315,
             0.0662822,
             0.0276306
-         };                    
-      	
+         };
+
 		   sampler source;
 		   sampler sourceLinear;
 		   float4 PixelMain( float2 Tex : TEXCOORD0 ) : COLOR
          {
             float4 Color = tex2D( source, Tex) * 0.2041637;
-            
+
             for (int i = 0; i < kKernelSize; i++)
-            {    
+            {
                Color += tex2D( sourceLinear, Tex + (PixelKernel[i].xy*0.001953125) ) * BlurWeights[i];
             }
-                                             
+
             return Color;
          }
       endShaderSource
-   end # end shader program      
-   
+   end # end shader program
+
    sampler source
       texture poolRenderTarget
       textureFilterHint point point
       textureAddressing clamp clamp
-   end		
-   
+   end
+
    sampler sourceLinear
       texture poolRenderTarget
       textureFilterHint bilinear bilinear
       textureAddressing clamp clamp
-   end		
+   end
 enddef
 
 define GaussVPS()
-	shaderProgram -target pixelProgram -method compile -version 2_0                                    
-      shaderSource                                      
-      
-         static const int kKernelSize = 8;                       
-         
+	shaderProgram -target pixelProgram -method compile -version 2_0
+      shaderSource
+
+         static const int kKernelSize = 8;
+
          float2 PixelKernel[kKernelSize] =
          {
             { -4, 0 },
             { -3, 0 },
             { -2, 0 },
-            { -1, 0 },               
+            { -1, 0 },
             {  1, 0 },
             {  2, 0 },
             {  3, 0 },
             {  4, 0 }
-         };         
-         
-         static const float BlurWeights[kKernelSize] = 
+         };
+
+         static const float BlurWeights[kKernelSize] =
          {
             0.0276306,
             0.0662822,
             0.1238315,
-            0.1801738,            
+            0.1801738,
             0.1801738,
             0.1238315,
             0.0662822,
             0.0276306
-         };                    
+         };
 
-   		
+
 		   sampler source;
 		   sampler sourceLinear;
 		   float4 PixelMain( float2 Tex : TEXCOORD0 ) : COLOR
@@ -455,70 +455,70 @@ define GaussVPS()
             float4 Color = tex2D( source, Tex) * 0.2041637;
 
             for (int i = 0; i < kKernelSize; i++)
-            {    
+            {
                Color += tex2D( sourceLinear, Tex + (PixelKernel[i].xy*0.001953125) ) * BlurWeights[i];
             }
-               
+
             return Color;
          }
          endShaderSource
-      end # end shader program      
-      
+      end # end shader program
+
       sampler source
          texture shadowMapBlur
          textureFilterHint point point
          textureAddressing clamp clamp
-      end		
-      
+      end
+
       sampler sourceLinear
          texture shadowMapBlur
          textureFilterHint bilinear bilinear
          textureAddressing clamp clamp
-      end	
+      end
 enddef
 
 define DX9GaussianFilterShadowMap()
    material
-      # render this at the end   
+      # render this at the end
       shader -layer +999
-         if (viewerRenderType = $kRenderTypeShadowMap)            
+         if (viewerRenderType = $kRenderTypeShadowMap)
             pass
                renderClipSpaceRect
 		         renderTarget shadowMapBlur
-		         depthTest false -enableDepthWrite false		         
-         		
-               create ShadowPassThroughVS()				
+		         depthTest false -enableDepthWrite false
+
+               create ShadowPassThroughVS()
 		         create GaussHPS()
-               
+
             end
-            
+
             pass
                renderClipSpaceRect
 		         renderTarget viewerRenderTarget
-		         depthTest false -enableDepthWrite false		         
-         		
-		         create ShadowPassThroughVS()				
+		         depthTest false -enableDepthWrite false
+
+		         create ShadowPassThroughVS()
 		         create GaussVPS()
-            end      
+            end
          endif
       end
-   end  
+   end
 enddef
 
 
 define PixelShaderFloors(normalMapping)
 
-   
+
    setb caustics false
    seti textureLights 0
-   
+
    if ($floorCausticsPass and $causticsEnabled)
       setb caustics true
    endif
-   
+
    if ($caustics and $useHWShader2Path)
       create PixelShaderFloorsWithShadowMapping()
-   else   
+   else
    	shader -layer $floorLayer
 		   validateRenderShaderContext -vertexFormat position  0 required
 		   validateRenderShaderContext -vertexFormat texcoord  0 required
@@ -527,7 +527,7 @@ define PixelShaderFloors(normalMapping)
 		   if (&normalMapping)
 			   validateRenderShaderContext -vertexFormat texcoord  1 required
 		   endif
-   		
+
 		   validateRenderShaderContext -viewerRenderType viewerRenderType
 
 		   if ($caustics)
@@ -535,8 +535,8 @@ define PixelShaderFloors(normalMapping)
          else
             pass
          endif
-         
-         if ($hasCutout)                         
+
+         if ($hasCutout)
             depthTestFunction acceptIfEqual
          else
             depthTestFunction acceptIfLessOrEqual
@@ -546,32 +546,32 @@ define PixelShaderFloors(normalMapping)
 		   # texcoord1 = normal mapping texcoords
 
 			   setb lightMapping false
-   	
+
 			   if (varExists(page))
 				   setb lightMapping true
 			   else
 				   set page "foo"
 			   endif
-   			
+
 			   if ($hasTexcoord2 = false)
 			      setb lightMapping false
 			   endif
-   			
-   			
+
+
 			   setv3 evalDiffuse ($stdMatDiffCoef.xyz)
-   			
+
 			   shaderProgram -target vertexProgram -method assemble
-   			
+
 				   setf scaleU (1.0 / $floorMaterialScaleU)
 				   setf scaleV (1.0 / $floorMaterialScaleV)
-   				
+
 				   bindConstants 0 -bindingID geomToClip -constantCount 4
 				   bindConstants 4 -bindingID immediateData -data ( $scaleU, $scaleV, 1, 1)
 				   bindConstants 5 -bindingID geomToGlobal -constantCount 3
-               
+
 				   shaderSource
 					   vs_1_1
-                  
+
                   # for pool floors.
                   def c11, 1, -1, 0, 0.3
                   def c12, 1,  1, 1, 1
@@ -584,16 +584,16 @@ define PixelShaderFloors(normalMapping)
                if (&normalMapping or $lightMapping)
 				      shaderSource "dcl_texcoord1 v2"
 				   endif
-   				
-				   shaderSource	
+
+				   shaderSource
 					   m4x4 oPos, v0, c0
 					   mul oT0.xy, v1, c4  ; base is tiled by scale
 				   endShaderSource
-               
+
                if (&normalMapping or $lightMapping)
                   shaderSource "mov oT1.xy, v2   ; lightmap space"
                endif
-               
+
 
 
                if ($floorHighlightOn)
@@ -606,56 +606,56 @@ define PixelShaderFloors(normalMapping)
                         m3x3 oT2, r0, c11  ; project and emit.
                      endShaderSource
                   else
-               
+
                      if (&normalMapping or $debugShowFloorIncidence or $debugShowFloorNormalMap)
                         shaderSource
                            mul oT2.xy, v1 , c4    ; normal map in 'tile space', so apply scale just like base
                            mov oT3.xy, v2     ; incidence exists in lightmap space
                         endShaderSource
                      endif
-                     
+
                   endif
-                  
+
 				   endif
-               
+
 			   end # shaderProgram
-   		
+
             if ($debugShowFloorIncidence or $debugShowFloorNormalMap or $debugFloorLighting or $debugShowLightMapTexcoords)
                create DebugFloorPixelShader(&normalMapping)
             else
-   		
+
                shaderProgram -target pixelProgram -method assemble
                   bindConstants 0 -bindingID immediateData -data($evalDiffuse, 1)
-                  
+
                   if ($floorHighlightOn)
                      bindConstants 1 -bindingID immediateData -data ($floorHighlightIntensity)
                   endif
-                  
-                  bindConstants 2 -bindingID immediateData -data (0,0,0,$causticsStrength) 
-                  
+
+                  bindConstants 2 -bindingID immediateData -data (0,0,0,$causticsStrength)
+
                   seti textureLights (numLightsOfType(environmentCube))  # a color that scales bright thingies at night
-                  
+
                   if ($textureLights)
                      bindConstants 3 -bindingID allTextureLights -constantCount 1
                   endif
-                  
+
                   shaderSource
                      ps_1_1
                      def c2, 1,1,1,1
                      tex t0
                      tex t1
-                     
+
                   endShaderSource
-                  
+
                   if ($floorHighlightOn)
                      shaderSource
                         tex t2
                         mul r1, c1, 1-t2.a
                         mul_x2 r0, t0, t2.a
                         add r0, r0, r1
-      
+
                      endShaderSource
-      
+
                   else
                      if ($caustics)
                         shaderSource
@@ -663,22 +663,22 @@ define PixelShaderFloors(normalMapping)
                            mul_x2 r0, t0, t1   ; base * lightmap * 2
                            mul r0, r0, c0
                         endShaderSource
-                        
+
                         if ($textureLights)
                            shaderSource "mad r0, t2, c3, r0 ; scale by the 'night color' then add in the result"
                         else
                            shaderSource "add r0, r0, t2  ; add in caustic."
                         endif
-                        
+
                      else
 
                         if (&normalMapping)
                            shaderSource
-                     
+
                               tex t2		; normal
                               tex t3		; incidence
-                              
-                              mul r0, t0, t1   ; base * lightmap 
+
+                              mul r0, t0, t1   ; base * lightmap
                               mul r0, r0, c0
                               dp3_sat r1, t2_bx2, t3_bx2  ; normal map dot incidence
                               mul_x2 r0.rgb, r0, r1      ; combine, and complete, scale at the end to prevent precision/LDR errors
@@ -694,32 +694,32 @@ define PixelShaderFloors(normalMapping)
                            else
                               shaderSource "mov r0, t0"
                            endif
-                           
+
                         endif
                      endif # caustics
                   endif # floor highlight.
                end  # shaderProgram
             endif
-            
+
 
 
 			   sampler 0
 				   texture $stdMatBaseTextureName ${stdMatBaseTextureParam}
 				   textureAddressing tile tile
 			   end
-   			
+
 			   if ($lightMapping)
 				   sampler 1
 					   texture "floorLightMap_${page}"
 				   end
 			   endif
-   			
+
             if ($floorHighlightOn)
-               
+
                sampler 2
                   texture "floor_selection_colors"
                end
-            
+
             else
 
                if ($caustics)
@@ -728,27 +728,27 @@ define PixelShaderFloors(normalMapping)
                      textureAddressing tile tile
                   end
                else
-               
+
                   if (&normalMapping or $debugShowFloorIncidence or $debugShowFloorNormalMap or $debugFloorLighting)
                      sampler 2
                         texture $stdMatNormalMapTextureName
                         textureAddressing tile tile
                      end
-                     
+
                      sampler 3
                         texture "floorIncidenceMap_${page}"
                      end
                   endif
                endif
-               
+
             endif
-   			
-   			
+
+
 		   end # pass
-     
+
 	   end # shader
    endif
-   
+
 enddef
 
 
@@ -760,7 +760,7 @@ define PixelShaderInverseTileGridRendering()
 		alphaTest true 50
 		alphaTestFunction acceptIfGreater
 		alphaBlend srcFactor(one) add dstFactor(srcAlpha)
-		depthTest true -enableDepthWrite false 
+		depthTest true -enableDepthWrite false
 
 		shaderProgram -target vertexProgram -method assemble
 			bindConstants 0 -bindingID geomToClip -constantCount 4
@@ -768,31 +768,31 @@ define PixelShaderInverseTileGridRendering()
 				vs_1_1
 				dcl_position v0
 				dcl_texcoord v1
-				
+
 				m4x4 oPos, v0, c0
 				mov oT0.xy, v1
 			endShaderSource
 		end
-		
+
 		shaderProgram -target pixelProgram -method assemble
-			
+
 			shaderSource
 				ps_1_1
 				tex t0
-				
+
 				mul r0.rgb, 1-t0, t0.a
 				+mov r0.a, t0
-		
+
 			endShaderSource
-		
+
 		end
-	
-	
-	
+
+
+
 		sampler 0
 			texture $stdMatBaseTextureName ${stdMatBaseTextureParam}
 		end
-	
+
 	end #pass
 
 

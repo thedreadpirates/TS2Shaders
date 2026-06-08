@@ -8,24 +8,24 @@ define StandardMaterialFragmentBuilder(lightingMode perPixelLightingFlag hdrFlag
 	setb texTransform false
 
 
-		
+
 	create TransformFragments($doSkinning $stdMatReduceBoneWeights &swvsFlag $doMorphing $numPosMorphs $numNormMorphs $stdMatLightingEnabled &shaderVersion)
 
 	setb specularFlag false
 
 	create CheckForCubeMapping()
 
-	
+
 	if ( ($stdMatSpecPower > 0) and &lightingMode = $kFullLighting )
 		setb specularFlag true
 	endif
-	
+
 
     #trace "$currentMaterialName   mode: &lightingMode"
-    
+
 
 	if (&lightingMode = $kFullLighting and $stdMatLightingEnabled)
-								
+
 		if ($specularFlag)
 			shaderFragment CreateReflectionVector&{shaderVersion}
 		endif
@@ -37,11 +37,11 @@ define StandardMaterialFragmentBuilder(lightingMode perPixelLightingFlag hdrFlag
 				shaderFragment TransformTangentSpaceNoSkinning&{shaderVersion}
 			endif
 		endif
-	
+
 	if ($totalLights > 0)
 
-      if ($vs2LoopsFunctional)      
-      
+      if ($vs2LoopsFunctional)
+
          create SupportedRenderShaderContextFFPredicates()
          #<
          #trace "$vs2LoopsFunctional <- loops active"
@@ -51,40 +51,40 @@ define StandardMaterialFragmentBuilder(lightingMode perPixelLightingFlag hdrFlag
             supportedRenderShaderContexts -lightCounts directional (1, 8) point (0, 8) spot (0, 8)
          endif
          #>
-         
+
   			create AddLoopingLightFragments(&perPixelLightingFlag $specularFlag  &shaderVersion)
   		else
          create StandardLightFragmentsDX9($specularFlag &perPixelLightingFlag &shaderVersion)
       endif
    endif
-   
+
 
 		if ($cubeMappingEnable)
          #trace "$currentMaterialName  cubemap on in VS"
 			if ($specularFlag = false)
     			shaderFragment CreateReflectionVector&{shaderVersion}
     		endif
-    		
+
     		if (not $stdMatEnvCubeLockedToCamera)
     			shaderFragment TexgenTransformedReflectionVector&{shaderVersion}
     		else
 				shaderFragment TexgenReflectionVector&{shaderVersion}
 			endif
 		endif
-			
-					
+
+
 		if ($hasTexcoords)
-			
-			
+
+
 			if (strcmp("${stdMatTextureCoordAnimMode}", "transform") = 0)
 				setb texTransform true
 			endif
-	
+
 			if (strcmp("${stdMatTextureCoordAnimMode}", "tile") = 0)
 				setb texTransform true
 			endif
 
-			# do nothing for "video" mode.		
+			# do nothing for "video" mode.
 
 			# any texture matrix animation uses this same fragment, only the binds are different.
 			if ($texTransform)
@@ -92,14 +92,14 @@ define StandardMaterialFragmentBuilder(lightingMode perPixelLightingFlag hdrFlag
 			else
 				shaderFragment NoTextureMagic&{shaderVersion}
 			endif
-			
+
 		endif
 
 	else
-		
+
 		#trace "Not full lighting, using full bright instead."
 		setb cubeMappingEnable false
-      
+
 		if (&hdrFlag)
 
 			if (&lightingMode = $kAmbientOnly)
@@ -113,23 +113,23 @@ define StandardMaterialFragmentBuilder(lightingMode perPixelLightingFlag hdrFlag
 			else
 				shaderFragment NoLighting&{shaderVersion}
 			endif
-	
+
 		endif
-		
-		
+
+
 		if ($hasTexcoords)
-			
+
 			setb texTransform false
-			
+
 			if (strcmp("${stdMatTextureCoordAnimMode}", "transform") = 0)
 				setb texTransform true
 			endif
-	
+
 			if (strcmp("${stdMatTextureCoordAnimMode}", "tile") = 0)
 				setb texTransform true
 			endif
 
-			# do nothing for "video" mode.		
+			# do nothing for "video" mode.
 
 			# any texture matrix animation uses this same fragment, only the binds are different.
 			if ($texTransform)
@@ -137,9 +137,9 @@ define StandardMaterialFragmentBuilder(lightingMode perPixelLightingFlag hdrFlag
 			else
 				shaderFragment NoTextureMagic&{shaderVersion}
 			endif
-			
+
 		endif
-			
+
 	endif
 
 
@@ -159,15 +159,15 @@ define StandardLightFragmentsDX9(specularFlag  perPixelLightingFlag shaderVersio
 	#trace "------------- $currentMaterialName -- StandardLightFragmentsDx9, specular Flag: &specularFlag"
 
 	seti totalLights ($distantLightCount + $pointLightCount +$spotLightCount)
-	
+
 	seti slotsLeft 4
 	seti pass1DistantLights 0
 	seti pass1PointLights 0
 	seti pass1SpotLights 0
-	seti pass1PointSpotLights 0 
+	seti pass1PointSpotLights 0
 	setb doSpecular false
-	
-	
+
+
 
 	create CheckForSpecular()
 
@@ -179,27 +179,27 @@ define StandardLightFragmentsDX9(specularFlag  perPixelLightingFlag shaderVersio
 #		seti totalLights 0
 #	endif
 
-	
-			
+
+
 
 	# 4 or less light case.
-	
+
 	if ($totalLights < 5)
 		if ($totalLights > 0)
 			create DX9LightFragments( true $doSpecular &perPixelLightingFlag 0 $totalLights $distantLightCount $pointLightCount $spotLightCount &shaderVersion)
 			seti totalLights 0
 		endif
 	else
-					
+
 		if ($distantLightCount < 5)
 			seti pass1DistantLights $distantLightCount
 		else
 			seti pass1DistantLights 4
 		endif
-				
+
 		seti slotsLeft (4 - $pass1DistantLights)
 		#trace "Slots left after distant: $slotsLeft"
-					
+
 		if ($pointLightCount > $slotsLeft)  # more point lights than slots left.
 			seti pass1PointLights $slotsLeft   # pass 1 points then are the rest of the slots.
 			seti slotsLeft 0  # no more slots left.
@@ -207,7 +207,7 @@ define StandardLightFragmentsDX9(specularFlag  perPixelLightingFlag shaderVersio
 			seti slotsLeft ($slotsLeft - $pointLightCount)  # there was room, compute new slots left
 			seti pass1PointLights $pointLightCount  # consumes all point lights in the first pass.
 		endif
-					
+
 		#trace "Slots left after point: $slotsLeft"
 
 		if ($spotLightCount > $slotsLeft)  # more spot lights than slots left.
@@ -217,7 +217,7 @@ define StandardLightFragmentsDX9(specularFlag  perPixelLightingFlag shaderVersio
 			seti slotsLeft ($slotsLeft - $spotLightCount)  # there was room, compute new slots left
 			seti pass1SpotLights $spotLightCount  # consumes all point lights in the first pass.
 		endif
-			
+
 		# start at light zero, no ambient yet, 4 lights...
 		create DX9LightFragments( false $doSpecular &perPixelLightingFlag 0 4 $pass1DistantLights $pass1PointLights $pass1SpotLights &shaderVersion)
 
@@ -226,14 +226,14 @@ define StandardLightFragmentsDX9(specularFlag  perPixelLightingFlag shaderVersio
 		seti pass2SpotLights ($spotLightCount - $pass1SpotLights)
 
 		seti totalLightsLeft ($pass2DistantLights +  $pass2PointLights + $pass2SpotLights)
-		
+
 		if ($totalLights)
 			create DX9LightFragments( true $doSpecular false 4 $totalLightsLeft $pass2DistantLights $pass2PointLights $pass2SpotLights &shaderVersion)
-		endif			
-		
+		endif
+
 	endif # one/two set of lights in this pass.
-	
-	
+
+
 enddef
 
 
@@ -245,18 +245,17 @@ enddef
 define CheckForCubeMapping()
 
   	setb cubeMappingEnable false
-	
+
 	if (strcmp("${stdMatEnvCubeMode}", "none") = 0)
 		setb cubeMappingEnable false
 	else
 		setb cubeMappingEnable true
 	endif
-	
+
 	setf coef ($stdMatEnvCubeCoef.x	+ $stdMatEnvCubeCoef.y + $stdMatEnvCubeCoef.z)
-	
+
 	if ($coef <	0.003)
 		setb cubeMappingEnable false
 	endif
-	
-enddef
 
+enddef

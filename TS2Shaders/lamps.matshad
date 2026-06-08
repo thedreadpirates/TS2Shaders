@@ -59,7 +59,7 @@ materialDefinition brokenLampSmoke
    addParam stdMatLightingEnabled false
    addParam stdMatAlphaBlendMode blend
    addParam stdMatAlphaTestEnabled false
-   addParam stdMatAlphaMultiplier  0.1 
+   addParam stdMatAlphaMultiplier  0.1
    addParam stdMatBaseTextureAlphaReplicate false
    addParam stdMatDiffCoef (.388, .312, .204)
    addParam stdMatBaseTextureEnabled true
@@ -102,8 +102,3 @@ materialDefinition brokenLampElectricalArcs
    addParam stdMatBaseTextureAddressingU clamp
    addParam stdMatBaseTextureAddressingV clamp
 end
-
-
-
-
-

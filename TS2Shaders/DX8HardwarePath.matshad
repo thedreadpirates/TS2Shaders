@@ -5,7 +5,7 @@
 define DX8HardwarePath()
 
    setb reduceLights false
-   
+
 	if (viewerRenderType = $kRenderTypeShadow)
 		create DX8ShadowRendering()
 	else
@@ -13,15 +13,15 @@ define DX8HardwarePath()
       seti reduceLights true
       create DX8StandardMaterialRendering()
 	endif
-	
+
 enddef
 
 
 
 
 define DX8StandardMaterialRendering()
-			
-			
+
+
 		setf diffuseColorAccum 0
 		setf specularColorAccum 0
 		seti totalLights 0
@@ -29,25 +29,25 @@ define DX8StandardMaterialRendering()
 		setb alphaBlendingOn false
 		setb useCutout false
 		setb cubeMappingEnable false
-		seti lightingMode $kNoLighting     
+		seti lightingMode $kNoLighting
 		seti passCount 0
 		setb texTransform false
 		setb HDRScale true
       setb singleBone false
       seti textureLightCount (numLightsOfType(environmentCube))
-      
+
 		if (strcmp("${stdMatAlphaBlendMode}", "none")!=0 )
 			setb alphaBlendingOn true
 		endif
-			
+
 		if (numLightsOfType(${kShapeColorLight}) > 0)
 			setb alphaBlendingOn true
 		endif
-			
+
 		seti  layerNumber ($stdMatLayer	* 18	+ ($alphaBlendingOn ? 17 : 0))
-		
+
 		#trace "DX8 standard mat: $currentMaterialName"
-		
+
 		shader  -layer ($layerNumber)
 
 			validateRenderShaderContext -vertexFormat position 0 required
@@ -56,13 +56,13 @@ define DX8StandardMaterialRendering()
 
 			create SetupCommonHWShaderVariablesAndPredicates()
 
-			
+
 			#trace "-----------------------------"
 			#trace "DX8 Standard Material ($currentMaterialName): total lights $totalLights ALphaBlending: $alphaBlendingOn, Layer $layerNumber"
-			
 
-	      
-	      
+
+
+
 			if ($hasTexcoords = false)
 				setb stdMatBaseTextureEnabled false
 				setb stdMatSpecMaskTextureEnabled  false
@@ -71,17 +71,17 @@ define DX8StandardMaterialRendering()
 
 
 			create DetermineLightingMode()
-			
-				
+
+
 			#   if (strcmp("${stdMatAlphaBlendMode}", "additive") = 0)
 			#		#trace "DX8 limits: Additive blend mode, disabling lighting"
 			#		seti lightingMode $kNoLighting
 			#	endif
-        
-				
+
+
 
 			# what to do with objects that already have blend mode set?
-		
+
 		#< Might be a cause of flicker for Dx8, disabling for now.
 			if (numLightsOfType(${kShapeColorLight}) != 0 ) #and  strcmp("${stdMatAlphaBlendMode}", "blend") != 0)
 
@@ -97,9 +97,9 @@ define DX8StandardMaterialRendering()
 					shaderProgram -method link -target vertexProgram
 						create TransformFragments($doSkinning false false $doMorphing $numPosMorphs $numNormMorphs false 1_1)
 					end
-											
+
 					shaderProgram -method assemble -target pixelProgram
-						shaderSource 
+						shaderSource
 							ps_1_1
 							def c0,0,0,0,0
 							mov r0, c0
@@ -108,29 +108,29 @@ define DX8StandardMaterialRendering()
 				end
 			endif
 		#>
-			
-				
+
+
 			if (strcmp("${stdMatCutoutTextureName}", "0") != 0)
 				setb useCutout true
 			endif
-		
+
 			create CheckForCubeMapping()
-			
+
 			#trace "Cubemapping flag: $cubeMappingEnable  mode: $stdMatEnvCubeMode"
-				
-			
+
+
 			if ($lightingMode = $kFullLighting)
 				#trace "$currentMaterialName DX8: Lit"
-            
+
 				create StandardMaterialPassesDX8($useCutout $lightingMode $cubeMappingEnable)
 			else
-         
+
             if ($updateEachFrameFlag)
                pass -modifiedEachFrameHint
             else
                pass
             endif
-					
+
 					#trace "$currentMaterialName DX8: Unlit or ambient only, mode: $lightingMode"
 
 				    create StandardShaderFBAlphaState($stdMatAlphaBlendMode)
@@ -138,16 +138,16 @@ define DX8StandardMaterialRendering()
 				 	fillmode $stdMatFillMode
 					cullmode $stdMatCullMode
 					create NonStandardLighting()
-				    
-					
+
+
 					shaderProgram -target vertexProgram -method link
-	
+
 						create BindsForHardwareVS1Transforms($doSkinning $doMorphing)
 						create BindsForLighting($lightingMode)
 
 						# $cubeMappingEnable is actually in the 'transform the normals' slot.
 						# without cubemapping, I can skip normals.
-						
+
                   if ($doSkinning)
                      if ($bonesPerVertex = 1 or $stdMatReduceBoneWeights)
                         setb singleBone true
@@ -155,33 +155,33 @@ define DX8StandardMaterialRendering()
                   else
                      setb singleBone false
                   endif
-                  
-                  
-                  
+
+
+
 						create TransformFragments($doSkinning $singleBone false $doMorphing $numPosMorphs $numNormMorphs $cubeMappingEnable 1_1)
-			
+
 						if ($useCutout)
 							shaderFragment Copy2DTexcoordsToTexTwo1_1
 						endif
-						
+
 						if ($cubeMappingEnable)
 							if (strcmp("${stdMatEnvCubeMode}", "reflection") = 0)
 	          					shaderFragment CreateReflectionVector1_1
 								shaderFragment TexgenReflectionVector1_1
 							endif
 						endif
-						
+
 						if ($hasTexcoords)
-							
+
 							if (strcmp("${stdMatTextureCoordAnimMode}", "transform") = 0)
 								setb texTransform true
 							endif
-					
+
 							if (strcmp("${stdMatTextureCoordAnimMode}", "tile") = 0)
 								setb texTransform true
 							endif
 
-							# do nothing for "video" mode.		
+							# do nothing for "video" mode.
 
 							# any texture matrix animation uses this same fragment, only the binds are different.
 							if ($texTransform)
@@ -191,20 +191,20 @@ define DX8StandardMaterialRendering()
 							endif
 
 						endif
-						
-						
+
+
 						if ($lightingMode = $kAmbientOnly)
 							shaderFragment AmbientLighting1_1
 						else
 							shaderFragment NoLighting1_1
 						endif
-						
+
 					end
 
 		    		create VertexShaderTextureMatrixAnimation()
-					
+
 					#trace "Alpha blending: $stdMatAlphaBlendMode"
-					
+
 					if ($alphaBlendingOn or $stdMatAlphaTestEnabled)
 					    create StandardShaderFBAlphaState($stdMatAlphaBlendMode)
 						setb maxOutboundAlpha false
@@ -215,24 +215,24 @@ define DX8StandardMaterialRendering()
 					if ($lightingMode = $kNoLighting)
 						setb HDRScale false
 					endif
-					
+
 					#trace "HDR scale: $HDRScale"
-					
+
 					if ($lightingMode = $kNoLighting)
 						create UnlitPixelShader()
 					else
 						create DX8StandardMaterialDiffusePixelShader(false $useCutout false $cubeMappingEnable $stdMatBaseTextureEnabled $HDRScale)
 					endif
-					
-					
-				end		
+
+
+				end
 
 			endif
-			
+
 		#trace "Stdmat complete in $passCount passes"
 		end #end shader
 
-	
+
 
 enddef
 
@@ -242,23 +242,23 @@ define StandardMaterialPassesDX8(useCutout lightingMode cubeMappingEnable)
 # the general idea here is that I only have 60 instructions to do stuff in, and worse case scenarios, like 4 spot lights, consume
 # 50-70 instructions for specular, so we can't merge diffuse and specular in these cases.
 # fourtunately, lighting can be separated and added together in passes. this code groups up to 4 lights together per pass.
-	
+
 	seti totalLights ($distantLightCount + $pointLightCount +$spotLightCount)
 	seti slotsLeft 4
 	seti pass1DistantLights 0
 	seti pass1PointLights 0
 	seti pass1SpotLights 0
-	seti pass1PointSpotLights 0 
+	seti pass1PointSpotLights 0
 	setb doSpecular false
 	setf specIntensity 0.0
-	seti passCount 0 
+	seti passCount 0
 	seti pass2SpotLights 0
-	
+
 	#trace "StandardMaterialPassesDX8: $currentMaterialName Total lights pre-split: $totalLights, d: $distantLightCount,  p: $pointLightCount, s:$spotLightCount cubemap flag: &cubeMappingEnable"
-	
+
 	setb localBumpMapFlag false
 	setb localCubemapFlag (&cubeMappingEnable)
-	
+
 	if ($doSkinning)
 		if ($bonesPerVertex = 1 or $stdMatReduceBoneWeights)
 			setb singleBone true
@@ -268,7 +268,7 @@ define StandardMaterialPassesDX8(useCutout lightingMode cubeMappingEnable)
 	endif
 
 	#bumpmaps are disabled for shape color, no instructions left to handle this case.
-		
+
 	if ($bumpMapping)
 		if ($stdMatNormalMapTextureEnabled and $stdMatShapeColorIndex = -1)
 			#trace "StdMat: Bump mapping enabled for $currentMaterialName"
@@ -279,22 +279,22 @@ define StandardMaterialPassesDX8(useCutout lightingMode cubeMappingEnable)
 
 	create CheckForSpecular()
 
-	
+
 	if ($totalLights < 5)
 		if ($totalLights > 0)
 			create StandardMaterialDiffusePassDX8(&useCutout false true $localBumpMapFlag 0  $totalLights $distantLightCount $pointLightCount $spotLightCount $localCubemapFlag)
 			seti totalLights 0
 		endif
 	else
-					
+
 		if ($distantLightCount < 4)
 			seti pass1DistantLights $distantLightCount
 		else
 			seti pass1DistantLights 4
 		endif
-				
+
 		seti slotsLeft (4 - $pass1DistantLights)
-					
+
 		if ($pointLightCount > $slotsLeft)  # more point lights than slots left.
 			seti pass1PointLights $slotsLeft   # pass 1 points then are the rest of the slots.
 			seti slotsLeft 0  # no more slots left.
@@ -302,7 +302,7 @@ define StandardMaterialPassesDX8(useCutout lightingMode cubeMappingEnable)
 			seti slotsLeft ($slotsLeft - $pointLightCount)  # there was room, compute new slots left
 			seti pass1PointLights $pointLightCount  # consumes all point lights in the first pass.
 		endif
-					
+
 
 		if ($spotLightCount > $slotsLeft)  # more spot lights than slots left.
 			seti pass1SpotLights $slotsLeft   # pass 1 points then are the rest of the slots.
@@ -311,7 +311,7 @@ define StandardMaterialPassesDX8(useCutout lightingMode cubeMappingEnable)
 			seti slotsLeft ($slotsLeft - $spotLightCount)  # there was room, compute new slots left
 			seti pass1SpotLights $spotLightCount  # consumes all point lights in the first pass.
 		endif
-			
+
 		# cutout, don't add to back buffer, apply ambient,bumps,  start at light 0, do 4 lights.
 		create StandardMaterialDiffusePassDX8(&useCutout false true  $localBumpMapFlag 0 4 $pass1DistantLights $pass1PointLights $pass1SpotLights false)
 
@@ -320,27 +320,27 @@ define StandardMaterialPassesDX8(useCutout lightingMode cubeMappingEnable)
 		seti pass2SpotLights ($spotLightCount - $pass1SpotLights)
 
 		seti totalLights ($pass2DistantLights +  $pass2PointLights + $pass2SpotLights)
-		
+
 		if ($totalLights)
 #StandardMaterialDiffusePassDX8(useCutout addToLastPass ambientFlag bumpMapFlag lightOffset passLightCount passDistantLightCount passPointCount passSpotLightCount cubeMapping)
 
 			# no cutout on 2nd pass, add to back buffer, no ambient (done in previous pass), no bumpmapping start at light 4...
-			
+
 			# cubemaps will only be enabled if bumpmapping was false.
 			create StandardMaterialDiffusePassDX8(false true false false 4 $totalLights $pass2DistantLights $pass2PointLights $pass2SpotLights $localCubemapFlag)
-			
+
 		endif
-					
-				
+
+
 	endif # 4 lights
-	
-	
+
+
 	# now do specular passes
-	
+
 
 	if ($doSpecular)
 		#trace "$currentMaterialName    Specular enabled, power: $stdMatSpecPower, Intensity : $specIntensity,  adding specular passes"
-		
+
 		seti totalLights ($distantLightCount + $pointLightCount +$spotLightCount)
 
 		if ($totalLights < 5)
@@ -349,15 +349,15 @@ define StandardMaterialPassesDX8(useCutout lightingMode cubeMappingEnable)
 				seti totalLights 0
 			endif
 		else
-						
+
 			if ($distantLightCount < 4)
 				seti pass1DistantLights $distantLightCount
 			else
 				seti pass1DistantLights 4
 			endif
-					
+
 			seti slotsLeft (4 - $pass1DistantLights)
-						
+
 			if ($pointLightCount > $slotsLeft)  # more point lights than slots left.
 				seti pass1PointLights $slotsLeft   # pass 1 points then are the rest of the slots.
 				seti slotsLeft 0  # no more slots left.
@@ -365,7 +365,7 @@ define StandardMaterialPassesDX8(useCutout lightingMode cubeMappingEnable)
 				seti slotsLeft ($slotsLeft - $pointLightCount)  # there was room, compute new slots left
 				seti pass1PointLights $pointLightCount  # consumes all point lights in the first pass.
 			endif
-						
+
 
 			if ($spotLightCount > $slotsLeft)  # more spot lights than slots left.
 				seti pass1SpotLights $slotsLeft   # pass 1 points then are the rest of the slots.
@@ -374,7 +374,7 @@ define StandardMaterialPassesDX8(useCutout lightingMode cubeMappingEnable)
 				seti slotsLeft ($slotsLeft - $spotLightCount)  # there was room, compute new slots left
 				seti pass1SpotLights $spotLightCount  # consumes all point lights in the first pass.
 			endif
-				
+
 			# start at light 0, do 4 lights.
 			create StandardMaterialSpecularPassDX8(0 4 $pass1DistantLights $pass1PointLights $pass1SpotLights)
 
@@ -383,32 +383,32 @@ define StandardMaterialPassesDX8(useCutout lightingMode cubeMappingEnable)
 			seti pass2SpotLights ($spotLightCount - $pass1SpotLights)
 
 			seti totalLights ($pass2DistantLights +  $pass2PointLights + $pass2SpotLights)
-		
+
          if ($reduceLights)
             if ($pass2SpotLights = 4)
                seti pass2SpotLights 3
             endif
          endif
-         
-      
+
+
 			if ($totalLights)
 				# no cutout on 2nd pass, add to back buffer, add ambient to final lighting, start at light 4...
 				create StandardMaterialSpecularPassDX8(4 $totalLights $pass2DistantLights $pass2PointLights $pass2SpotLights)
 			endif
-						
-					
+
+
 		endif # <= 4 lights
-		
+
 	#else  # if specular
 		# #trace " Specular DISABLED power or color is too low. power: $stdMatSpecPower, Intensity : $specIntensity"
 	endif
-	
-	
+
+
 	# if bumpmapping AND cubemapping is on, then apply a final pass to combine these two features.
 	if (&cubeMappingEnable and $localBumpMapFlag)
-		
+
 		create BumpyShinyPass()
-		
+
 	endif
 
    create Dx8SnowPass()
@@ -417,50 +417,50 @@ enddef
 
 define Dx8SnowPass()
    seti weatherLightCount (numLightsOfType(${kWeatherLight}))
-	
+
 	if ($weatherLightCount > 0)
-		
+
 		pass
-		   alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)		      
-		   
+		   alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
+
 		   depthTest true -enableDepthWrite false
 		   depthTestFunction acceptIfEqual
-		   
+
 		   shaderProgram -method link -target vertexProgram
 				create BindsForHardwareVS1Transforms($doSkinning $doMorphing)
-				create BindsForLighting($kFullLighting)				   
+				create BindsForLighting($kFullLighting)
 				create TransformFragments($doSkinning $stdMatReduceBoneWeights false $doMorphing $numPosMorphs $numNormMorphs true 1_1)
 				#trace "$currentMaterialName : $doSkinning $stdMatReduceBoneWeights $bonesPerVertex"
 				shaderFragment ObjectSnowShaderTest1_1
 			end
 
-         # now write a pixel shader               		   
-         shaderProgram -target pixelProgram -method compile -version 1_1 # -disassemble "c:\sims2ep5\hlslPS2_0.txt"                            
-         
-            shaderSource                                                       
+         # now write a pixel shader
+         shaderProgram -target pixelProgram -method compile -version 1_1 # -disassemble "c:\sims2ep5\hlslPS2_0.txt"
+
+            shaderSource
                sampler NoiseSampler;
-               float4 PixelMain(float snow : TEXCOORD0, 
-		               float2 noiseUV : TEXCOORD1,		                  
+               float4 PixelMain(float snow : TEXCOORD0,
+		               float2 noiseUV : TEXCOORD1,
 		               float3 camNormal : TEXCOORD2,
 		               float3 diffuse : TEXCOORD3) : COLOR0
                {
-	               float4 result;	                  	                  
+	               float4 result;
 	               float4 n = tex2D(NoiseSampler, noiseUV);
-	               float snowColor = saturate((snow*2) - n.r);	                  
-	               result.w = snowColor; // blend alpha	                  	                  
+	               float snowColor = saturate((snow*2) - n.r);
+	               result.w = snowColor; // blend alpha
 	               result.xyz = diffuse.xyz;
 	               return(result);
                }
 
             endShaderSource
-         end               
-         
+         end
+
          sampler NoiseSampler
             texture "snow-object-noise"
             textureAddressing tile tile
-         end                                              
+         end
 		end
-	endif     
+	endif
 enddef
 
 define BumpyShinyPass()
@@ -468,7 +468,7 @@ define BumpyShinyPass()
 	pass
 
 	#trace "$currentMaterialName  bumpy shiny pass added"
-	
+
 		alphaBlend srcFactor(one) add dstFactor(one)
 		depthTest true -enableDepthWrite false
 
@@ -477,7 +477,7 @@ define BumpyShinyPass()
 			create BindsForHardwareVS1Transforms($doSkinning $doMorphing)
 
 			create TransformFragments($doSkinning $singleBone false $doMorphing $numPosMorphs $numNormMorphs true 1_1)
-			
+
 			if ($doSkinning)
 				shaderFragment TransformTangentSpaceWithCompositeMatrix1_1
 			else
@@ -486,18 +486,18 @@ define BumpyShinyPass()
 
 			# writes texcoords for Texm3x3vspec
 			shaderFragment TexgenBumpMapReflectionCube1_1
-			
+
 		end
-			
+
 		shaderProgram -target pixelProgram -method assemble
-			
+
 			setv3 cubeCoef (($stdMatEnvCubeCoef).xyz)
-			
-			bindConstants 0 -bindingID immediateData -data ($cubeCoef, 1) 
+
+			bindConstants 0 -bindingID immediateData -data ($cubeCoef, 1)
          if ($textureLightCount)
             bindConstants 1 -bindingID allTextureLights -constantCount 1
          endif
-         
+
 			shaderSource
 				ps_1_1
 				tex t0
@@ -506,13 +506,13 @@ define BumpyShinyPass()
 				texm3x3vspec t3, t0_bx2
 				mul r0, t3, c0   ; cubemap coeff.
          endShaderSource
-         
+
          if ($textureLightCount)
             shaderSource "mul r0, r0, c1  ; texture light for scaling reflection maps at night/dark rooms"
          endif
-			
+
 		end
-		
+
 		sampler 0
 			texture $stdMatNormalMapTextureName
 		end
@@ -520,9 +520,9 @@ define BumpyShinyPass()
 			texture $stdMatEnvCubeTextureName
 			textureAddressing clamp clamp clamp
 		end
-		
+
 	end
-	
+
 enddef
 
 
@@ -539,45 +539,45 @@ enddef
  Caveats about DX8 and multi-pass lighting.
 
 	Cutout only needs to exist in the first pass, the later passes can check Z-equals and be OK.
-	
+
 	first pass handles the destination blend with 1-srcAlpha.
-	
+
 	each sucessive pass has to preform pre-multiplied alpha (last instruction is "mul r0.rgb, r0, r0.a")
 	and mearly add to the background. All passes must honor the alpha from textures and alpha test modes.
-	 
+
 #>
 
 
 # IF there is no lighting, this should not be called!
 
 define StandardMaterialDiffusePassDX8(useCutout addToLastPass ambientFlag bumpMapFlag lightOffset passLightCount passDistantLightCount passPointCount passSpotLightCount cubeMappingEnable)
-	
+
 	#trace "StandardMaterialDiffusePassDX8 $currentMaterialName, add: &addToLastPass, bump: &bumpMapFlag lights this time: &passLightCount D:&passDistantLightCount P: &passPointCount S: &passSpotLightCount"
 
 	pass
 
 		seti passCount ($passCount +1)
-		
+
 		fillmode $stdMatFillMode
 		cullmode $stdMatCullMode
 		create NonStandardLighting()
 
-		
-		
+
+
 		shaderProgram -target vertexProgram -method link
-	
+
 			create BindsForHardwareVS1Transforms($doSkinning $doMorphing)
 			create BindsForLighting($lightingMode)
 			bindConstants 6 -bindingID ambientLight -constantCount 1 -constantType float
-									
+
 			seti distantLightCount (numLightsOfType(directional))
 			seti pointLightCount (numLightsOfType(point))
 			seti spotLightCount (numLightsOfType(spot))
 			seti totalLightCount ($distantLightCount + $pointLightCount + $spotLightCount)
-					
+
 			create TransformFragments($doSkinning $singleBone false $doMorphing $numPosMorphs $numNormMorphs true 1_1)
-			
-			
+
+
 			if (&bumpMapFlag)
 				# create a tangent space matrix to transform our light vectors.
 				if ($doSkinning)
@@ -586,43 +586,43 @@ define StandardMaterialDiffusePassDX8(useCutout addToLastPass ambientFlag bumpMa
 					shaderFragment TransformTangentSpaceNoSkinning1_1
 				endif
 			endif
-			
+
 			create DX8DiffusePassLightFragments(&ambientFlag  &bumpMapFlag &lightOffset &passLightCount &passDistantLightCount &passPointCount &passSpotLightCount 1_1)
-			
+
 			if (&useCutout)
 				shaderFragment Copy2DTexcoordsToTexTwo1_1
 			endif
-			
+
 			# should only be on  'the last pass' in the diffuse.
 			if (&cubeMappingEnable)
 	    		shaderFragment CreateReflectionVector1_1
 				shaderFragment TexgenReflectionVector1_1
 			endif
-			
+
 			# if texcoords exist, go ahead and copy them
 			if ($hasTexcoords)
 				setb texTransform false
-			
+
 				if (strcmp("${stdMatTextureCoordAnimMode}", "transform") = 0)
 					setb texTransform true
 				endif
-		
+
 				if (strcmp("${stdMatTextureCoordAnimMode}", "tile") = 0)
 					setb texTransform true
 				endif
 
-				# do nothing for "video" mode.		
+				# do nothing for "video" mode.
 
 				# any texture matrix animation uses this same fragment, only the binds are different.
 				if ($texTransform)
 					shaderFragment TextureMatrix2DTransformTex01_1
 				else
 					shaderFragment Copy2DTexcoords1_1
-				endif				
-				
+				endif
+
 			endif
 
-		end		
+		end
 
 		# Support Texture matrix animation from FF legacy path
 		create VertexShaderTextureMatrixAnimation()
@@ -634,20 +634,20 @@ define StandardMaterialDiffusePassDX8(useCutout addToLastPass ambientFlag bumpMa
 			setb preMultAlpha true
 		endif
 
-		
+
 		# similar to 'cutout'.
 		if ($stdMatAlphaTestEnabled and &addToLastPass = false)
 			#trace "Alpha testing enabled"
 			alphaTest true $stdMatAlphaRefValue
 			alphaTestFunction acceptIfGreaterOrEqual
 		endif
-		
+
 		if (&bumpMapFlag)
 			create DX8StandardMaterialDiffuseBumpPixelShader()
 		else
 			create DX8StandardMaterialDiffusePixelShader(&addToLastPass &useCutout $preMultAlpha &cubeMappingEnable $stdMatBaseTextureEnabled true)
 		endif
-		
+
 	end # pass
 
 
@@ -682,47 +682,47 @@ define DX8StandardMaterialDiffusePixelShader(addToLastPass useCutout premultiply
 	endif
 
 
-	
+
 
 	if (&useCutout)
 		alphaTest true 127
 		alphaTestFunction acceptIfGreaterOrEqual
 	endif
-   
-	
+
+
 
 	shaderProgram -method assemble -target pixelProgram
-			
+
 		setv3 cubeCoef (($stdMatEnvCubeCoef).xyz)
 		setv3 evalDiffuse (($stdMatDiffCoef).xyz)
-	
+
 		if ($stdMatBaseTextureEnabled)
 			bindConstants 0 -bindingID immediateData -data (1,1,1, $stdMatAlphaMultiplier) -constantType float
 		else
 			setf alpha ($stdMatAlphaMultiplier * $stdMatUntexturedDiffAlpha)
 			bindConstants 0 -bindingID immediateData -data (1,1,1, $alpha) -constantType float
 		endif
-			
+
 		bindConstants 1 -bindingID immediateData -data ($cubeCoef, 1) -constantType float
-		
+
       setb localCubeMapFlag &cubeMappingEnable
-	
+
 		if ($stdMatShapeColorIndex = 0)
 			#trace "Shape color active for $currentMaterialName"
-			bindConstants 2 -bindingID shapeColorIndex0 
+			bindConstants 2 -bindingID shapeColorIndex0
          setb localCubeMapFlag false
 		endif
 
       if ($localCubeMapFlag)
             bindConstants 2 -bindingID allTextureLights -constantCount 1
       endif
-         
-		shaderSource 
+
+		shaderSource
 			ps_1_1
 			def c3, 0.5,0.5,0.5,1
 		endShaderSource
-	
-	
+
+
 		if ($stdMatBaseTextureEnabled)
 			shaderSource "tex t0"
 		endif
@@ -734,7 +734,7 @@ define DX8StandardMaterialDiffusePixelShader(addToLastPass useCutout premultiply
 		if (&useCutout)
 			shaderSource "tex t2"
 		endif
-				
+
 
 		if (&baseTextureEnabled)
 			#trace "   DX8 Standard PS: Base texture enabled"
@@ -746,90 +746,90 @@ define DX8StandardMaterialDiffusePixelShader(addToLastPass useCutout premultiply
 					mul r0, t0.a, v0
 					mul r0, r0, c0.a
 				endShaderSource
-				
+
 			else
 				#trace "   DX8 Standard PS: NO alpha replicate"
 
 				shaderSource
 					mul r0.rgb,t0,v0
 					+mul r0.a, t0.a, c0.a
-					
+
 				endShaderSource
 			endif
-			
+
 			if (&HDRScaling = false)
 				shaderSource "mul r0.rgb, r0, c0"
 			endif
-			
+
 			if (&useCutout)
 				#trace "Cutout, overlaying cutout alpha to final alpha"
 				shaderSource "mov r0.a, t2.a"
 			endif
-					
+
 
 		else
 			#trace "$currentMaterialName No Base texture, $stdMatDiffCoef"
-			
+
 			# no texture cases, emit the untextured alpha constant.
-			
+
 			shaderSource "mov r0.rgb, v0"
 			shaderSource "+mov r0.a, c0.a"
-						
+
 		endif
-				
+
 		if (&HDRScaling)
    			#trace "   DX8 Standard PS: HDR Scaling"
 			shaderSource "mov_x2 r0.rgb, r0"  # 'HDR' output.
 		endif
-		
+
 		# scale diffuse BEFORE the cube maps...
 		if ($localCubeMapFlag)
-         
+
          if ($textureLightCount)  # only exists at night time or dark rooms?
             shaderSource "mul r1, t1, c2  ; scale cubemap sample by texture light (for night time)"
             shaderSource "mad r0.rgb, c1, r1, r0 ; then scale by cubeCoeff"
          else
             shaderSource "mad r0.rgb, c1, t1, r0 ; scale by cubeCoeff only"
          endif
-                 
-                    
+
+
 		endif
-	
+
       # shapecolor disables cubemaps
 		if ($stdMatShapeColorIndex = 0)
 			#trace "shape color PS code added"
 			shaderSource "mul r0, r0, c2"
 		endif
-		
-		
+
+
 		if (&premultiplyAlpha)
    			#trace "   DX8 Standard PS: premult alpha"
 			shaderSource "mul r0.rgb, r0, r0.a"
 		endif
 
-   
-      
+
+
 	end #shader program
-					
+
 	if (&baseTextureEnabled)
 		sampler 0
 			texture $stdMatBaseTextureName
 		end
 	endif
-			
+
 	if ( $localCubeMapFlag )
 		sampler 1
 			texture $stdMatEnvCubeTextureName
 			textureAddressing clamp clamp clamp
 		end
 	endif
-						
+
 	if (&useCutout)
 		sampler 2
 			texture $stdMatCutoutTextureName
 		end
 	endif
-		
+
 
 
 enddef
@@ -846,31 +846,31 @@ define DX8StandardMaterialDiffuseBumpPixelShader()
 	cullmode $stdMatCullMode
 
 	#trace "Std mat PS1 bump shader"
-		
+
 	if (strcmp("${stdMatAlphaBlendMode}", "blend") = 0)
 		alphaBlend srcFactor(srcAlpha) add dstFactor(invSrcAlpha)
 		depthTest true -enableDepthWrite false
 	endif
-			
+
 	shaderProgram -method assemble -target pixelProgram
-			
+
 		if ($stdMatShapeColorIndex = 0)
 			#trace "Shape color active for $currentMaterialName"
-			bindConstants 0 -bindingID shapeColorIndex0 
+			bindConstants 0 -bindingID shapeColorIndex0
 		endif
 
 		# Bumps lights 1 and 3. first distant (hopefully the sun), and light #3, the first point or spot.
-		
-		# 1,2,3 = light colors 
+
+		# 1,2,3 = light colors
 		bindConstants 1 -bindingID allStandardLightColorsHalf -constantCount 3 -constantType float
-		
+
 		setv3 finalShaderDiffuse (($stdMatDiffCoef).xyz)
 
 		bindConstants 5 -bindingID immediateData -data ($finalShaderDiffuse, $stdMatAlphaMultiplier) -constantType float
-		
+
 		# 2 lights means #1 and #3, never #1 and #2. This should improve lighting consistency.
 		if ($perPixelLightCount = 2)
-			shaderSource 
+			shaderSource
 				ps_1_1
 				def c6,1,1,1,1
 				tex t0
@@ -880,45 +880,45 @@ define DX8StandardMaterialDiffuseBumpPixelShader()
 
 				dp3_sat r1, t1_bx2, v1_bx2  ; N.L light 1 into alpha
 				dp3_sat r1.rgb, t1_bx2, t2_bx2 ; N.L light 2 into rgb
-				
+
 				mul r0.rgb, r1.a, c1		; light color 1
 				mad r0.rgb, r1, c3, r0      ; light color 2
-				
+
 				add r0.rgb, r0, v0 ; add in vertex diffuse
 				mul r0.rgb, r0, c5  ; multiply by material color
 				mul_x2 r0.rgb, r0, t0 ; multiply by base texture
 				+mul r0.a, t0.a, c5.a
 			endShaderSource
 		endif
-		
+
 		if ($perPixelLightCount = 1)
-			shaderSource 
+			shaderSource
 				ps_1_1
 				def c6,1,1,1,1
 				tex t0
 				tex t1
-				
+
 				dp3_sat r1, t1_bx2, v1_bx2  ; N.L light 1 into alpha
-				
+
 				mad r0.rgb, r1.a, c1, v0		; light color 1 + ambient/vertex light
-				
+
 				mul r0.rgb, r0, c5  ; multiply by material color
 				mul_x2 r0.rgb, r0, t0 ; multiply by base texture
 				+mul r0.a, t0.a, c5.a
 			endShaderSource
 		endif
-		
+
 		if ($stdMatShapeColorIndex = 0)
 			shaderSource "mul r0.rgb, r0, c1"
 		endif
 
 
 	end #shader program
-					
+
 	sampler 0
 		texture $stdMatBaseTextureName
 	end
-			
+
 	sampler 1
 		texture $stdMatNormalMapTextureName
 	end
@@ -929,62 +929,62 @@ enddef
 
 
 define StandardMaterialSpecularPassDX8(lightOffset passLightCount passDistantLightCount passPointCount passSpotLightCount)
-	
+
 	#trace "StandardMaterialspecularPassDX8 $currentMaterialName, lights this time: &passLightCount D:&passDistantLightCount P: &passPointCount S: &passSpotLightCount"
 	seti passCount ($passCount +1)
 
 	pass
-	
+
 	# specular is always adding to the previous passes.
 
 		fillmode $stdMatFillMode
 		cullmode $stdMatCullMode
-		
+
 		# specular always adds.
-		
+
 		depthTest true -enableDepthWrite false
 
 		# previous passes have already done the 'dest * 1-SrcAlpha' thing, so don't do it again here.
-				
+
 		alphaBlend srcFactor(one) add dstFactor(one)
-		
+
 		if ($stdMatAlphaTestEnabled)
 			#trace "Alpha testing enabled: ref val: $stdMatAlphaRefValue"
 			alphaTest true $stdMatAlphaRefValue
 			alphaTestFunction acceptIfGreaterOrEqual
 		endif
-		
-		
+
+
 		shaderProgram -target vertexProgram -method link
-	
+
 			create BindsForHardwareVS1Transforms($doSkinning $doMorphing)
 			create BindsForLighting($lightingMode)
-									
+
 			seti distantLightCount (numLightsOfType(directional))
 			seti pointLightCount (numLightsOfType(point))
 			seti spotLightCount (numLightsOfType(spot))
 			seti totalLightCount ($distantLightCount + $pointLightCount + $spotLightCount)
-					
+
 			create TransformFragments($doSkinning $singleBone false $doMorphing $numPosMorphs $numNormMorphs true 1_1)
 			shaderFragment NoTextureMagic1_1
 			create DX8SpecularPassLightFragments(&lightOffset &passLightCount &passDistantLightCount &passPointCount &passSpotLightCount 1_1)
-		
-		end		
-		
+
+		end
+
 		# no specular masks for now, but when I add them I need to copy texcoord to t2.
-		
+
 		create DX8StandardMaterialSpecularPixelShader(false)
-		
+
 		if ($stdMatBaseTextureEnabled)
-		
+
 			sampler 0
 				texture $stdMatBaseTextureName
 			end
-			
+
 		endif
-		
-			
-	
+
+
+
 	end # pass
 
 
@@ -1002,29 +1002,29 @@ define DX8StandardMaterialSpecularPixelShader(specularMaskEnable)
 	else
 		setf evalAlpha ($stdMatAlphaMultiplier * $stdMatUntexturedDiffAlpha)
 	endif
-	
+
 	setb emitAlpha false
-	
+
 	if (strcmp("${stdMatAlphaBlendMode}","none") != 0)
 		setb emitAlpha true
 	endif
-	
+
 	if ($stdMatAlphaTestEnabled)
 		setb emitAlpha true
 	endif
-	
+
 	#trace "Emit alpha: $emitAlpha"
-	
+
 	shaderProgram -method assemble -target pixelProgram
-		
+
 		bindConstants 1 -bindingID immediateData -data (0,0,0, $evalAlpha)
-		
-		shaderSource 
+
+		shaderSource
 			ps_1_1
 			def c0, 0,0,0,1
 		endShaderSource
 
-		
+
 		if ($emitAlpha)
 			if ($stdMatBaseTextureEnabled)
 				shaderSource
@@ -1039,17 +1039,17 @@ define DX8StandardMaterialSpecularPixelShader(specularMaskEnable)
 		else
 			shaderSource "mov r0.a, c0.a" # spit out specular directly, no HDR bs.
 		endif
-		
-	
-		shaderSource 
+
+
+		shaderSource
 			mov r0.rgb, v0 ; spit out specular directly, no HDR bs.
 		endShaderSource
 
 		if (strcmp("${stdMatAlphaBlendMode}","none") != 0)
 			shaderSource "mul r0.rgb, r0, r0.a" # ; pre-mult alpha
 		endif
-			
-	
+
+
 	end
 
 enddef
@@ -1062,30 +1062,30 @@ enddef
 define DX8ShadowRendering()
 
 		#trace "Shadow render type for: $currentMaterialName"
-		shader 
+		shader
 			viewerRenderTypePred $kRenderTypeShadow
 
 			pass
-				
+
 				create SetupCommonHWShaderVariablesAndPredicates()
-				
+
 				if ($bonesPerVertex = 1 and $doSkinning)
 					setb singleBone true
 				else
 					setb singleBone false
 				endif
-				
+
 				shaderProgram -method link -target vertexProgram
-				
+
 					create BindsForHardwareVS1Transforms($doSkinning $doMorphing)
 					create TransformFragments($doSkinning $singleBone false $doMorphing $numPosMorphs $numNormMorphs true 1_1)
-					
+
 				end
-				
-				
+
+
 				shaderProgram -method assemble -target pixelProgram
 					bindConstants 0 -bindingID immediateData -data ($stdMatShadowColor) -constantType float
-					
+
 					shaderSource
 						ps_1_1
 						def c1,1,1,1,1
@@ -1096,7 +1096,7 @@ define DX8ShadowRendering()
 
 			end
 		end
-		
+
 enddef
 
 
@@ -1108,7 +1108,7 @@ define 	BindsForHardwareVS1Transforms(skinFlag morphFlag)
 	bindConstants 0 -bindingID cameraToClip -constantCount 4 -constantType float
 	bindConstants 4 -bindingID geomToClip -constantCount 4 -constantType float
 	bindConstants 8 -bindingID geomToCamera -constantCount 3 -constantType float
-	
+
 
 	# enough for 15 bones.
 	if (&skinFlag)   # 56 + 40 = 96
@@ -1118,9 +1118,9 @@ define 	BindsForHardwareVS1Transforms(skinFlag morphFlag)
 	if (&morphFlag)  # 56 + 30 = 86
 		bindConstants 56 -bindingID morphWeights -constantCount 30 -startChannel w
 	endif
-	
+
 	if (strcmp("${stdMatEnvCubeMode}", "reflection") = 0)
 		bindConstants 11 -bindingID cameraToGlobal -constantCount 3
 	endif
-		
+
 enddef

@@ -19,23 +19,23 @@ define ScreenEffectMaterial()
             else
                create ScreenQuadVertexProgram()
             endif
-            
+
             alphaBlend srcFactor(${srcBlendMode}) add dstFactor(${dstBlendMode})
             depthTest false -enableDepthWrite false
             alphaTest true 0
             alphaTestFunction acceptIfGreater
             colorScalar @color @alpha
-            
+
             stage
                if (varExists(screenEffectTexture))
                   texture $screenEffectTexture
-   
+
                   textureAddressing clamp clamp clamp
                   textureBlend multiply(texture colorScalar) multiply(texture colorScalar)
-               else               
+               else
                   textureBlend select(colorScalar) select(colorScalar)
                endif
-            end               
+            end
          end
       end
    end
@@ -49,33 +49,33 @@ define ScreenEffectSkyboxMaterial()
       end
 
       shader -layer (-100)
-         vertexFormatPred position 0 true                 
+         vertexFormatPred position 0 true
          create DetermineHardwareSupport()
-         
+
          pass -renderEachFrame
             create ScreenQuadVertexProgram()
 
             cullmode none
             alphaBlend srcFactor(${srcBlendMode}) add dstFactor(${dstBlendMode})
-            depthTest true -enableDepthWrite false   #depth test needed for dirty rects to work properly                                                
-            
-            if ($cubeMapSupport)            
-               colorScalar @color @alpha               
-            else               
+            depthTest true -enableDepthWrite false   #depth test needed for dirty rects to work properly
+
+            if ($cubeMapSupport)
+               colorScalar @color @alpha
+            else
                colorScalar(0.3, 0.3, 0.65, 1.0)
             endif
 
-            stage                              
-               if ($cubeMapSupport)                  
-                  if (varExists(screenEffectTexture))                                       
-                     texture $screenEffectTexture                     
-                     textureMIPFilterHint disabled     
+            stage
+               if ($cubeMapSupport)
+                  if (varExists(screenEffectTexture))
+                     texture $screenEffectTexture
+                     textureMIPFilterHint disabled
                      textureAddressing clamp clamp clamp
                      textureBlend multiply(texture colorScalar) select(colorScalar texture)
-                  else               
+                  else
                      textureBlend select(colorScalar) select(colorScalar)
                   endif
-               else                  
+               else
                   textureBlend select(colorScalar) select(colorScalar)
                endif
             end
@@ -90,7 +90,7 @@ materialDefinition screenEffectAdditiveQuad
    addParam srcBlendMode srcAlpha
    addParam dstBlendMode one
 end
- 
+
 materialDefinition screenEffectBlendQuad
    setDefinition ScreenEffectMaterial
    addParam srcBlendMode srcAlpha
